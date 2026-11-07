@@ -1,7 +1,7 @@
 /**
  * ========================================================
  * ⚙️ Photo Earn - Configuration File (config.js)
- * সমস্ত সেটিংস, পেমেন্ট নম্বর ও কন্ট্রোল এখান থেকেই আপডেট করা হয়েছে
+ * সমস্ত সেটিংস, পেমেন্ট নম্বর, ফায়ারবেস ও বিজ্ঞাপন কনফিগারেশন
  * ========================================================
  */
 
@@ -70,23 +70,45 @@ window.APP_CONFIG = {
     downloadWaitSeconds: 5, // ৫ সেকেন্ড অপেক্ষা করিয়ে ডাউনলোড আনলক
     sponsorDirectLink: "https://asiafilm.org/4/7dba13cd99d01214b30af2e53cea4c8a", // আপনার Adsterra Direct Link
 
+    // টপ ব্যানার অ্যাড (সরাসরি ক্লিক করলেই Adsterra ডিরেক্ট লিংকে চলে যাবে)
     topBannerSlot: `
-      <div class="ad-placeholder w-full py-2 bg-slate-900/80 border border-dashed border-amber-500/30 rounded-xl text-center text-xs text-amber-300 flex items-center justify-center gap-2">
-        <span class="bg-amber-500/20 px-2 py-0.5 rounded text-[10px] uppercase font-bold text-amber-400">Sponsored Ad</span>
-        <span>Adsterra Banner Slot (728x90 / 320x50)</span>
-      </div>
+      <a href="https://asiafilm.org/4/7dba13cd99d01214b30af2e53cea4c8a" target="_blank" rel="noopener" class="block w-full py-2.5 px-4 bg-gradient-to-r from-amber-500/15 via-rose-500/15 to-indigo-500/15 border border-amber-500/30 hover:border-amber-400 rounded-2xl text-center shadow-lg transition-all group">
+        <div class="flex items-center justify-between gap-2">
+          <div class="flex items-center gap-2">
+            <span class="bg-amber-500 text-slate-950 px-2 py-0.5 rounded text-[10px] uppercase font-black tracking-wider">Sponsored</span>
+            <span class="text-xs font-bold text-white group-hover:text-amber-300 transition-colors">🔥 আজকের সেরা অনলাইন রিওয়ার্ড ও স্পনসর অফার দেখুন</span>
+          </div>
+          <span class="text-[11px] bg-amber-500 hover:bg-amber-400 text-slate-950 font-black px-3 py-1 rounded-xl shadow whitespace-nowrap">ভিজিট করুন ➔</span>
+        </div>
+      </a>
     `,
+
+    // ইন-ফিড নেটিভ বিজ্ঞাপন কার্ড
     inFeedNativeSlot: `
-      <div class="ad-placeholder w-full py-4 bg-slate-900/80 border border-dashed border-indigo-500/30 rounded-2xl text-center text-xs text-indigo-300 flex flex-col items-center justify-center gap-1">
-        <span class="bg-indigo-500/20 px-2 py-0.5 rounded text-[10px] uppercase font-bold text-indigo-400">Sponsored</span>
-        <span>In-Feed Native Adsterra Banner Slot</span>
-      </div>
+      <a href="https://asiafilm.org/4/7dba13cd99d01214b30af2e53cea4c8a" target="_blank" rel="noopener" class="block w-full p-4 bg-gradient-to-r from-indigo-950/80 via-purple-950/70 to-slate-900 border border-indigo-500/30 hover:border-pink-500/50 rounded-2xl shadow-xl transition-all text-center group">
+        <div class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 text-[10px] font-bold uppercase mb-1.5">
+          <span class="w-1.5 h-1.5 rounded-full bg-pink-500 animate-ping"></span>
+          <span>Sponsored Promotion</span>
+        </div>
+        <h4 class="text-sm font-black text-white group-hover:text-pink-400 transition-colors">🎁 প্রতিদিন ৫০০ থেকে ১,০০০ টাকা আয়ের বিশেষ সুযোগ!</h4>
+        <p class="text-xs text-gray-400 mt-0.5">নিচের লিংকে ক্লিক করে সরাসরি স্পনসর অফারটি দেখুন ও জিতে নিন উপহার</p>
+        <div class="mt-3">
+          <span class="inline-block px-5 py-1.5 bg-gradient-to-r from-pink-500 to-indigo-600 hover:from-pink-600 hover:to-indigo-700 text-white font-bold rounded-xl text-xs shadow-md">এখনই অফারটি দেখুন ➔</span>
+        </div>
+      </a>
     `,
+
+    // স্টিকি বটম মোবাইল ব্যানার
     stickyBottomSlot: `
-      <div class="ad-placeholder w-full py-1.5 bg-slate-950/95 border-t border-slate-800 text-center text-[11px] text-gray-400 flex items-center justify-center gap-2 shadow-2xl">
-        <span class="bg-emerald-500/20 px-1.5 py-0.2 rounded text-[9px] uppercase font-bold text-emerald-400">Ad</span>
-        <span>Sticky Bottom Banner Ad (320x50)</span>
-      </div>
+      <a href="https://asiafilm.org/4/7dba13cd99d01214b30af2e53cea4c8a" target="_blank" rel="noopener" class="block w-full py-2 px-3 bg-slate-950/95 border-t border-amber-500/30 text-center shadow-2xl transition-colors hover:bg-slate-900">
+        <div class="max-w-6xl mx-auto flex items-center justify-between gap-2">
+          <div class="flex items-center gap-2 truncate">
+            <span class="bg-amber-500 text-slate-950 px-1.5 py-0.5 rounded text-[9px] uppercase font-black">AD</span>
+            <span class="text-xs font-bold text-amber-300 truncate">🔥 বিশেষ স্পনসর অফার দেখতে এখানে ট্যাপ করুন</span>
+          </div>
+          <span class="text-[11px] bg-amber-500 text-slate-950 font-black px-2.5 py-0.5 rounded-lg whitespace-nowrap">Open ➔</span>
+        </div>
+      </a>
     `
   },
 

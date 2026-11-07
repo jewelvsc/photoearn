@@ -165,7 +165,7 @@ switch ($action) {
             exit;
         }
 
-        $photoId = 'photo_' . time() . '_' . rand(100, 999);
+        $photoId = !empty($input['id']) ? preg_replace('/[^a-zA-Z0-9_-]/', '', $input['id']) : ('photo_' . time() . '_' . rand(100, 999));
         $fileName = $photoId . '.jpg';
         $filePath = $uploadDir . '/' . $fileName;
 
