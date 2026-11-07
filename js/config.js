@@ -19,8 +19,9 @@ window.APP_CONFIG = {
   nagadNumber: "01771136809",
   supportWhatsApp: "https://wa.me/8801771136809", // হোয়াটসঅ্যাপ সাপোর্ট
   supportTelegram: "https://t.me/photoearnOfficial", // আপনার অফিসিয়াল টেলিগ্রাম চ্যানেল
-  youtubeChannel: "https://youtube.com/@channel",   // ইউটিউব চ্যানেল
-  youtubePopupDelaySeconds: 30, // সাইটে প্রবেশের ৩০ সেকেন্ড পর পপআপ আসবে
+  youtubePopupDelaySeconds: 0, // ইউটিউব চ্যানেল না থাকায় পপআপ বন্ধ করা হয়েছে
+  telegramPopupDelaySeconds: 20, // সাইটে প্রবেশের ২০ সেকেন্ড পর টেলিগ্রাম পপআপ আসবে
+  telegramPopupEnabled: true,
 
   // ৩. বাংলা কিউআর (BANGLA QR) পেমেন্ট তথ্য
   banglaQr: {
@@ -69,6 +70,8 @@ window.APP_CONFIG = {
     enabled: true,
     downloadWaitSeconds: 5, // ৫ সেকেন্ড অপেক্ষা করিয়ে ডাউনলোড আনলক
     sponsorDirectLink: "https://asiafilm.org/4/7dba13cd99d01214b30af2e53cea4c8a", // আপনার Adsterra Direct Link
+    uploadHumanVerifyEnabled: true, // ছবি জমার আগে Human Verify (GalleryBD স্টাইল - ইনকাম বাড়াতে)
+    uploadWaitSeconds: 5, // ভেরিফাই অপেক্ষা ৫ সেকেন্ড
 
     // টপ ব্যানার অ্যাড (সরাসরি ক্লিক করলেই Adsterra ডিরেক্ট লিংকে চলে যাবে)
     topBannerSlot: `
@@ -112,12 +115,24 @@ window.APP_CONFIG = {
     `
   },
 
-  // ৮. Firebase Realtime Database
+  // ৮. লাইভ পাবলিক চ্যাট (GalleryBD স্টাইল - Firebase Powered)
+  chat: {
+    enabled: true,
+    pollIntervalMs: 3500 // প্রতি ৩.৫ সেকেন্ডে রিয়েল-টাইম নতুন মেসেজ রিফ্রেশ
+  },
+
+  // ৯. PWA মোবাইল অ্যাপ ইনস্টল সুবিধা
+  pwa: {
+    enabled: true,
+    promptDelaySeconds: 40 // সাইটে প্রবেশের ৪০ সেকেন্ড পর অ্যাপ ইনস্টল নোটিস
+  },
+
+  // ১০. Firebase Realtime Database
   firebase: {
     databaseURL: "https://photo-earn-official-default-rtdb.firebaseio.com"
   },
 
-  // ৯. সিকিউরিটি ও অ্যাডমিন পিন
+  // ১১. সিকিউরিটি ও অ্যাডমিন পিন
   adminPin: "8800",
   voteCoolDownSeconds: 5
 };

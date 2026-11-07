@@ -1,3 +1,11 @@
+window.__deferredPrompt = null;
+window.addEventListener("beforeinstallprompt", (e) => {
+  e.preventDefault();
+  window.__deferredPrompt = e;
+  const topPwaBtn = document.getElementById("pwa-top-btn");
+  if (topPwaBtn) topPwaBtn.classList.remove("hidden");
+});
+
 /**
  * ========================================================
  * 🚀 PicPrize BD - Core Application Engine (app.js)
@@ -27,6 +35,7 @@ class PicPrizeApp {
     this.setupEventListeners();
     this.startContestTimers();
     this.setupPopups();
+    this.initLiveChat();
     await this.renderGallery();
     this.checkUrlParams();
   }
@@ -420,6 +429,30 @@ class PicPrizeApp {
 
     const modal = document.getElementById("upload-modal");
     if (modal) modal.classList.remove("hidden");
+
+    // হিউম্যান ভেরিফাই স্ট্যাটাস চেক
+    const verifyBox = document.getElementById("up-verify-box");
+    const submitBtn = document.getElementById("up-submit-btn");
+    if (this.cfg.ads && this.cfg.ads.uploadHumanVerifyEnabled) {
+      if (sessionStorage.getItem("up_human_verified")) {
+        if (verifyBox) verifyBox.innerHTML = `<div class="p-2.5 bg-emerald-500/10 border border-emerald-500/30 rounded-xl text-center text-xs text-emerald-400 font-bold">✅ সিকিউরিটি হিউম্যান ভেরিফিকেশন সম্পন্ন</div>`;
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.classList.remove("opacity-50", "cursor-not-allowed");
+        }
+      } else {
+        if (submitBtn) {
+          submitBtn.disabled = true;
+          submitBtn.classList.add("opacity-50", "cursor-not-allowed");
+        }
+      }
+    } else {
+      if (verifyBox) verifyBox.classList.add("hidden");
+      if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.classList.remove("opacity-50", "cursor-not-allowed");
+      }
+    }
   }
 
   // ছবি আপলোড সাবমিট হ্যান্ডলার
@@ -780,16 +813,221 @@ class PicPrizeApp {
     update();
   }
 
-  // ১৫. পপআপ (ইউটিউব সাবস্ক্রাইব ইত্যাদি)
+  // ১৫. পপআপ (টেলিগ্রাম চ্যানেল ও PWA নোটিস - ইউটিউব বন্ধ)
   setupPopups() {
-    const delay = (this.cfg.youtubePopupDelaySeconds || 30) * 1000;
-    if (!sessionStorage.getItem("yt_popup_shown")) {
+    // টেলিগ্রাম চ্যানেল পপআপ
+    if (this.cfg.telegramPopupEnabled && !sessionStorage.getItem("tg_popup_shown")) {
+      const delay = (this.cfg.telegramPopupDelaySeconds || 20) * 1000;
       setTimeout(() => {
-        sessionStorage.setItem("yt_popup_shown", "true");
-        const modal = document.getElementById("yt-subscribe-modal");
+        sessionStorage.setItem("tg_popup_shown", "true");
+        const modal = document.getElementById("telegram-join-modal");
         if (modal) modal.classList.remove("hidden");
       }, delay);
     }
+
+    // PWA অ্যাপ ইনস্টল ব্যানার প্রম্পট
+    if (this.cfg.pwa && this.cfg.pwa.enabled && !localStorage.getItem("pwa_dismissed")) {
+      const pwaDelay = (this.cfg.pwa.promptDelaySeconds || 35) * 1000;
+      setTimeout(() => {
+        const banner = document.getElementById("pwa-install-banner");
+        if (banner) banner.classList.remove("hidden");
+      }, pwaDelay);
+    }
+  }
+
+  // PWA অ্যাপ ইনস্টল ট্রিগার
+  async triggerPwaInstall() {
+    if (window.__deferredPrompt) {
+      window.__deferredPrompt.prompt();
+      const { outcome } = await window.__deferredPrompt.userChoice;
+      if (outcome === "accepted") {
+        localStorage.setItem("pwa_installed", "true");
+        this.showToast("অ্যাপ সফলভাবে ইনস্টল হচ্ছে! হোম স্ক্রিনে চেক করুন। 🎉", "success");
+      }
+      window.__deferredPrompt = null;
+      const banner = document.getElementById("pwa-install-banner");
+      if (banner) banner.classList.add("hidden");
+    } else {
+      this.showToast("আপনার ব্রাউজারের থ্রি-ডট (⋮) অপশনে গিয়ে 'Add to Home screen' বা 'Install app' চাপুন।", "info");
+    }
+  }
+
+  dismissPwaBanner() {
+    localStorage.setItem("pwa_dismissed", "true");
+    const banner = document.getElementById("pwa-install-banner");
+    if (banner) banner.classList.add("hidden");
+  }
+
+  // GalleryBD স্টাইল হিউম্যান ভেরিফাই (Adsterra ডিরেক্ট লিংক ওপেন + ৫ সেকেন্ড অপেক্ষা)
+  triggerUploadVerify() {
+    const btn = document.getElementById("up-verify-btn");
+    const verifyBox = document.getElementById("up-verify-box");
+    const submitBtn = document.getElementById("up-submit-btn");
+
+    const adUrl = (this.cfg.ads && this.cfg.ads.sponsorDirectLink) ? this.cfg.ads.sponsorDirectLink : "https://asiafilm.org/4/7dba13cd99d01214b30af2e53cea4c8a";
+    window.open(adUrl, "_blank");
+
+    let count = (this.cfg.ads && this.cfg.ads.uploadWaitSeconds) || 5;
+    if (btn) btn.disabled = true;
+
+    const timer = setInterval(() => {
+      if (count > 0) {
+        if (btn) btn.innerHTML = `<span>⏳ স্পনসর পেজ ভেরিফাই হচ্ছে... ${count} সেকেন্ড</span>`;
+        count--;
+      } else {
+        clearInterval(timer);
+        sessionStorage.setItem("up_human_verified", "true");
+        if (verifyBox) {
+          verifyBox.innerHTML = `
+            <div class="p-3 bg-emerald-500/15 border border-emerald-500/40 rounded-xl text-center text-xs text-emerald-300 font-bold flex items-center justify-center gap-2">
+              <span>✅</span>
+              <span>হিউম্যান ভেরিফিকেশন সফল হয়েছে! এখন ছবি জমা দিন।</span>
+            </div>
+          `;
+        }
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.classList.remove("opacity-50", "cursor-not-allowed");
+        }
+        this.showToast("ভেরিফিকেশন সফল! এখন ফর্ম পূরণ করে ছবি জমা দিন।", "success");
+      }
+    }, 1000);
+  }
+
+  // লাইভ পাবলিক চ্যাট ইঞ্জিন (GalleryBD স্টাইল - Firebase Powered)
+  initLiveChat() {
+    this.chatOpen = false;
+    const chatBtn = document.getElementById("lc-btn");
+    const chatBox = document.getElementById("lc-box");
+    const chatClose = document.getElementById("lc-close");
+    const chatForm = document.getElementById("lc-form");
+
+    if (chatBtn) chatBtn.addEventListener("click", () => this.toggleLiveChat());
+    if (chatClose) chatClose.addEventListener("click", () => this.toggleLiveChat(false));
+    if (chatForm) chatForm.addEventListener("submit", (e) => this.handleSendChatMessage(e));
+
+    // প্রতি ৩.৫ সেকেন্ডে চ্যাট আপডেট
+    if (this.cfg.chat && this.cfg.chat.enabled) {
+      this.pollChatMessages();
+      setInterval(() => {
+        if (this.chatOpen) {
+          this.pollChatMessages();
+        }
+      }, this.cfg.chat.pollIntervalMs || 3500);
+    }
+  }
+
+  toggleLiveChat(forceState) {
+    const box = document.getElementById("lc-box");
+    if (!box) return;
+    this.chatOpen = forceState !== undefined ? forceState : !this.chatOpen;
+    if (this.chatOpen) {
+      box.classList.remove("hidden");
+      box.classList.add("flex");
+      this.pollChatMessages(true);
+      const badge = document.getElementById("lc-badge");
+      if (badge) badge.classList.add("hidden");
+
+      const nameRow = document.getElementById("lc-name-row");
+      if (nameRow) {
+        if (this.activeUser) {
+          nameRow.classList.add("hidden");
+        } else {
+          nameRow.classList.remove("hidden");
+        }
+      }
+
+      setTimeout(() => {
+        const input = document.getElementById("lc-input");
+        if (input) input.focus();
+      }, 100);
+    } else {
+      box.classList.add("hidden");
+      box.classList.remove("flex");
+    }
+  }
+
+  async pollChatMessages(scrollToEnd = false) {
+    const messages = await this.db.getChatMessages();
+    this.renderChatMessages(messages, scrollToEnd);
+  }
+
+  renderChatMessages(messages, scrollToEnd) {
+    const container = document.getElementById("lc-messages");
+    if (!container) return;
+
+    if (!messages || messages.length === 0) {
+      container.innerHTML = `<div class="text-center py-8 text-gray-500 text-xs">এখনও কোনো বার্তা নেই। প্রথম বার্তাটি আপনি পাঠান! 😊</div>`;
+      return;
+    }
+
+    const currentPin = this.activeUser ? this.activeUser.pin : "";
+    let html = "";
+    messages.forEach(msg => {
+      const isMe = currentPin && msg.pin === currentPin;
+      const isAdmin = msg.isAdmin || msg.pin === "8800";
+      const timeStr = msg.time ? new Date(msg.time).toLocaleTimeString("bn-BD", { hour: "2-digit", minute: "2-digit" }) : "";
+
+      if (isMe) {
+        html += `
+          <div class="flex flex-col items-end mb-2.5">
+            <div class="bg-gradient-to-r from-amber-500 to-rose-500 text-slate-950 font-medium px-3.5 py-2 rounded-2xl rounded-tr-none text-xs shadow max-w-[85%] break-words">
+              ${this.escapeHtml(msg.text)}
+            </div>
+            <span class="text-[9px] text-gray-400 mt-0.5">${timeStr} • আপনি</span>
+          </div>
+        `;
+      } else {
+        html += `
+          <div class="flex flex-col items-start mb-2.5">
+            <div class="flex items-center gap-1.5 mb-0.5">
+              <span class="text-[10px] font-bold ${isAdmin ? 'text-amber-400' : 'text-indigo-300'}">${this.escapeHtml(msg.name || 'অতিথি')}</span>
+              ${isAdmin ? '<span class="bg-amber-500 text-slate-950 px-1 py-0.2 rounded text-[8px] font-black uppercase">ADMIN</span>' : ''}
+              <span class="text-[9px] text-gray-500">${timeStr}</span>
+            </div>
+            <div class="bg-slate-800 text-gray-200 border border-slate-700/60 px-3.5 py-2 rounded-2xl rounded-tl-none text-xs shadow max-w-[85%] break-words">
+              ${this.escapeHtml(msg.text)}
+            </div>
+          </div>
+        `;
+      }
+    });
+
+    container.innerHTML = html;
+    if (scrollToEnd) {
+      container.scrollTop = container.scrollHeight;
+    }
+  }
+
+  async handleSendChatMessage(e) {
+    e.preventDefault();
+    const input = document.getElementById("lc-input");
+    const nameInput = document.getElementById("lc-name-input");
+    if (!input) return;
+    const text = input.value.trim();
+    if (!text) return;
+
+    let authorName = this.activeUser ? this.activeUser.name : (nameInput ? nameInput.value.trim() : "");
+    if (!authorName) {
+      authorName = "ভিজিটর_" + Math.floor(Math.random() * 900 + 100);
+      if (nameInput) nameInput.value = authorName;
+    }
+
+    const authorPin = this.activeUser ? this.activeUser.pin : "";
+    input.value = "";
+
+    await this.db.sendChatMessage(text, authorName, authorPin);
+    await this.pollChatMessages(true);
+  }
+
+  escapeHtml(str) {
+    if (!str) return "";
+    return String(str)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;");
   }
 
   // ১৬. ইউআরএল প্যারামিটার চেকিং (রেফারেল ইত্যাদি)

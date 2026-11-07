@@ -573,6 +573,53 @@ class AppDB {
     users[userData.pin] = userData;
     localStorage.setItem("peg_users", JSON.stringify(users));
   }
+
+  // ১৩. লাইভ পাবলিক চ্যাট মেসেজ আনা (Firebase + Local)
+  async getChatMessages() {
+    if (this.hasFirebase) {
+      try {
+        const res = await fetch(`${this.fbUrl}/chat.json`);
+        const data = await res.json();
+        if (data) {
+          const list = Object.keys(data).map(k => ({ ...data[k], id: data[k].id || k }));
+          list.sort((a, b) => new Date(a.time || 0) - new Date(b.time || 0));
+          return list.slice(-60); // শেষের ৬০টি মেসেজ
+        }
+      } catch (e) {}
+    }
+    const local = JSON.parse(localStorage.getItem("peg_chat") || "[]");
+    return local;
+  }
+
+  // ১৪. লাইভ পাবলিক চ্যাট মেসেজ পাঠানো (Firebase + Local)
+  async sendChatMessage(text, authorName, authorPin) {
+    const msgId = "msg_" + Date.now();
+    const newMsg = {
+      id: msgId,
+      text: text.trim(),
+      name: authorName || "অতিথি",
+      pin: authorPin || "",
+      isAdmin: authorPin === (this.cfg.adminPin || "8800"),
+      time: new Date().toISOString()
+    };
+
+    if (this.hasFirebase) {
+      try {
+        await fetch(`${this.fbUrl}/chat/${msgId}.json`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(newMsg)
+        });
+      } catch (e) {}
+    }
+
+    const local = JSON.parse(localStorage.getItem("peg_chat") || "[]");
+    local.push(newMsg);
+    if (local.length > 60) local.shift();
+    localStorage.setItem("peg_chat", JSON.stringify(local));
+
+    return newMsg;
+  }
 }
 
 window.DB = new AppDB();

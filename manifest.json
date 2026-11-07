@@ -1,0 +1,25 @@
+{
+  "name": "Photo Earn - ছবি আপলোড ও আর্নিং কন্টেস্ট",
+  "short_name": "Photo Earn",
+  "description": "ছবি আপলোড করুন, লাইক ও ভোট পান এবং জিতে নিন প্রতিদিনের নগদ পুরস্কার",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#030712",
+  "theme_color": "#030712",
+  "icons": [
+    {
+      "src": "images/og-preview.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "images/og-preview.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
