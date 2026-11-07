@@ -1,0 +1,6 @@
+# Protect data files from direct web access
+<FilesMatch "\.(json|lock)$">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
+

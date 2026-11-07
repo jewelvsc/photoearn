@@ -1,0 +1,2132 @@
+<!DOCTYPE html>
+<html lang="bn" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>PhotoEarn BD - ছবি তুলে আয় করুন প্রতিদিন | ফটো কনটেস্ট ও আর্নিং গ্যালারি</title>
+  <meta name="description" content="মোবাইল বা ক্যামেরা দিয়ে তোলা ছবি জমা দিন, লাইভ ভোট পান আর জিতে নিন প্রতিদিনের নগদ বিকাশ ও নগদ প্রাইজ।">
+  <meta name="keywords" content="photo earn, photo contest bd, ছবি তুলে টাকা আয়, photo gallery bd, photo earn gallery">
+  <meta property="og:title" content="PhotoEarn BD - সেরা ছবির জন্য প্রতিদিন নগদ বিকাশ পুরস্কার!">
+  <meta property="og:description" content="আপনার তোলা ছবি আপলোড করুন আর জিতে নিন ২৪ ঘণ্টা, ৭ দিন ও ৩০ দিনের মেগা ক্যাশ প্রাইজ।">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://photoearn.chasherdokan.com">
+  <meta property="og:image" content="https://photoearn.chasherdokan.com/images/og-preview.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="PhotoEarn BD - ছবি তুলে আয় করুন প্রতিদিন">
+  <meta name="twitter:description" content="ছবি আপলোড করুন, ভোট পান আর জিতে নিন প্রতিদিনের নগদ বিকাশ ও নগদ প্রাইজ।">
+  <meta name="twitter:image" content="https://photoearn.chasherdokan.com/images/og-preview.png">
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#eef2ff',
+              500: '#6366f1',
+              600: '#4f46e5',
+              700: '#4338ca'
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Custom Stylesheet -->
+  <style>
+@import url('https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap');
+
+:root {
+  --primary: #6366f1;
+  --primary-hover: #4f46e5;
+  --secondary: #ec4899;
+  --accent: #f59e0b;
+  --dark-bg: #0b0f19;
+  --card-bg: rgba(17, 24, 39, 0.75);
+  --border-color: rgba(255, 255, 255, 0.08);
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  font-family: 'Hind Siliguri', 'Outfit', sans-serif;
+  background-color: var(--dark-bg);
+  color: #f3f4f6;
+  min-height: 100vh;
+  overflow-x: hidden;
+  background-image: 
+    radial-gradient(at 10% 20%, rgba(99, 102, 241, 0.12) 0px, transparent 50%),
+    radial-gradient(at 90% 80%, rgba(236, 72, 153, 0.1) 0px, transparent 50%);
+  background-attachment: fixed;
+}
+
+/* Glassmorphism Classes */
+.glass-panel {
+  background: var(--card-bg);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--border-color);
+}
+
+.glass-nav {
+  background: rgba(11, 15, 25, 0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border-color);
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #0f172a;
+}
+::-webkit-scrollbar-thumb {
+  background: #334155;
+  border-radius: 999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #475569;
+}
+
+/* Contest Nav Chips */
+.nav-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  border-radius: 9999px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  white-space: nowrap;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  background: rgba(30, 41, 59, 0.5);
+  color: #cbd5e1;
+  text-decoration: none;
+}
+.nav-chip:hover {
+  background: rgba(51, 65, 85, 0.8);
+  color: #ffffff;
+  transform: translateY(-1px);
+}
+.nav-chip.active {
+  background: linear-gradient(135deg, #6366f1 0%, #ec4899 100%);
+  color: #ffffff;
+  border-color: transparent;
+  box-shadow: 0 4px 15px rgba(99, 102, 241, 0.35);
+}
+
+/* Glow Badges */
+.badge-blue-king {
+  background: linear-gradient(135deg, #0ea5e9, #38bdf8);
+  color: #082f49;
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+  box-shadow: 0 0 10px rgba(14, 165, 233, 0.5);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+.badge-red-king {
+  background: linear-gradient(135deg, #ef4444, #f43f5e);
+  color: #fff;
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+  box-shadow: 0 0 10px rgba(239, 68, 68, 0.6);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+/* Card Hover Animations */
+.photo-card {
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease;
+}
+.photo-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 30px -10px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(99, 102, 241, 0.3);
+}
+
+/* Heart Vote Button Pop */
+@keyframes heartPop {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.35); }
+  100% { transform: scale(1); }
+}
+.heart-active {
+  animation: heartPop 0.4s ease-out;
+  color: #f43f5e !important;
+}
+
+/* Live Dot Pulse */
+.live-pulse {
+  position: relative;
+}
+.live-pulse::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: -8px;
+  transform: translateY(-50%);
+  width: 6px;
+  height: 6px;
+  background-color: #ef4444;
+  border-radius: 50%;
+  box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
+  animation: pulseRed 1.8s infinite cubic-bezier(0.66, 0, 0, 1);
+}
+@keyframes pulseRed {
+  to {
+    box-shadow: 0 0 0 8px rgba(239, 68, 68, 0);
+  }
+}
+
+/* Floating Action Button */
+.fab-btn {
+  background: linear-gradient(135deg, #6366f1, #d946ef);
+  box-shadow: 0 10px 25px -5px rgba(99, 102, 241, 0.5);
+  transition: all 0.2s ease;
+}
+.fab-btn:hover {
+  transform: scale(1.05);
+  box-shadow: 0 12px 30px -5px rgba(217, 70, 239, 0.6);
+}
+
+/* Modal Backdrop */
+.modal-overlay {
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+/* Toast Notification */
+#toast-container {
+  position: fixed;
+  bottom: 80px;
+  right: 20px;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  pointer-events: none;
+}
+.toast {
+  pointer-events: auto;
+  background: #1e293b;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #fff;
+  padding: 12px 18px;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 500;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  animation: slideIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  max-width: 340px;
+}
+@keyframes slideIn {
+  from { transform: translateX(100%); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+
+</style>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect fill='%236366f1' width='64' height='64' rx='16'/><circle cx='32' cy='32' r='14' fill='%23ec4899'/><circle cx='32' cy='32' r='6' fill='%23ffffff'/></svg>">
+</head>
+<body class="pb-24">
+
+  <!-- ================= TOP HEADER ================= -->
+  <header class="sticky top-0 z-40 glass-nav">
+    <div class="max-w-6xl mx-auto px-4 py-2.5 flex items-center justify-between gap-3">
+      
+      <!-- সাইটের লোগো -->
+      <a href="/" class="flex items-center gap-2 group">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-500 via-purple-500 to-pink-500 flex items-center justify-center shadow-lg shadow-indigo-500/25 group-hover:scale-105 transition-transform">
+          <svg class="w-6 h-6 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+            <circle cx="12" cy="13" r="4" />
+          </svg>
+        </div>
+        <div>
+          <span id="brand-logo-text" class="text-lg font-black tracking-tight text-white flex items-center gap-1">
+            <b>PhotoEarn</b> <em class="text-pink-500 not-italic font-extrabold">BD</em>
+          </span>
+          <span class="text-[10px] text-gray-400 block -mt-1">ফটোগ্রাফি ও রিওয়ার্ড প্ল্যাটফর্ম</span>
+        </div>
+      </a>
+
+      <!-- লাইভ ভিজিটর কাউন্টার (ডেস্কটপ ও ট্যাবলেট) -->
+      <div class="hidden sm:flex items-center gap-2 px-3 py-1 rounded-full bg-slate-900/80 border border-white/5 text-xs text-gray-300">
+        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+        <span id="visitor-stats">মোট ভিজিটর: লোড হচ্ছে…</span>
+      </div>
+
+      <!-- হেডার বাটনসমূহ -->
+      <div class="flex items-center gap-2">
+        <button id="auth-nav-btn" class="px-3.5 py-1.5 rounded-xl border border-gray-700 bg-slate-800/80 hover:bg-slate-700 text-xs font-semibold text-gray-200 flex items-center gap-2 transition-all">
+          <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+          <span>লগইন / একাউন্ট</span>
+        </button>
+
+        <button id="upload-trigger-btn" class="hidden md:flex px-4 py-1.5 rounded-xl bg-gradient-to-r from-indigo-500 to-pink-500 hover:from-indigo-600 hover:to-pink-600 text-white text-xs font-bold shadow-lg shadow-indigo-500/20 items-center gap-1.5 transition-transform active:scale-95">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+          <span>ছবি জমা দিন</span>
+        </button>
+      </div>
+
+    </div>
+  </header>
+
+  <!-- ================= TOP BANNER AD SLOT ================= -->
+  <div class="max-w-4xl mx-auto px-4 mt-3" id="ad-top-slot">
+    <!-- Adsterra 728x90 বা 320x50 ব্যানার কোড এখানে রেন্ডার হবে -->
+  </div>
+
+  <!-- ================= HERO CONTEST ANNOUNCEMENT BANNER ================= -->
+  <section class="max-w-6xl mx-auto px-4 mt-4">
+    <div class="glass-panel rounded-3xl p-5 md:p-6 border border-indigo-500/20 relative overflow-hidden">
+      <div class="absolute -right-10 -bottom-10 w-64 h-64 bg-pink-500/10 rounded-full blur-3xl pointer-events-none"></div>
+      <div class="absolute -left-10 -top-10 w-64 h-64 bg-indigo-500/15 rounded-full blur-3xl pointer-events-none"></div>
+
+      <div class="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-5">
+        <div>
+          <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs font-semibold mb-2">
+            <span class="w-2 h-2 rounded-full bg-rose-500 animate-ping"></span>
+            <span>লাইভ ফটো কনটেস্ট চলছে</span>
+          </div>
+          <h1 class="text-xl md:text-2xl font-black text-white">ছবি তুলুন, ভোট পান আর প্রতিদিন জিতে নিন প্রাইজ!</h1>
+          <p class="text-xs md:text-sm text-gray-400 mt-1">মোবাইল দিয়ে যেকোনো সুন্দর ছবি জমা দিন। ভোট বাড়লেই নিশ্চিত বিকাশ বা নগদ ক্যাশ রিওয়ার্ড।</p>
+        </div>
+
+        <!-- লাইভ কাউন্টডাউন টাইমার কার্ড -->
+        <div class="flex items-center gap-3 bg-slate-900/90 border border-white/10 px-4 py-3 rounded-2xl w-full md:w-auto justify-between md:justify-start">
+          <div>
+            <span class="text-[10px] text-gray-400 uppercase tracking-wider block font-bold">২৪ ঘণ্টার কনটেস্ট শেষ হতে বাকি:</span>
+            <span id="timer-24h" class="text-lg md:text-xl font-mono font-black text-amber-400 tracking-wider">00:00:00</span>
+          </div>
+          <button onclick="window.APP.openUploadModal()" class="px-3.5 py-2 bg-gradient-to-r from-indigo-500 to-pink-500 text-white text-xs font-bold rounded-xl shadow-md transition-transform active:scale-95">
+            অংশ নিন
+          </button>
+        </div>
+      </div>
+
+      <!-- প্রাইজ পুল গ্রিড -->
+      <div class="grid grid-cols-3 gap-2 mt-4 pt-4 border-t border-white/5 text-center">
+        <div class="p-2 rounded-xl bg-slate-900/50 border border-rose-500/10">
+          <span class="text-[10px] text-gray-400 block font-bold">🔥 ২৪ ঘণ্টা কনটেস্ট</span>
+          <span class="text-sm font-extrabold text-rose-400">১ম স্থান: ৳৫০</span>
+        </div>
+        <div class="p-2 rounded-xl bg-slate-900/50 border border-amber-500/10">
+          <span class="text-[10px] text-gray-400 block font-bold">👑 ৭ দিন কনটেস্ট</span>
+          <span class="text-sm font-extrabold text-amber-400">১ম: ৳১৫০ · ২য়: ৳৫০</span>
+        </div>
+        <div class="p-2 rounded-xl bg-slate-900/50 border border-purple-500/10">
+          <span class="text-[10px] text-gray-400 block font-bold">💎 ৩০ দিন মেগা কনটেস্ট</span>
+          <span class="text-sm font-extrabold text-purple-400">১ম: ৳৫০০ · ২য়: ৳২০০</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= SEARCH & VIRAL REPUTATION ================= -->
+  <section class="max-w-6xl mx-auto px-4 mt-5">
+    <div class="flex flex-col sm:flex-row items-center gap-3">
+      <!-- সার্চ বার -->
+      <div class="relative w-full">
+        <svg class="w-4 h-4 text-gray-400 absolute left-3.5 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+        <input type="search" id="search-input" placeholder="ছবির নাম, শিল্পী বা ক্যাটাগরি দিয়ে খুঁজুন…" class="w-full bg-slate-900/80 border border-white/10 rounded-2xl pl-10 pr-4 py-2.5 text-xs text-white placeholder-gray-500 outline-none focus:border-indigo-500 transition-colors">
+      </div>
+
+      <!-- টেলিগ্রাম সাপোর্ট / পেমেন্ট প্রুফ বাটন -->
+      <a href="https://t.me/photoearnOfficial" target="_blank" class="w-full sm:w-auto px-4 py-2.5 rounded-2xl bg-indigo-950/70 border border-indigo-500/30 text-indigo-300 hover:text-white text-xs font-semibold flex items-center justify-center gap-2 whitespace-nowrap transition-colors">
+        <svg class="w-4 h-4 text-sky-400" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.894 8.221l-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.446 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.121l-6.871 4.326-2.962-.924c-.643-.204-.657-.643.136-.953l11.57-4.458c.538-.196 1.006.128.832.943z"/></svg>
+        <span>টেলিগ্রামে পেমেন্ট প্রুফ দেখুন</span>
+      </a>
+    </div>
+  </section>
+
+  <!-- ================= CONTEST & CATEGORY NAVIGATION ================= -->
+  <nav class="max-w-6xl mx-auto px-4 mt-4 overflow-x-auto no-scrollbar py-1">
+    <div class="flex items-center gap-2 min-w-max">
+      <a href="#" data-tab="all" class="nav-chip active">🏠 সব ছবি</a>
+      <a href="#" data-tab="c24" class="nav-chip"><i class="w-2 h-2 rounded-full bg-rose-500"></i>🔥 ২৪ ঘণ্টা কনটেস্ট</a>
+      <a href="#" data-tab="c7" class="nav-chip">👑 ৭ দিন কনটেস্ট</a>
+      <a href="#" data-tab="c30" class="nav-chip">💎 ৩০ দিন মেগা কনটেস্ট</a>
+      <a href="#" data-tab="lb" class="nav-chip">📊 লিডারবোর্ড</a>
+      <a href="#" data-tab="potd" class="nav-chip">🌟 আজকের সেরা</a>
+      <a href="#" data-tab="theme" class="nav-chip">🗳️ থিম ভোটিং</a>
+      <a href="#" data-tab="income" class="nav-chip">💰 ইনকামের নিয়মাবলী</a>
+    </div>
+  </nav>
+
+  <!-- ================= 1. MAIN GALLERY SECTION ================= -->
+  <main class="max-w-6xl mx-auto px-4 mt-6" id="gallery-container">
+    <div id="photo-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-4 md:gap-5">
+      <!-- ফটোগুলো app.js থেকে স্বয়ংক্রিয়ভাবে রেন্ডার হবে -->
+    </div>
+  </main>
+
+  <!-- ================= 2. LEADERBOARD SECTION ================= -->
+  <section class="max-w-4xl mx-auto px-4 mt-6 hidden" id="leaderboard-container">
+    <div class="glass-panel rounded-3xl p-6 border border-white/10">
+      <div class="text-center mb-6">
+        <span class="text-xs uppercase tracking-wider text-amber-400 font-bold">Top Ranked Artists & Photos</span>
+        <h2 class="text-2xl font-black text-white mt-1">📊 সেরা ছবির লিডারবোর্ড</h2>
+        <p class="text-xs text-gray-400 mt-1">সবচেয়ে বেশি ভোট ও ভিউ পাওয়া সেরা ১০টি ছবি এবং তাদের প্রাইজ র‍্যাঙ্ক।</p>
+      </div>
+
+      <div id="leaderboard-list" class="space-y-3">
+        <!-- লিডারবোর্ড আইটেমগুলো app.js থেকে আসবে -->
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= 3. INCOME RULES SECTION ================= -->
+  <section class="max-w-4xl mx-auto px-4 mt-6 hidden" id="income-rules-container">
+    <div class="glass-panel rounded-3xl p-6 md:p-8 border border-white/10 space-y-6">
+      <div class="text-center pb-4 border-b border-white/10">
+        <span class="text-xs font-bold text-emerald-400 uppercase tracking-widest">How to Earn</span>
+        <h2 class="text-2xl font-black text-white mt-1">💰 PhotoEarn BD থেকে ইনকামের নিয়ম</h2>
+        <p class="text-xs text-gray-400 mt-1">সহজ ৩টি উপায়ে প্রতিদিন নিশ্চিত টাকা আয় করার নিয়মাবলী</p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div class="p-4 bg-slate-900/60 rounded-2xl border border-white/5">
+          <div class="w-10 h-10 rounded-xl bg-rose-500/20 text-rose-400 flex items-center justify-center font-bold text-lg mb-3">১</div>
+          <h3 class="font-bold text-white text-sm mb-1">কনটেস্টে প্রাইজ মানি</h3>
+          <p class="text-xs text-gray-400 leading-relaxed">আপনার ছবি জমা দিন। ২৪ ঘণ্টা, ৭ দিন বা ৩০ দিন কনটেস্টে শীর্ষস্থান অর্জন করলেই পাবেন সর্বোচ্চ ৳৫০০ পর্যন্ত ক্যাশ প্রাইজ।</p>
+        </div>
+
+        <div class="p-4 bg-slate-900/60 rounded-2xl border border-white/5">
+          <div class="w-10 h-10 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center font-bold text-lg mb-3">২</div>
+          <h3 class="font-bold text-white text-sm mb-1">ভোট ও ভিউ পয়েন্ট</h3>
+          <p class="text-xs text-gray-400 leading-relaxed">আপনার ছবিতে প্রতিটি ভোটে যোগ হবে ২ পয়েন্ট। আপনার ছবির ভিউ ও বিজ্ঞাপনে ক্লিক বাড়লে অটোমেটিক আর্নিং পয়েন্ট ব্যালেন্সে জমা হবে।</p>
+        </div>
+
+        <div class="p-4 bg-slate-900/60 rounded-2xl border border-white/5">
+          <div class="w-10 h-10 rounded-xl bg-indigo-500/20 text-indigo-400 flex items-center justify-center font-bold text-lg mb-3">৩</div>
+          <h3 class="font-bold text-white text-sm mb-1">রেফারেল ও টেলিগ্রাম বোনাস</h3>
+          <p class="text-xs text-gray-400 leading-relaxed">টেলিগ্রামে জয়েন করলেই তাৎক্ষণিক ৳১০ বোনাস। এছাড়া আপনার রেফারেল লিংক দিয়ে বন্ধু জয়েন করলে প্রতি রেফারে ১০ পয়েন্ট।</p>
+        </div>
+      </div>
+
+      <!-- উইথড্র নির্দেশিকা -->
+      <div class="p-5 bg-gradient-to-r from-emerald-950/40 to-teal-950/40 border border-emerald-500/20 rounded-2xl">
+        <h4 class="font-bold text-emerald-400 text-sm mb-1 flex items-center gap-2">
+          <span>💳 টাকা তোলার নিয়ম (bKash & Nagad):</span>
+        </h4>
+        <ul class="text-xs text-gray-300 space-y-1 list-disc list-inside mt-2 leading-relaxed">
+          <li>সর্বনিম্ন <b>৫০০ পয়েন্ট = ৳৫০</b> হলেই যেকোনো সময় বিকাশ বা নগদে টাকা তোলা যাবে।</li>
+          <li>টাকা তোলার জন্য আপনার প্রোফাইলে ন্যূনতম <b>৩টি ছবি আপলোড</b> থাকতে হবে।</li>
+          <li>উইথড্র রিকোয়েস্ট পাঠানোর ২৪ ঘণ্টার মধ্যে সরাসরি আপনার নম্বরে টাকা পাঠিয়ে দেওয়া হবে।</li>
+        </ul>
+      </div>
+
+      <!-- পেমেন্ট ও সাপোর্ট হেল্পলাইন (বিকাশ, নগদ ও বাংলা কিউআর) -->
+      <div class="p-5 bg-slate-900/90 border border-indigo-500/30 rounded-2xl space-y-3">
+        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pb-3 border-b border-white/10">
+          <div>
+            <h4 class="font-bold text-white text-sm flex items-center gap-2">
+              <span>💳 অফিসিয়াল পেমেন্ট ও সাপোর্ট হেল্পলাইন</span>
+            </h4>
+            <p class="text-xs text-gray-400 mt-0.5">উইথড্র বা যেকোনো প্রয়োজনে সরাসরি আমাদের সাথে যোগাযোগ করতে পারেন</p>
+          </div>
+          <a href="https://wa.me/8801771136809" target="_blank" class="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-transform active:scale-95">
+            <span>💬 হোয়াটসঅ্যাপ সাপোর্ট</span>
+          </a>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+          <!-- বিকাশ ও নগদ -->
+          <div class="p-3 bg-slate-950/80 rounded-xl border border-white/5 flex items-center justify-between gap-2">
+            <div>
+              <span class="text-[11px] text-pink-400 font-bold block">bKash / Nagad (Personal):</span>
+              <span class="text-base font-mono font-bold text-white tracking-wider">01771136809</span>
+            </div>
+            <button onclick="navigator.clipboard.writeText('01771136809'); window.APP.showToast('বিকাশ/নগদ নম্বর কপি হয়েছে!', 'success')" class="px-2.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-gray-200 rounded-lg text-xs font-semibold">
+              কপি
+            </button>
+          </div>
+
+          <!-- বাংলা কিউআর -->
+          <div class="p-3 bg-slate-950/80 rounded-xl border border-white/5 flex items-center justify-between gap-2">
+            <div>
+              <span class="text-[11px] text-emerald-400 font-bold block">ইসলামী ব্যাংক (Bangla QR):</span>
+              <span class="text-xs text-gray-300 font-medium">যেকোনো অ্যাপ (বিকাশ/সেলফিন) দিয়ে স্ক্যান</span>
+            </div>
+            <button onclick="document.getElementById('bangla-qr-modal').classList.remove('hidden')" class="px-3 py-1.5 bg-indigo-600/30 hover:bg-indigo-600 text-indigo-300 hover:text-white rounded-lg text-xs font-bold transition-all flex items-center gap-1">
+              <span>QR কোড দেখুন</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= 4. THEME VOTE SECTION ================= -->
+  <section class="max-w-4xl mx-auto px-4 mt-6 hidden" id="theme-vote-container">
+    <div class="glass-panel rounded-3xl p-6 border border-white/10">
+      <div class="text-center mb-6">
+        <span class="text-xs uppercase tracking-wider text-purple-400 font-bold">Upcoming Contest Themes</span>
+        <h2 class="text-2xl font-black text-white mt-1">🗳️ আগামী কনটেস্টের থিম ভোট</h2>
+        <p class="text-xs text-gray-400 mt-1">পরবর্তী কনটেস্টে কোন বিষয়ের ওপর ছবি দেখতে চান? আপনার পছন্দের থিমে ভোট দিন।</p>
+      </div>
+
+      <div id="theme-vote-list" class="space-y-3">
+        <!-- থিম ভোটের তালিকা app.js থেকে আসবে -->
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= MOBILE FLOATING ACTION BUTTON (FAB) ================= -->
+  <div class="fixed bottom-14 right-4 z-40 md:hidden">
+    <button onclick="window.APP.openUploadModal()" class="fab-btn w-14 h-14 rounded-full flex items-center justify-center text-white shadow-2xl active:scale-95 transition-transform">
+      <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"></path></svg>
+    </button>
+  </div>
+
+  <!-- ================= STICKY BOTTOM AD SLOT ================= -->
+  <div class="fixed bottom-0 left-0 right-0 z-30" id="ad-sticky-slot">
+    <!-- 320x50 Adsterra স্টিকি ব্যানার কোড এখানে রেন্ডার হবে -->
+  </div>
+
+  <!-- ================= MODAL 1: PHOTO DETAILS & SPONSOR DOWNLOAD ================= -->
+  <div id="photo-details-modal" class="fixed inset-0 z-50 modal-overlay hidden flex items-center justify-center p-4 app-modal">
+    <div class="glass-panel rounded-3xl p-5 md:p-6 w-full max-w-2xl border border-white/15 relative overflow-hidden">
+      <button onclick="window.APP.closeModals()" class="absolute top-4 right-4 w-8 h-8 rounded-full bg-slate-800 text-gray-400 hover:text-white flex items-center justify-center text-lg z-10">&times;</button>
+      <div id="photo-details-content">
+        <!-- কন্টেন্ট app.js থেকে আসবে -->
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= MODAL 2: PHOTO UPLOAD FORM ================= -->
+  <div id="upload-modal" class="fixed inset-0 z-50 modal-overlay hidden flex items-center justify-center p-4 app-modal">
+    <div class="glass-panel rounded-3xl p-6 w-full max-w-md border border-white/15 relative">
+      <button onclick="window.APP.closeModals()" class="absolute top-4 right-4 w-8 h-8 rounded-full bg-slate-800 text-gray-400 hover:text-white flex items-center justify-center text-lg">&times;</button>
+      
+      <div class="mb-4">
+        <h3 class="text-lg font-bold text-white flex items-center gap-2">
+          <span>📷 নতুন ছবি জমা দিন</span>
+        </h3>
+        <p class="text-xs text-gray-400 mt-0.5">ছবি আপলোড করে চলমান কনটেস্টে অংশগ্রহণ করুন</p>
+      </div>
+
+      <form id="upload-form" onsubmit="window.APP.handlePhotoUpload(event)" class="space-y-3.5">
+        <div>
+          <label class="text-xs text-gray-300 block mb-1">ছবির শিরোনাম / নাম *</label>
+          <input type="text" id="up-title" placeholder="যেমন: গ্রামের সোনালী বিকেল" required class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white placeholder-gray-500 outline-none focus:border-indigo-500">
+        </div>
+
+        <div class="grid grid-cols-2 gap-2.5">
+          <div>
+            <label class="text-xs text-gray-300 block mb-1">ক্যাটাগরি / থিম</label>
+            <select id="up-category" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-2.5 py-2 text-xs text-white outline-none focus:border-indigo-500">
+              <option value="গ্রামের দৃশ্য">গ্রামের দৃশ্য</option>
+              <option value="শীতের সকাল">শীতের সকাল</option>
+              <option value="পাখির ছবি">পাখির ছবি</option>
+              <option value="নদী ও নৌকা">নদী ও নৌকা</option>
+              <option value="প্রকৃতি ও ফুল">প্রকৃতি ও ফুল</option>
+              <option value="রাতের আকাশ">রাতের আকাশ</option>
+              <option value="রাস্তার ফটোগ্রাফি">রাস্তার ফটোগ্রাফি</option>
+            </select>
+          </div>
+          <div>
+            <label class="text-xs text-gray-300 block mb-1">কনটেস্ট রাউন্ড</label>
+            <select id="up-contest" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-2.5 py-2 text-xs text-white outline-none focus:border-indigo-500">
+              <option value="c24">🔥 ২৪ ঘণ্টা কনটেস্ট</option>
+              <option value="c7">👑 ৭ দিন কনটেস্ট</option>
+              <option value="c30">💎 ৩০ দিন কনটেস্ট</option>
+            </select>
+          </div>
+        </div>
+
+        <div>
+          <label class="text-xs text-gray-300 block mb-1">ছবির ফাইল বেছে নিন (JPG/PNG) *</label>
+          <input type="file" id="up-file" accept="image/*" required class="w-full bg-slate-900 border border-slate-700 rounded-xl p-2 text-xs text-gray-400 file:mr-3 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-indigo-600 file:text-white hover:file:bg-indigo-500 cursor-pointer">
+        </div>
+
+        <button type="submit" id="up-submit-btn" class="w-full py-2.5 bg-gradient-to-r from-indigo-500 to-pink-500 hover:from-indigo-600 hover:to-pink-600 text-white font-bold rounded-xl text-xs shadow-lg transition-transform active:scale-95">
+          ছবি আপলোড সম্পন্ন করুন
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- ================= MODAL 3: LOGIN / REGISTER ================= -->
+  <div id="auth-modal" class="fixed inset-0 z-50 modal-overlay hidden flex items-center justify-center p-4 app-modal">
+    <div class="glass-panel rounded-3xl p-6 w-full max-w-sm border border-white/15 relative">
+      <button onclick="window.APP.closeModals()" class="absolute top-4 right-4 w-8 h-8 rounded-full bg-slate-800 text-gray-400 hover:text-white flex items-center justify-center text-lg">&times;</button>
+      
+      <!-- ট্যাব সুইচ -->
+      <div class="flex items-center gap-2 p-1 bg-slate-900 rounded-xl mb-4 border border-white/5">
+        <button id="auth-tab-login-btn" onclick="document.getElementById('auth-login-box').classList.remove('hidden'); document.getElementById('auth-reg-box').classList.add('hidden'); this.classList.add('bg-indigo-600','text-white'); document.getElementById('auth-tab-reg-btn').classList.remove('bg-indigo-600','text-white');" class="flex-1 py-1.5 rounded-lg text-xs font-semibold text-center bg-indigo-600 text-white transition-all">লগইন</button>
+        <button id="auth-tab-reg-btn" onclick="document.getElementById('auth-reg-box').classList.remove('hidden'); document.getElementById('auth-login-box').classList.add('hidden'); this.classList.add('bg-indigo-600','text-white'); document.getElementById('auth-tab-login-btn').classList.remove('bg-indigo-600','text-white');" class="flex-1 py-1.5 rounded-lg text-xs font-semibold text-center text-gray-400 hover:text-white transition-all">নতুন একাউন্ট</button>
+      </div>
+
+      <!-- লগইন ফর্ম -->
+      <div id="auth-login-box">
+        <form onsubmit="window.APP.handleLogin(event)" class="space-y-3">
+          <div>
+            <label class="text-xs text-gray-300 block mb-1">আপনার ৪ সংখ্যার গোপন পিন (PIN)</label>
+            <input type="password" id="login-pin" maxlength="10" placeholder="যেমন: 1234" required class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white placeholder-gray-500 outline-none focus:border-indigo-500 text-center text-lg tracking-widest font-mono">
+          </div>
+          <button type="submit" class="w-full py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl text-xs shadow-lg transition-transform active:scale-95">
+            লগইন করুন
+          </button>
+        </form>
+      </div>
+
+      <!-- রেজিস্ট্রেশন ফর্ম -->
+      <div id="auth-reg-box" class="hidden">
+        <form onsubmit="window.APP.handleRegister(event)" class="space-y-3">
+          <div>
+            <label class="text-xs text-gray-300 block mb-1">আপনার পূর্ণ নাম</label>
+            <input type="text" id="reg-name" placeholder="যেমন: সাব্বির আহমেদ" required class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white placeholder-gray-500 outline-none focus:border-indigo-500">
+          </div>
+          <div>
+            <label class="text-xs text-gray-300 block mb-1">মোবাইল নম্বর (বিকাশ/নগদ)</label>
+            <input type="tel" id="reg-phone" placeholder="01XXXXXXXXX" required class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white placeholder-gray-500 outline-none focus:border-indigo-500">
+          </div>
+          <div>
+            <label class="text-xs text-gray-300 block mb-1">৪ সংখ্যার গোপন পিন (মনে রাখবেন)</label>
+            <input type="password" id="reg-pin" maxlength="10" placeholder="৪-১০ সংখ্যা" required class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white placeholder-gray-500 outline-none focus:border-indigo-500 font-mono tracking-widest">
+          </div>
+          <div>
+            <label class="text-[11px] text-gray-400 block mb-1">রেফারেল কোড (যদি থাকে)</label>
+            <input type="text" id="reg-ref" placeholder="ঐচ্ছিক" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-1.5 text-xs text-amber-300 outline-none">
+          </div>
+          <button type="submit" class="w-full py-2 bg-gradient-to-r from-indigo-500 to-pink-500 hover:from-indigo-600 text-white font-bold rounded-xl text-xs shadow-lg transition-transform active:scale-95">
+            একাউন্ট তৈরি করুন (২০ পয়েন্ট বোনাস)
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= MODAL 4: USER PROFILE & WITHDRAW ================= -->
+  <div id="profile-modal" class="fixed inset-0 z-50 modal-overlay hidden flex items-center justify-center p-4 app-modal">
+    <div class="glass-panel rounded-3xl p-6 w-full max-w-sm border border-white/15 relative">
+      <button onclick="window.APP.closeModals()" class="absolute top-4 right-4 w-8 h-8 rounded-full bg-slate-800 text-gray-400 hover:text-white flex items-center justify-center text-lg">&times;</button>
+      <div id="profile-modal-content">
+        <!-- প্রোফাইল ও উইথড্র ফর্ম app.js থেকে আসবে -->
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= MODAL 5: YOUTUBE SUBSCRIBE POPUP ================= -->
+  <div id="yt-subscribe-modal" class="fixed inset-0 z-50 modal-overlay hidden flex items-center justify-center p-4 app-modal">
+    <div class="glass-panel rounded-3xl p-6 w-full max-w-sm border border-rose-500/30 text-center relative">
+      <button onclick="window.APP.closeModals()" class="absolute top-4 right-4 text-gray-400 hover:text-white text-lg">&times;</button>
+      <div class="w-14 h-14 rounded-2xl bg-rose-500/20 text-rose-500 flex items-center justify-center mx-auto mb-3">
+        <svg class="w-8 h-8 fill-current" viewBox="0 0 24 24"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
+      </div>
+      <h3 class="text-base font-bold text-white">ইউটিউব চ্যানেল সাবস্ক্রাইব করুন</h3>
+      <p class="text-xs text-gray-400 mt-1">নতুন ফটো কনটেস্টের আপডেট ও নগদ পেমেন্ট প্রুফ ভিডিও দেখতে সাবস্ক্রাইব করে বেল আইকন বাজিয়ে রাখুন।</p>
+      <a href="https://youtube.com/@channel" target="_blank" onclick="window.APP.closeModals()" class="block w-full mt-4 py-2 bg-rose-600 hover:bg-rose-500 text-white font-bold rounded-xl text-xs shadow-lg transition-transform active:scale-95">
+        এখনই সাবস্ক্রাইব করুন
+      </a>
+      <button onclick="window.APP.closeModals()" class="mt-2 text-xs text-gray-500 hover:text-gray-300">পরে করব</button>
+    </div>
+  </div>
+
+  <!-- ================= MODAL 6: BANGLA QR PAYMENT SCAN ================= -->
+  <div id="bangla-qr-modal" class="fixed inset-0 z-50 modal-overlay hidden flex items-center justify-center p-4 app-modal">
+    <div class="glass-panel rounded-3xl p-6 w-full max-w-sm border border-emerald-500/30 text-center relative max-h-[90vh] overflow-y-auto">
+      <button onclick="this.closest('.app-modal').classList.add('hidden')" class="absolute top-4 right-4 w-8 h-8 rounded-full bg-slate-800 text-gray-400 hover:text-white flex items-center justify-center text-lg z-10">&times;</button>
+      
+      <div class="mb-3">
+        <span class="text-xs font-bold uppercase tracking-wider text-emerald-400">Bangla QR Scan & Pay</span>
+        <h3 class="text-base font-bold text-white mt-0.5">ইসলামী ব্যাংক বাংলাদেশ পিএলসি</h3>
+        <p class="text-xs text-gray-400">যেকোনো মোবাইল ব্যাংকিং অ্যাপ দিয়ে স্ক্যান করুন</p>
+      </div>
+
+      <!-- কিউআর ইমেজ -->
+      <div class="p-2 bg-white rounded-2xl shadow-xl mx-auto max-w-[280px]">
+        <img src="images/bangla-qr.png" alt="Bangla QR Code - Md. Ziaur Rahman" class="w-full h-auto rounded-xl object-contain">
+      </div>
+
+      <div class="mt-4 text-xs text-gray-300 bg-slate-900/80 p-3 rounded-xl border border-white/5 space-y-1 text-left">
+        <p>নাম: <b class="text-white">Md. Ziaur Rahman</b></p>
+        <p>মার্চেন্ট নম্বর: <b class="font-mono text-amber-300">01349538109</b></p>
+        <p>TID: <b class="font-mono text-indigo-400">T4230691, DAKSHIN KHAN</b></p>
+        <p class="text-[11px] text-gray-400 pt-1 border-t border-white/10">সাপোর্টেড: bKash, CellFin, mCash, Upay, VISA, MasterCard, NPSB</p>
+      </div>
+
+      <button onclick="this.closest('.app-modal').classList.add('hidden')" class="w-full mt-4 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-xl text-xs font-semibold">
+        বন্ধ করুন
+      </button>
+    </div>
+  </div>
+
+  <!-- All-In-One Self-Contained Engine -->
+  <script>
+/**
+ * ========================================================
+ * ⚙️ Photo Earn - Configuration File (config.js)
+ * সমস্ত সেটিংস, পেমেন্ট নম্বর ও কন্ট্রোল এখান থেকেই আপডেট করা হয়েছে
+ * ========================================================
+ */
+
+window.APP_CONFIG = {
+  // ১. সাইটের প্রাথমিক তথ্য ও ব্র্যান্ডিং
+  siteName: "Photo Earn",
+  logoTextPrimary: "Photo",
+  logoTextSecondary: "Earn",
+  tagline: "ছবি আপলোড করুন, ভোট পান আর জিতে নিন প্রতিদিনের নগদ পুরস্কার",
+  currencySymbol: "৳",
+  siteUrl: "https://photoearn.chasherdokan.com",
+
+  // ২. আপনার অফিসিয়াল পেমেন্ট ও সাপোর্ট নম্বর (আপডেটেড)
+  bkashNumber: "01771136809",
+  nagadNumber: "01771136809",
+  supportWhatsApp: "https://wa.me/8801771136809", // হোয়াটসঅ্যাপ সাপোর্ট
+  supportTelegram: "https://t.me/photoearnOfficial", // আপনার অফিসিয়াল টেলিগ্রাম চ্যানেল
+  youtubeChannel: "https://youtube.com/@channel",   // ইউটিউব চ্যানেল
+  youtubePopupDelaySeconds: 30, // সাইটে প্রবেশের ৩০ সেকেন্ড পর পপআপ আসবে
+
+  // ৩. বাংলা কিউআর (BANGLA QR) পেমেন্ট তথ্য
+  banglaQr: {
+    enabled: true,
+    image: "images/bangla-qr.png",
+    name: "Md. Ziaur Rahman",
+    number: "01349538109",
+    tid: "T4230691",
+    bank: "ইসলামী ব্যাংক বাংলাদেশ পিএলসি (Bangla QR)",
+    supportedApps: "bKash, CellFin, mCash, Upay, VISA, MasterCard, NPSB"
+  },
+
+  // ৪. পেমেন্ট ও উইথড্র নিয়ম
+  minWithdrawPoints: 500,     // সর্বনিম্ন উইথড্র পয়েন্ট (৫০০ পয়েন্ট = ৫০ টাকা)
+  minWithdrawTaka: 50,
+  takaPerPoint: 0.10,         // ১ পয়েন্ট = ০.১০ টাকা (১০ পয়েন্ট = ১ টাকা)
+  minPhotosForWithdraw: 3,    // টাকা তুলতে কমপক্ষে ৩টি ছবি আপলোড থাকতে হবে (স্প্যাম রোধে)
+  telegramJoinBonusTaka: 10,  // টেলিগ্রামে যুক্ত হলে তাৎক্ষণিক ৳১০ বোনাস
+  referralPointsPerUser: 10,  // প্রতি সফল রেফারে ১০ পয়েন্ট
+
+  // ৫. কনটেস্ট ও ক্যাশ প্রাইজ (টাকা হিসেবে)
+  contestPrizes: {
+    c24: [50],                  // ২৪ ঘণ্টা কনটেস্ট: ১ম স্থান ৳৫০
+    c7: [150, 50],              // ৭ দিন কনটেস্ট: ১ম স্থান ৳১৫০, ২য় স্থান ৳৫০
+    c30: [500, 200, 100]        // ৩০ দিন কনটেস্ট: ১ম ৳৫০০, ২য় ৳২০০, ৩য় ৳১০০
+  },
+
+  // কনটেস্টের চলমান ক্যাটাগরি ও থিম
+  activeThemes: [
+    "গ্রামের দৃশ্য",
+    "শীতের সকাল",
+    "পাখির ছবি",
+    "নদী ও নৌকা",
+    "প্রকৃতি ও ফুল",
+    "রাতের আকাশ",
+    "রাস্তার ফটোগ্রাফি",
+    "সৃষ্টি ও কারুকাজ"
+  ],
+
+  // ৬. ব্যাজ রিকোয়ারমেন্ট
+  badgeBlueKingVotes: 30,  // ৩০+ ভোট পেলে Blue King ব্যাজ
+  badgeRedKingVotes: 70,   // ৭০+ ভোট পেলে Red King ব্যাজ
+
+  // ৭. বিজ্ঞাপন (Adsterra / Monetag / Direct Link) সেটিংস
+  ads: {
+    enabled: true,
+    downloadWaitSeconds: 5, // ৫ সেকেন্ড অপেক্ষা করিয়ে ডাউনলোড আনলক
+    sponsorDirectLink: "https://asiafilm.org/4/7dba13cd99d01214b30af2e53cea4c8a", // আপনার Adsterra Direct Link
+
+    topBannerSlot: `
+      <div class="ad-placeholder w-full py-2 bg-slate-900/80 border border-dashed border-amber-500/30 rounded-xl text-center text-xs text-amber-300 flex items-center justify-center gap-2">
+        <span class="bg-amber-500/20 px-2 py-0.5 rounded text-[10px] uppercase font-bold text-amber-400">Sponsored Ad</span>
+        <span>Adsterra Banner Slot (728x90 / 320x50)</span>
+      </div>
+    `,
+    inFeedNativeSlot: `
+      <div class="ad-placeholder w-full py-4 bg-slate-900/80 border border-dashed border-indigo-500/30 rounded-2xl text-center text-xs text-indigo-300 flex flex-col items-center justify-center gap-1">
+        <span class="bg-indigo-500/20 px-2 py-0.5 rounded text-[10px] uppercase font-bold text-indigo-400">Sponsored</span>
+        <span>In-Feed Native Adsterra Banner Slot</span>
+      </div>
+    `,
+    stickyBottomSlot: `
+      <div class="ad-placeholder w-full py-1.5 bg-slate-950/95 border-t border-slate-800 text-center text-[11px] text-gray-400 flex items-center justify-center gap-2 shadow-2xl">
+        <span class="bg-emerald-500/20 px-1.5 py-0.2 rounded text-[9px] uppercase font-bold text-emerald-400">Ad</span>
+        <span>Sticky Bottom Banner Ad (320x50)</span>
+      </div>
+    `
+  },
+
+  // ৮. Firebase Realtime Database
+  firebase: {
+    databaseURL: "https://photo-earn-official-default-rtdb.firebaseio.com"
+  },
+
+  // ৯. সিকিউরিটি ও অ্যাডমিন পিন
+  adminPin: "8800",
+  voteCoolDownSeconds: 5
+};
+
+  </script>
+  <script>
+/**
+ * ========================================================
+ * 🗄️ Database & Storage Layer (db.js)
+ * PHP Server API (Real Shared Database) + LocalStorage Fallback
+ * ========================================================
+ */
+
+class AppDB {
+  constructor() {
+    this.cfg = window.APP_CONFIG || {};
+    this.isServer = window.location.protocol.startsWith("http");
+    this.apiBase = "api.php";
+    this.hasFirebase = !!(this.cfg.firebase && this.cfg.firebase.databaseURL && this.cfg.firebase.databaseURL.trim().length > 0);
+    this.fbUrl = this.hasFirebase ? this.cfg.firebase.databaseURL.replace(/\/$/, "") : "";
+    this.initDefaultLocalData();
+  }
+
+  // ডিফল্ট ডেমো ডাটা ইনিশিয়ালাইজেশন (লোকাল মোডের জন্য)
+  initDefaultLocalData() {
+    if (!localStorage.getItem("peg_photos")) {
+      const defaultPhotos = [
+        {
+          id: "photo_1",
+          title: "গ্রামের শান্ত বিকেল ও সূর্যাস্ত",
+          category: "গ্রামের দৃশ্য",
+          authorName: "তানভীর হাসান",
+          authorPin: "1234",
+          url: "https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=800&auto=format&fit=crop&q=80",
+          views: 342,
+          votes: 68,
+          contestType: "c24",
+          approved: true,
+          date: new Date(Date.now() - 3600000 * 4).toISOString()
+        },
+        {
+          id: "photo_2",
+          title: "নদীর বুকে পালতোলা নৌকা",
+          category: "নদী ও নৌকা",
+          authorName: "রাকিবুল ইসলাম",
+          authorPin: "2345",
+          url: "https://images.unsplash.com/photo-1544644181-1484b3fdfc62?w=800&auto=format&fit=crop&q=80",
+          views: 654,
+          votes: 112,
+          contestType: "c7",
+          approved: true,
+          date: new Date(Date.now() - 3600000 * 20).toISOString()
+        },
+        {
+          id: "photo_3",
+          title: "কুয়াশা ঘেরা শীতের সকালের মাঠ",
+          category: "শীতের সকাল",
+          authorName: "আরিফ চৌধুরী",
+          authorPin: "3456",
+          url: "https://images.unsplash.com/photo-1470240731273-7821a6eeb6bd?w=800&auto=format&fit=crop&q=80",
+          views: 890,
+          votes: 145,
+          contestType: "c30",
+          approved: true,
+          date: new Date(Date.now() - 3600000 * 48).toISOString()
+        },
+        {
+          id: "photo_4",
+          title: "গাছের ডালে রঙিন মাছরাঙা পাখি",
+          category: "পাখির ছবি",
+          authorName: "মেহেদী হাসান",
+          authorPin: "4567",
+          url: "https://images.unsplash.com/photo-1444464666168-49d633b86797?w=800&auto=format&fit=crop&q=80",
+          views: 240,
+          votes: 45,
+          contestType: "c24",
+          approved: true,
+          date: new Date(Date.now() - 3600000 * 2).toISOString()
+        }
+      ];
+      localStorage.setItem("peg_photos", JSON.stringify(defaultPhotos));
+    }
+
+    if (!localStorage.getItem("peg_users")) {
+      const defaultUsers = {
+        "1234": { pin: "1234", name: "তানভীর হাসান", phone: "01711111111", points: 240, taka: "24.00", photosCount: 2, verified: false, telegramBonus: false },
+        "2345": { pin: "2345", name: "রাকিবুল ইসলাম", phone: "01822222222", points: 620, taka: "62.00", photosCount: 4, verified: true, telegramBonus: true }
+      };
+      localStorage.setItem("peg_users", JSON.stringify(defaultUsers));
+    }
+
+    if (!localStorage.getItem("peg_withdraws")) {
+      localStorage.setItem("peg_withdraws", JSON.stringify([]));
+    }
+  }
+
+  // ১. সাইটের লাইভ ভিজিটর সংখ্যা
+  async getVisitorStats() {
+    if (this.isServer) {
+      try {
+        const res = await fetch(`${this.apiBase}?action=stats`);
+        const data = await res.json();
+        if (data && data.stats) return data.stats;
+      } catch (e) {
+        console.warn("Server stats fallback:", e);
+      }
+    }
+
+    // লোকাল ফলব্যাক
+    const todayStr = new Date().toISOString().slice(0, 10);
+    let stats = JSON.parse(localStorage.getItem("peg_stats") || "{}");
+    if (!stats.total) stats.total = 12450;
+    if (stats.lastDate !== todayStr) {
+      stats.lastDate = todayStr;
+      stats.today = 0;
+    }
+    stats.total += 1;
+    stats.today = (stats.today || 0) + 1;
+    localStorage.setItem("peg_stats", JSON.stringify(stats));
+    return stats;
+  }
+
+  // ২. সব ছবি লোড করা (Firebase + Server API)
+  async getPhotos() {
+    if (this.hasFirebase) {
+      try {
+        const res = await fetch(`${this.fbUrl}/photos.json`);
+        const data = await res.json();
+        if (data) {
+          const list = Array.isArray(data) ? data : Object.keys(data).map(k => ({ ...data[k], fbKey: k }));
+          const validList = list.filter(p => p && p.title);
+          localStorage.setItem("peg_photos", JSON.stringify(validList));
+          return validList;
+        }
+      } catch (e) {
+        console.warn("Firebase fetch photos error:", e);
+      }
+    }
+
+    if (this.isServer) {
+      try {
+        const res = await fetch(`${this.apiBase}?action=get_photos`);
+        const data = await res.json();
+        if (data && data.photos) {
+          localStorage.setItem("peg_photos", JSON.stringify(data.photos));
+          return data.photos;
+        }
+      } catch (e) {
+        console.warn("Server fetch photos error, fallback to local:", e);
+      }
+    }
+    const local = localStorage.getItem("peg_photos");
+    return local ? JSON.parse(local) : [];
+  }
+
+  // ৩. নতুন ছবি আপলোড
+  async addPhoto(photoData) {
+    if (this.isServer) {
+      try {
+        const res = await fetch(`${this.apiBase}?action=upload_photo`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            title: photoData.title,
+            category: photoData.category,
+            contestType: photoData.contestType,
+            authorName: photoData.authorName,
+            authorPin: photoData.authorPin,
+            image: photoData.url
+          })
+        });
+        const data = await res.json();
+        if (data.success && data.photo) {
+          return data.photo;
+        }
+      } catch (e) {
+        console.warn("Server upload error, fallback to local:", e);
+      }
+    }
+
+    // লোকাল মোড
+    photoData.id = "photo_" + Date.now();
+    photoData.views = 0;
+    photoData.votes = 0;
+    photoData.date = new Date().toISOString();
+    photoData.approved = true;
+
+    const photos = await this.getPhotos();
+    photos.unshift(photoData);
+    localStorage.setItem("peg_photos", JSON.stringify(photos));
+
+    if (this.hasFirebase) {
+      try {
+        await fetch(`${this.fbUrl}/photos.json`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(photoData)
+        });
+      } catch (e) {
+        console.warn("Firebase photo post error:", e);
+      }
+    }
+
+    if (photoData.authorPin) {
+      const user = this.getUser(photoData.authorPin);
+      if (user) {
+        user.photosCount = (user.photosCount || 0) + 1;
+        this.saveUser(user);
+      }
+    }
+    return photoData;
+  }
+
+  // ৪. ছবিতে ভোট দেওয়া
+  async votePhoto(photoId) {
+    const votedKey = `voted_${photoId}`;
+    if (localStorage.getItem(votedKey)) {
+      return { success: false, message: "আপনি ইতিমধ্যে এই ছবিতে ভোট দিয়েছেন!" };
+    }
+
+    if (this.isServer) {
+      try {
+        const res = await fetch(`${this.apiBase}?action=vote`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ photoId })
+        });
+        const data = await res.json();
+        if (data.success) {
+          localStorage.setItem(votedKey, "true");
+          return { success: true, votes: data.votes };
+        }
+      } catch (e) {
+        console.warn("Server vote error, fallback to local:", e);
+      }
+    }
+
+    // লোকাল মোড
+    const photos = await this.getPhotos();
+    const photo = photos.find(p => p.id === photoId);
+    if (!photo) return { success: false, message: "ছবিটি খুঁজে পাওয়া যায়নি!" };
+
+    photo.votes = (photo.votes || 0) + 1;
+    localStorage.setItem("peg_photos", JSON.stringify(photos));
+    localStorage.setItem(votedKey, "true");
+
+    if (this.hasFirebase && photo.fbKey) {
+      try {
+        await fetch(`${this.fbUrl}/photos/${photo.fbKey}/votes.json`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(photo.votes)
+        });
+      } catch (e) {}
+    }
+
+    if (photo.authorPin) {
+      const artist = this.getUser(photo.authorPin);
+      if (artist) {
+        artist.points = (artist.points || 0) + 2;
+        artist.taka = (artist.points * 0.1).toFixed(2);
+        this.saveUser(artist);
+      }
+    }
+
+    return { success: true, votes: photo.votes };
+  }
+
+  // ৫. ছবির ভিউ কাউন্ট
+  async incrementView(photoId) {
+    const viewedKey = `viewed_${photoId}`;
+    if (sessionStorage.getItem(viewedKey)) return;
+    sessionStorage.setItem(viewedKey, "true");
+
+    if (this.isServer) {
+      try {
+        await fetch(`${this.apiBase}?action=view`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ photoId })
+        });
+      } catch (e) {}
+    }
+
+    const photos = await this.getPhotos();
+    const photo = photos.find(p => p.id === photoId);
+    if (photo) {
+      photo.views = (photo.views || 0) + 1;
+      localStorage.setItem("peg_photos", JSON.stringify(photos));
+    }
+  }
+
+  // ৬. ইউজার লগইন
+  async loginUser(pin) {
+    if (this.isServer) {
+      try {
+        const res = await fetch(`${this.apiBase}?action=login`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ pin })
+        });
+        const data = await res.json();
+        if (data.success && data.user) {
+          this.saveUser(data.user);
+          return { success: true, user: data.user };
+        } else {
+          return { success: false, message: data.message || "ভুল পিন!" };
+        }
+      } catch (e) {
+        console.warn("Server login fallback:", e);
+      }
+    }
+    const user = this.getUser(pin);
+    if (user) return { success: true, user };
+    return { success: false, message: "ভুল পিন! একাউন্ট না থাকলে রেজিস্ট্রেশন করুন।" };
+  }
+
+  // ৭. ইউজার রেজিস্ট্রেশন
+  async registerUser(pin, name, phone, refCode) {
+    if (this.isServer) {
+      try {
+        const res = await fetch(`${this.apiBase}?action=register`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ pin, name, phone, ref: refCode })
+        });
+        const data = await res.json();
+        if (data.success && data.user) {
+          this.saveUser(data.user);
+          return { success: true, user: data.user };
+        } else {
+          return { success: false, message: data.message || "রেজিস্ট্রেশন ব্যর্থ হয়েছে!" };
+        }
+      } catch (e) {
+        console.warn("Server register fallback:", e);
+      }
+    }
+
+    const existing = this.getUser(pin);
+    if (existing) {
+      return { success: false, message: "এই পিন দিয়ে ইতিমধ্যে একাউন্ট রয়েছে!" };
+    }
+
+    const newUser = {
+      pin: pin,
+      name: name,
+      phone: phone,
+      points: 20,
+      taka: "2.00",
+      photosCount: 0,
+      verified: false,
+      telegramBonus: false,
+      refCode: "REF" + pin,
+      created: new Date().toISOString()
+    };
+
+    this.saveUser(newUser);
+    return { success: true, user: newUser };
+  }
+
+  // ৮. টেলিগ্রাম বোনাস
+  async claimTelegramBonus(pin) {
+    if (this.isServer) {
+      try {
+        const res = await fetch(`${this.apiBase}?action=claim_telegram`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ pin })
+        });
+        const data = await res.json();
+        if (data.success) {
+          this.saveUser(data.user);
+          return { success: true, message: data.message, user: data.user };
+        } else {
+          return { success: false, message: data.message };
+        }
+      } catch (e) {}
+    }
+
+    const user = this.getUser(pin);
+    if (!user) return { success: false, message: "প্রথমে একাউন্টে লগইন করুন!" };
+    if (user.telegramBonus) return { success: false, message: "আপনি ইতিমধ্যে টেলিগ্রাম বোনাস পেয়েছেন!" };
+
+    user.telegramBonus = true;
+    user.taka = (parseFloat(user.taka || 0) + 10.0).toFixed(2);
+    user.points = Math.round(parseFloat(user.taka) / 0.1);
+    this.saveUser(user);
+    return { success: true, message: "অভিনন্দন! ৳১০ আপনার একাউন্টে যোগ হয়েছে!", user };
+  }
+
+  // ৯. উইথড্র রিকোয়েস্ট
+  async requestWithdraw(pin, phone, amountTaka, method) {
+    if (this.isServer) {
+      try {
+        const res = await fetch(`${this.apiBase}?action=withdraw`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ pin, phone, amount: amountTaka, method })
+        });
+        const data = await res.json();
+        if (data.success) {
+          // লোকাল ক্যাশ রিফ্রেশ
+          const user = this.getUser(pin);
+          if (user) {
+            user.taka = (parseFloat(user.taka) - amountTaka).toFixed(2);
+            user.points = Math.round(parseFloat(user.taka) / 0.1);
+            this.saveUser(user);
+          }
+          return { success: true, message: data.message };
+        } else {
+          return { success: false, message: data.message };
+        }
+      } catch (e) {}
+    }
+
+    const user = this.getUser(pin);
+    if (!user) return { success: false, message: "ইউজার পাওয়া যায়নি!" };
+    if (parseFloat(user.taka) < amountTaka) return { success: false, message: "পর্যাপ্ত ব্যালেন্স নেই!" };
+
+    user.taka = (parseFloat(user.taka) - amountTaka).toFixed(2);
+    user.points = Math.round(parseFloat(user.taka) / 0.1);
+    this.saveUser(user);
+
+    const withdraws = JSON.parse(localStorage.getItem("peg_withdraws") || "[]");
+    const newReq = {
+      id: "wd_" + Date.now(),
+      pin: pin,
+      name: user.name,
+      phone: phone,
+      amount: amountTaka,
+      method: method,
+      status: "pending",
+      date: new Date().toISOString()
+    };
+    withdraws.unshift(newReq);
+    localStorage.setItem("peg_withdraws", JSON.stringify(withdraws));
+    return { success: true, message: "উইথড্র রিকোয়েস্ট সফল হয়েছে! অ্যাডমিন যাচাই করে পেমেন্ট পাঠিয়ে দেবে।" };
+  }
+
+  // ১০. অ্যাডমিন: উইথড্র হিস্ট্রি
+  async getWithdraws() {
+    if (this.isServer) {
+      try {
+        const res = await fetch(`${this.apiBase}?action=get_withdraws`);
+        const data = await res.json();
+        if (data.success && data.withdraws) return data.withdraws;
+      } catch (e) {}
+    }
+    return JSON.parse(localStorage.getItem("peg_withdraws") || "[]");
+  }
+
+  // ১১. অ্যাডমিন: উইথড্র আপডেট
+  async updateWithdrawStatus(id, newStatus) {
+    if (this.isServer) {
+      try {
+        await fetch(`${this.apiBase}?action=update_withdraw`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ id, status: newStatus })
+        });
+      } catch (e) {}
+    }
+    const withdraws = JSON.parse(localStorage.getItem("peg_withdraws") || "[]");
+    const req = withdraws.find(w => w.id === id);
+    if (req) {
+      req.status = newStatus;
+      localStorage.setItem("peg_withdraws", JSON.stringify(withdraws));
+    }
+    return true;
+  }
+
+  // ১২. অ্যাডমিন: ছবি মুছে ফেলা
+  async deletePhoto(id) {
+    if (this.isServer) {
+      try {
+        await fetch(`${this.apiBase}?action=delete_photo`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ id })
+        });
+      } catch (e) {}
+    }
+    const photos = await this.getPhotos();
+    const updated = photos.filter(p => p.id !== id);
+    localStorage.setItem("peg_photos", JSON.stringify(updated));
+    return true;
+  }
+
+  getUser(pin) {
+    const users = JSON.parse(localStorage.getItem("peg_users") || "{}");
+    return users[pin] || null;
+  }
+
+  saveUser(userData) {
+    const users = JSON.parse(localStorage.getItem("peg_users") || "{}");
+    users[userData.pin] = userData;
+    localStorage.setItem("peg_users", JSON.stringify(users));
+  }
+}
+
+window.DB = new AppDB();
+
+  </script>
+  <script>
+/**
+ * ========================================================
+ * 🚀 PicPrize BD - Core Application Engine (app.js)
+ * সম্পূর্ণ ইউজার ইন্টারফেস, কনটেস্ট টাইমার, আর্নিং ও মডাল লজিক
+ * ========================================================
+ */
+
+document.addEventListener("DOMContentLoaded", () => {
+  window.APP = new PicPrizeApp();
+});
+
+class PicPrizeApp {
+  constructor() {
+    this.cfg = window.APP_CONFIG || {};
+    this.db = window.DB;
+    this.currentTab = "all";
+    this.searchQuery = "";
+    this.activeUser = null;
+    this.isVoteCooldown = false;
+
+    this.init();
+  }
+
+  async init() {
+    this.checkAuth();
+    this.renderHeader();
+    this.setupEventListeners();
+    this.startContestTimers();
+    this.setupPopups();
+    await this.renderGallery();
+    this.checkUrlParams();
+  }
+
+  // ১. ইউজার অথেনটিকেশন চেক
+  checkAuth() {
+    const savedPin = localStorage.getItem("peg_auth_pin");
+    if (savedPin) {
+      const user = this.db.getUser(savedPin);
+      if (user) {
+        this.activeUser = user;
+      } else {
+        localStorage.removeItem("peg_auth_pin");
+      }
+    }
+  }
+
+  // ২. হেডার ও সাইট ব্র্যান্ডিং রেন্ডারিং
+  async renderHeader() {
+    // লোগো ও নাম
+    const logoEl = document.getElementById("brand-logo-text");
+    if (logoEl) {
+      logoEl.innerHTML = `<b>${this.cfg.logoTextPrimary || "Photo"}</b> <em class="text-pink-500 not-italic font-extrabold">${this.cfg.logoTextSecondary || "Earn"}</em>`;
+    }
+
+    // ভিজিটর কাউন্টার
+    const stats = await this.db.getVisitorStats();
+    const visitorEl = document.getElementById("visitor-stats");
+    if (visitorEl) {
+      visitorEl.innerHTML = `মোট ভিজিটর: <span class="text-amber-400 font-bold">${(stats.total || 12450).toLocaleString()}</span> · আজ: <span class="text-emerald-400 font-bold">${(stats.today || 120).toLocaleString()}</span>`;
+    }
+
+    // ইউজার বাটন স্ট্যাটাস
+    this.updateUserNavButton();
+
+    // অ্যাড স্লট রেন্ডারিং
+    const topAdEl = document.getElementById("ad-top-slot");
+    if (topAdEl && this.cfg.ads && this.cfg.ads.enabled) {
+      topAdEl.innerHTML = this.cfg.ads.topBannerSlot || "";
+    }
+    const stickyAdEl = document.getElementById("ad-sticky-slot");
+    if (stickyAdEl && this.cfg.ads && this.cfg.ads.enabled) {
+      stickyAdEl.innerHTML = this.cfg.ads.stickyBottomSlot || "";
+    }
+  }
+
+  updateUserNavButton() {
+    const userBtn = document.getElementById("auth-nav-btn");
+    if (!userBtn) return;
+
+    if (this.activeUser) {
+      userBtn.innerHTML = `
+        <span class="w-2.5 h-2.5 rounded-full bg-emerald-400"></span>
+        <span class="max-w-[100px] truncate">${this.activeUser.name}</span>
+        <span class="bg-indigo-500/30 text-indigo-300 text-xs px-2 py-0.5 rounded-full font-bold">৳${parseFloat(this.activeUser.taka || 0).toFixed(1)}</span>
+      `;
+      userBtn.classList.remove("border-gray-700");
+      userBtn.classList.add("border-indigo-500/50");
+    } else {
+      userBtn.innerHTML = `
+        <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+        <span>লগইন / একাউন্ট</span>
+      `;
+    }
+  }
+
+  // ৩. ইভেন্ট লিসেনার সেটআপ
+  setupEventListeners() {
+    // সার্চ ইনপুট
+    const searchInput = document.getElementById("search-input");
+    if (searchInput) {
+      searchInput.addEventListener("input", (e) => {
+        this.searchQuery = e.target.value.toLowerCase().trim();
+        this.renderGallery();
+      });
+    }
+
+    // কনটেস্ট ন্যাভ ট্যাব ক্লিক
+    document.querySelectorAll(".nav-chip").forEach(chip => {
+      chip.addEventListener("click", (e) => {
+        e.preventDefault();
+        const tab = chip.getAttribute("data-tab");
+        this.switchTab(tab);
+      });
+    });
+
+    // ছবি জমা দিন বাটন
+    const uploadBtn = document.getElementById("upload-trigger-btn");
+    if (uploadBtn) {
+      uploadBtn.addEventListener("click", () => this.openUploadModal());
+    }
+
+    // লগইন বা প্রোফাইল বাটন
+    const authBtn = document.getElementById("auth-nav-btn");
+    if (authBtn) {
+      authBtn.addEventListener("click", () => {
+        if (this.activeUser) {
+          this.openProfileModal();
+        } else {
+          this.openAuthModal();
+        }
+      });
+    }
+  }
+
+  // ৪. ট্যাব পরিবর্তন লজিক
+  switchTab(tabName) {
+    this.currentTab = tabName;
+    document.querySelectorAll(".nav-chip").forEach(c => {
+      if (c.getAttribute("data-tab") === tabName) {
+        c.classList.add("active");
+      } else {
+        c.classList.remove("active");
+      }
+    });
+
+    // সেকশন কন্ট্রোল
+    const bannerSection = document.getElementById("contest-hero-banner");
+    const gallerySection = document.getElementById("gallery-container");
+    const leaderboardSection = document.getElementById("leaderboard-container");
+    const rulesSection = document.getElementById("income-rules-container");
+    const themeVoteSection = document.getElementById("theme-vote-container");
+
+    // সব সেকশন ডিফল্ট হাইড
+    if (leaderboardSection) leaderboardSection.classList.add("hidden");
+    if (rulesSection) rulesSection.classList.add("hidden");
+    if (themeVoteSection) themeVoteSection.classList.add("hidden");
+    if (gallerySection) gallerySection.classList.remove("hidden");
+
+    if (tabName === "lb") {
+      if (gallerySection) gallerySection.classList.add("hidden");
+      if (leaderboardSection) leaderboardSection.classList.remove("hidden");
+      this.renderLeaderboard();
+    } else if (tabName === "income") {
+      if (gallerySection) gallerySection.classList.add("hidden");
+      if (rulesSection) rulesSection.classList.remove("hidden");
+    } else if (tabName === "theme") {
+      if (gallerySection) gallerySection.classList.add("hidden");
+      if (themeVoteSection) themeVoteSection.classList.remove("hidden");
+      this.renderThemeVotes();
+    } else {
+      this.renderGallery();
+    }
+
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  // ৫. গ্যালারি রেন্ডারিং
+  async renderGallery() {
+    const container = document.getElementById("photo-grid");
+    if (!container) return;
+
+    container.innerHTML = `
+      <div class="col-span-full py-16 text-center text-gray-400">
+        <svg class="animate-spin h-8 w-8 mx-auto mb-3 text-indigo-500" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path></svg>
+        <span>ছবি লোড হচ্ছে…</span>
+      </div>
+    `;
+
+    const allPhotos = await this.db.getPhotos();
+    let filtered = allPhotos;
+
+    // ট্যাব ফিল্টারিং
+    if (this.currentTab === "c24") {
+      filtered = filtered.filter(p => p.contestType === "c24");
+    } else if (this.currentTab === "c7") {
+      filtered = filtered.filter(p => p.contestType === "c7");
+    } else if (this.currentTab === "c30") {
+      filtered = filtered.filter(p => p.contestType === "c30");
+    } else if (this.currentTab === "potd") {
+      // আজকের সেরা (সর্বোচ্চ ভোট পাওয়া ছবি)
+      filtered = [...filtered].sort((a, b) => (b.votes || 0) - (a.votes || 0)).slice(0, 10);
+    }
+
+    // সার্চ ফিল্টারিং
+    if (this.searchQuery) {
+      filtered = filtered.filter(p =>
+        (p.title && p.title.toLowerCase().includes(this.searchQuery)) ||
+        (p.authorName && p.authorName.toLowerCase().includes(this.searchQuery)) ||
+        (p.category && p.category.toLowerCase().includes(this.searchQuery))
+      );
+    }
+
+    if (filtered.length === 0) {
+      container.innerHTML = `
+        <div class="col-span-full py-16 text-center text-gray-500 glass-panel rounded-2xl">
+          <svg class="w-12 h-12 mx-auto mb-3 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+          <p class="text-base font-semibold text-gray-400">কোনো ছবি পাওয়া যায়নি!</p>
+          <p class="text-xs text-gray-500 mt-1">প্রথম ছবিটি আপনিই আপলোড করুন এবং জিতে নিন পুরস্কার।</p>
+          <button onclick="window.APP.openUploadModal()" class="mt-4 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-semibold shadow-lg">ছবি জমা দিন</button>
+        </div>
+      `;
+      return;
+    }
+
+    let html = "";
+    filtered.forEach((photo, index) => {
+      // প্রতি ৪টি ছবির পর ১টি নেটিভ ইন-ফিড অ্যাড
+      if (index > 0 && index % 4 === 0 && this.cfg.ads && this.cfg.ads.enabled) {
+        html += `<div class="col-span-full my-3">${this.cfg.ads.inFeedNativeSlot}</div>`;
+      }
+
+      // ব্যাজ নির্ণয়
+      let badgeHtml = "";
+      if ((photo.votes || 0) >= (this.cfg.badgeRedKingVotes || 70)) {
+        badgeHtml = `<span class="badge-red-king">👑 Red King</span>`;
+      } else if ((photo.votes || 0) >= (this.cfg.badgeBlueKingVotes || 30)) {
+        badgeHtml = `<span class="badge-blue-king">⚡ Blue King</span>`;
+      }
+
+      // কনটেস্ট চিপ
+      let contestChip = "";
+      if (photo.contestType === "c24") contestChip = `<span class="bg-rose-500/20 text-rose-300 text-[10px] px-2 py-0.5 rounded-full font-bold border border-rose-500/30">🔥 ২৪ ঘণ্টা</span>`;
+      else if (photo.contestType === "c7") contestChip = `<span class="bg-amber-500/20 text-amber-300 text-[10px] px-2 py-0.5 rounded-full font-bold border border-amber-500/30">👑 ৭ দিন</span>`;
+      else if (photo.contestType === "c30") contestChip = `<span class="bg-purple-500/20 text-purple-300 text-[10px] px-2 py-0.5 rounded-full font-bold border border-purple-500/30">💎 ৩০ দিন</span>`;
+
+      html += `
+        <div class="photo-card glass-panel rounded-2xl overflow-hidden flex flex-col justify-between group">
+          <!-- ছবি অংশ -->
+          <div class="relative overflow-hidden cursor-pointer aspect-4/3 bg-slate-900" onclick="window.APP.openPhotoModal('${photo.id}')">
+            <img src="${photo.url}" alt="${photo.title}" loading="lazy" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
+            <div class="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-black/20"></div>
+            
+            <!-- টপ ব্যাজ -->
+            <div class="absolute top-2.5 left-2.5 flex items-center gap-1.5 flex-wrap">
+              ${contestChip}
+              ${badgeHtml}
+            </div>
+
+            <!-- ভিউ কাউন্ট -->
+            <div class="absolute bottom-2.5 right-2.5 bg-black/60 backdrop-blur-md px-2 py-0.5 rounded-full text-[11px] text-gray-300 flex items-center gap-1">
+              <svg class="w-3 h-3 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
+              <span>${photo.views || 0}</span>
+            </div>
+          </div>
+
+          <!-- বিস্তারিত ও ভোট বাটন -->
+          <div class="p-4 flex flex-col justify-between gap-3 flex-1">
+            <div>
+              <span class="text-[11px] text-indigo-400 font-medium">${photo.category || "প্রকৃতি"}</span>
+              <h3 class="font-bold text-gray-100 text-sm line-clamp-1 group-hover:text-indigo-400 transition-colors mt-0.5">${photo.title}</h3>
+              <p class="text-xs text-gray-400 flex items-center gap-1.5 mt-1">
+                <svg class="w-3.5 h-3.5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+                <span>${photo.authorName || "শিল্পী"}</span>
+              </p>
+            </div>
+
+            <div class="flex items-center justify-between pt-2 border-t border-white/5">
+              <div class="flex items-center gap-1.5 text-rose-400 font-bold text-xs">
+                <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+                <span id="vote-count-${photo.id}">${photo.votes || 0} ভোট</span>
+              </div>
+
+              <button onclick="window.APP.handleVote('${photo.id}', event)" class="px-3.5 py-1.5 bg-rose-500/15 hover:bg-rose-500 text-rose-400 hover:text-white rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all active:scale-95 border border-rose-500/25">
+                <span>❤️ ভোট দিন</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      `;
+    });
+
+    container.innerHTML = html;
+  }
+
+  // ৬. ভোট হ্যান্ডলার (৫ সেকেন্ডের কুলডাউন ও এনিমেশন)
+  async handleVote(photoId, event) {
+    if (event) event.stopPropagation();
+
+    if (this.isVoteCooldown) {
+      this.showToast(`দয়া করে ${this.cfg.voteCoolDownSeconds || 5} সেকেন্ড অপেক্ষা করুন!`, "warning");
+      return;
+    }
+
+    const btn = event.currentTarget;
+    const res = await this.db.votePhoto(photoId);
+
+    if (res.success) {
+      this.isVoteCooldown = true;
+      btn.classList.add("heart-active");
+      const countEl = document.getElementById(`vote-count-${photoId}`);
+      if (countEl) countEl.innerText = `${res.votes} ভোট`;
+
+      this.showToast("আপনার ভোট সফলভাবে যোগ হয়েছে! ❤️", "success");
+
+      // ৫ সেকেন্ডের কুলডাউন
+      setTimeout(() => {
+        this.isVoteCooldown = false;
+        btn.classList.remove("heart-active");
+      }, (this.cfg.voteCoolDownSeconds || 5) * 1000);
+    } else {
+      this.showToast(res.message, "info");
+    }
+  }
+
+  // ৭. ফটো ভিউ ও স্পনসর ডাউনলোড মডাল
+  async openPhotoModal(photoId) {
+    const photos = await this.db.getPhotos();
+    const photo = photos.find(p => p.id === photoId);
+    if (!photo) return;
+
+    // ভিউ কাউন্ট বৃদ্ধি
+    await this.db.incrementView(photoId);
+
+    const modal = document.getElementById("photo-details-modal");
+    const content = document.getElementById("photo-details-content");
+    if (!modal || !content) return;
+
+    content.innerHTML = `
+      <div class="relative rounded-2xl overflow-hidden bg-black/90 max-h-[65vh] flex items-center justify-center">
+        <img src="${photo.url}" alt="${photo.title}" class="max-h-[60vh] max-w-full object-contain mx-auto">
+        <div class="absolute bottom-3 left-3 bg-black/70 backdrop-blur-md px-3 py-1 rounded-lg text-xs text-gray-200">
+          ছবি সৌজন্যে: <b class="text-indigo-400">${photo.authorName}</b>
+        </div>
+      </div>
+
+      <div class="mt-4 flex flex-col gap-3">
+        <div class="flex items-start justify-between gap-3">
+          <div>
+            <span class="text-xs text-indigo-400 font-semibold px-2 py-0.5 rounded-full bg-indigo-500/10 border border-indigo-500/20">${photo.category}</span>
+            <h2 class="text-lg font-bold text-white mt-1">${photo.title}</h2>
+            <p class="text-xs text-gray-400 mt-0.5">আপলোড তারিখ: ${new Date(photo.date).toLocaleDateString('bn-BD')}</p>
+          </div>
+          <div class="text-right">
+            <span class="text-sm font-bold text-rose-400">❤️ ${photo.votes || 0} ভোট</span>
+            <p class="text-xs text-gray-400 mt-0.5">👁️ ${photo.views || 0} ভিউ</p>
+          </div>
+        </div>
+
+        <!-- স্পনসর ডাউনলোড বাটন -->
+        <div class="p-3.5 rounded-xl bg-slate-900 border border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-3 mt-2">
+          <div class="text-left text-xs text-gray-300">
+            <b class="text-amber-400 block mb-0.5">📥 হাই-রেজ্যুলেশন HD ডাউনলোড</b>
+            <span>অরিজিনাল সাইজের ছবি নামাতে ৫ সেকেন্ড অপেক্ষা করুন</span>
+          </div>
+          <button id="sponsor-download-btn" onclick="window.APP.handleSponsorDownload('${photo.url}', '${photo.title}', '${photo.authorName}')" class="w-full sm:w-auto px-5 py-2.5 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white rounded-xl text-xs font-bold shadow-lg flex items-center justify-center gap-2 transition-transform active:scale-95">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+            <span>HD ডাউনলোড করুন</span>
+          </button>
+        </div>
+      </div>
+    `;
+
+    modal.classList.remove("hidden");
+  }
+
+  // ৮. ৫ সেকেন্ড স্পনসর ডিরেক্ট লিংক ডাউনলোড কাউন্টডাউন
+  handleSponsorDownload(imgUrl, title, author) {
+    const btn = document.getElementById("sponsor-download-btn");
+    if (!btn) return;
+
+    let seconds = this.cfg.ads.downloadWaitSeconds || 5;
+    btn.disabled = true;
+    btn.classList.add("opacity-80");
+
+    const timer = setInterval(() => {
+      btn.innerHTML = `<span>অপেক্ষা করুন (${seconds}s)…</span>`;
+      seconds--;
+
+      if (seconds < 0) {
+        clearInterval(timer);
+        btn.disabled = false;
+        btn.classList.remove("opacity-80");
+        btn.innerHTML = `<span>ডাউনলোড শুরু হচ্ছে…</span>`;
+
+        // স্পনসর ডিরেক্ট লিংক ওপেন (নতুন ট্যাবে আর্নিং লিংক)
+        if (this.cfg.ads.sponsorDirectLink) {
+          window.open(this.cfg.ads.sponsorDirectLink, "_blank");
+        }
+
+        // আসল ইমেজ ডাউনলোড ট্রিগার
+        const a = document.createElement("a");
+        a.href = imgUrl;
+        a.download = `${title.replace(/\s+/g, '_')}_by_${author}.jpg`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+
+        this.showToast("ছবি ডাউনলোড সম্পন্ন হয়েছে! 🎉", "success");
+      }
+    }, 1000);
+  }
+
+  // ৯. ছবি আপলোড মডাল ওপেন
+  openUploadModal() {
+    if (!this.activeUser) {
+      this.showToast("ছবি জমা দিতে প্রথমে লগইন বা একাউন্ট তৈরি করুন!", "info");
+      this.openAuthModal();
+      return;
+    }
+
+    const modal = document.getElementById("upload-modal");
+    if (modal) modal.classList.remove("hidden");
+  }
+
+  // ছবি আপলোড সাবমিট হ্যান্ডলার
+  async handlePhotoUpload(e) {
+    e.preventDefault();
+    const title = document.getElementById("up-title").value.trim();
+    const category = document.getElementById("up-category").value;
+    const contestType = document.getElementById("up-contest").value;
+    const fileInput = document.getElementById("up-file");
+
+    if (!title || !fileInput.files[0]) {
+      this.showToast("দয়া করে ছবির শিরোনাম ও ফাইল সিলেক্ট করুন!", "warning");
+      return;
+    }
+
+    const file = fileInput.files[0];
+    const submitBtn = document.getElementById("up-submit-btn");
+    submitBtn.disabled = true;
+    submitBtn.innerText = "ছবি প্রসেস হচ্ছে…";
+
+    // ক্লায়েন্ট-সাইড ইমেজ অপটিমাইজেশন (Canvas দিয়ে রিসাইজ)
+    const reader = new FileReader();
+    reader.onload = async (event) => {
+      const img = new Image();
+      img.onload = async () => {
+        const canvas = document.createElement("canvas");
+        const ctx = canvas.getContext("2d");
+        const maxWidth = 1200;
+        let width = img.width;
+        let height = img.height;
+
+        if (width > maxWidth) {
+          height = Math.round((height * maxWidth) / width);
+          width = maxWidth;
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+        ctx.drawImage(img, 0, 0, width, height);
+
+        // কম্প্রেসড ইমেজ ডাটা URL
+        const dataUrl = canvas.toDataURL("image/jpeg", 0.85);
+
+        const newPhoto = {
+          title: title,
+          category: category,
+          contestType: contestType,
+          authorName: this.activeUser.name,
+          authorPin: this.activeUser.pin,
+          url: dataUrl
+        };
+
+        await this.db.addPhoto(newPhoto);
+
+        this.closeModals();
+        submitBtn.disabled = false;
+        submitBtn.innerText = "ছবি আপলোড সম্পন্ন করুন";
+        document.getElementById("upload-form").reset();
+
+        this.showToast("ছবি সফলভাবে আপলোড হয়েছে এবং কনটেস্টে যুক্ত হয়েছে! 🎉", "success");
+        this.renderGallery();
+        this.updateUserNavButton();
+      };
+      img.src = event.target.result;
+    };
+    reader.readAsDataURL(file);
+  }
+
+  // ১০. লগইন ও রেজিস্ট্রেশন মডাল
+  openAuthModal() {
+    const modal = document.getElementById("auth-modal");
+    if (modal) modal.classList.remove("hidden");
+  }
+
+  async handleLogin(e) {
+    e.preventDefault();
+    const pin = document.getElementById("login-pin").value.trim();
+    if (!pin) return;
+
+    const res = await this.db.loginUser(pin);
+    if (res.success && res.user) {
+      this.activeUser = res.user;
+      localStorage.setItem("peg_auth_pin", pin);
+      this.updateUserNavButton();
+      this.closeModals();
+      this.showToast(`স্বাগতম, ${res.user.name}! আপনি লগইন করেছেন।`, "success");
+    } else {
+      this.showToast(res.message || "ভুল পিন! একাউন্ট না থাকলে রেজিস্ট্রেশন করুন।", "error");
+    }
+  }
+
+  async handleRegister(e) {
+    e.preventDefault();
+    const name = document.getElementById("reg-name").value.trim();
+    const phone = document.getElementById("reg-phone").value.trim();
+    const pin = document.getElementById("reg-pin").value.trim();
+    const ref = document.getElementById("reg-ref").value.trim();
+
+    if (!name || !phone || !pin) {
+      this.showToast("দয়া করে নাম, মোবাইল নম্বর এবং ৪ ডিজিটের পিন দিন!", "warning");
+      return;
+    }
+
+    if (pin.length < 4) {
+      this.showToast("পিন কমপক্ষে ৪ সংখ্যার হতে হবে!", "warning");
+      return;
+    }
+
+    const res = await this.db.registerUser(pin, name, phone, ref);
+    if (res.success && res.user) {
+      this.activeUser = res.user;
+      localStorage.setItem("peg_auth_pin", pin);
+      this.updateUserNavButton();
+      this.closeModals();
+      this.showToast(`একাউন্ট সফলভাবে তৈরি হয়েছে! বোনাস ২০ পয়েন্ট যোগ হয়েছে। 🎉`, "success");
+    } else {
+      this.showToast(res.message, "error");
+    }
+  }
+
+  // ১১. প্রোফাইল ও উইথড্র মডাল
+  openProfileModal() {
+    if (!this.activeUser) return;
+    const modal = document.getElementById("profile-modal");
+    const content = document.getElementById("profile-modal-content");
+    if (!modal || !content) return;
+
+    // রিফ্রেশ ইউজার ডাটা
+    this.activeUser = this.db.getUser(this.activeUser.pin);
+
+    content.innerHTML = `
+      <div class="flex items-center gap-3 pb-4 border-b border-white/10">
+        <div class="w-12 h-12 rounded-full bg-gradient-to-tr from-indigo-500 to-pink-500 flex items-center justify-center text-white text-lg font-bold shadow-md">
+          ${this.activeUser.name.charAt(0)}
+        </div>
+        <div>
+          <h3 class="font-bold text-white text-base">${this.activeUser.name}</h3>
+          <p class="text-xs text-gray-400">পিন: ****${this.activeUser.pin.slice(-2)} · ফোন: ${this.activeUser.phone}</p>
+        </div>
+      </div>
+
+      <!-- ব্যালেন্স ও স্ট্যাটাস কার্ড -->
+      <div class="grid grid-cols-2 gap-3 my-4">
+        <div class="p-3 bg-slate-900 rounded-xl border border-indigo-500/20 text-center">
+          <span class="text-xs text-gray-400">মোট ব্যালেন্স</span>
+          <p class="text-xl font-bold text-emerald-400 mt-0.5">৳${parseFloat(this.activeUser.taka || 0).toFixed(2)}</p>
+          <span class="text-[10px] text-gray-500">${this.activeUser.points || 0} পয়েন্ট</span>
+        </div>
+        <div class="p-3 bg-slate-900 rounded-xl border border-purple-500/20 text-center">
+          <span class="text-xs text-gray-400">আপলোড করা ছবি</span>
+          <p class="text-xl font-bold text-purple-400 mt-0.5">${this.activeUser.photosCount || 0} টি</p>
+          <span class="text-[10px] text-gray-500">উইথড্র রিকোয়ারমেন্ট: ৩টি</span>
+        </div>
+      </div>
+
+      <!-- টেলিগ্রাম বোনাস কার্ড -->
+      ${!this.activeUser.telegramBonus ? `
+        <div class="p-3 bg-indigo-950/60 border border-indigo-500/30 rounded-xl mb-4 flex items-center justify-between gap-2">
+          <div>
+            <b class="text-indigo-300 text-xs block">🎁 টেলিগ্রাম বোনাস ৳১০</b>
+            <span class="text-[11px] text-gray-400">চ্যানেলে জয়েন করে ইনস্ট্যান্ট বোনাস নিন</span>
+          </div>
+          <button onclick="window.APP.claimTelegramBonus()" class="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-semibold whitespace-nowrap">
+            ক্লেইম করুন
+          </button>
+        </div>
+      ` : ''}
+
+      <!-- রেফারেল লিংক -->
+      <div class="p-3 bg-slate-900 rounded-xl border border-slate-800 mb-4">
+        <label class="text-xs text-gray-400 block mb-1">আপনার রেফারেল কোড:</label>
+        <div class="flex items-center gap-2">
+          <input type="text" readonly value="${this.activeUser.refCode || 'REF' + this.activeUser.pin}" class="w-full bg-slate-800 text-xs text-amber-300 px-3 py-2 rounded-lg border border-slate-700 outline-none">
+          <button onclick="navigator.clipboard.writeText('${window.location.origin}/?ref=${this.activeUser.refCode}'); window.APP.showToast('রেফারেল লিংক কপি হয়েছে!', 'success')" class="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-lg text-xs font-semibold whitespace-nowrap">
+            কপি
+          </button>
+        </div>
+      </div>
+
+      <!-- উইথড্র ফর্ম -->
+      <form id="withdraw-form" onsubmit="window.APP.handleWithdraw(event)" class="space-y-3 pt-2 border-t border-white/10">
+        <h4 class="text-xs font-bold text-gray-300 uppercase tracking-wider">টাকা উইথড্র করুন (বিকাশ / নগদ)</h4>
+        
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="text-[11px] text-gray-400">পেমেন্ট মেথড</label>
+            <select id="wd-method" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white outline-none">
+              <option value="bkash">bKash (বিকাশ)</option>
+              <option value="nagad">Nagad (নগদ)</option>
+              <option value="rocket">Rocket (রকেট)</option>
+            </select>
+          </div>
+          <div>
+            <label class="text-[11px] text-gray-400">উইথড্র টাকার পরিমাণ</label>
+            <input type="number" id="wd-amount" min="50" step="10" placeholder="৳50" required class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white outline-none">
+          </div>
+        </div>
+
+        <div>
+          <label class="text-[11px] text-gray-400">বিকাশ/নগদ নম্বর</label>
+          <input type="text" id="wd-phone" value="${this.activeUser.phone || ''}" required placeholder="01XXXXXXXXX" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white outline-none">
+        </div>
+
+        <button type="submit" class="w-full py-2 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white rounded-xl text-xs font-bold shadow-lg transition-transform active:scale-95">
+          টাকা তোলার আবেদন করুন
+        </button>
+      </form>
+
+      <button onclick="window.APP.handleLogout()" class="w-full mt-3 py-1.5 text-gray-500 hover:text-rose-400 text-xs font-semibold transition-colors">
+        লগআউট করুন
+      </button>
+    `;
+
+    modal.classList.remove("hidden");
+  }
+
+  // টেলিগ্রাম বোনাস ক্লেইম
+  async claimTelegramBonus() {
+    if (!this.activeUser) return;
+    // প্রথমে টেলিগ্রাম চ্যানেল ওপেন
+    if (this.cfg.supportTelegram) {
+      window.open(this.cfg.supportTelegram, "_blank");
+    }
+    const res = await this.db.claimTelegramBonus(this.activeUser.pin);
+    if (res.success) {
+      this.activeUser = res.user;
+      this.updateUserNavButton();
+      this.openProfileModal();
+      this.showToast(res.message, "success");
+    } else {
+      this.showToast(res.message, "warning");
+    }
+  }
+
+  // উইথড্র সাবমিট
+  async handleWithdraw(e) {
+    e.preventDefault();
+    const amount = parseFloat(document.getElementById("wd-amount").value);
+    const phone = document.getElementById("wd-phone").value.trim();
+    const method = document.getElementById("wd-method").value;
+
+    const res = await this.db.requestWithdraw(this.activeUser.pin, phone, amount, method);
+    if (res.success) {
+      this.activeUser = this.db.getUser(this.activeUser.pin);
+      this.updateUserNavButton();
+      this.closeModals();
+      this.showToast(res.message, "success");
+    } else {
+      this.showToast(res.message, "error");
+    }
+  }
+
+  handleLogout() {
+    localStorage.removeItem("peg_auth_pin");
+    this.activeUser = null;
+    this.updateUserNavButton();
+    this.closeModals();
+    this.showToast("সফলভাবে লগআউট হয়েছে!", "info");
+  }
+
+  // ১২. লিডারবোর্ড রেন্ডারিং
+  async renderLeaderboard() {
+    const listEl = document.getElementById("leaderboard-list");
+    if (!listEl) return;
+
+    const photos = await this.db.getPhotos();
+    // ভোটের ক্রমানুসারে সর্ট
+    const sorted = [...photos].sort((a, b) => (b.votes || 0) - (a.votes || 0)).slice(0, 10);
+
+    let html = "";
+    sorted.forEach((p, index) => {
+      let rankColor = "text-gray-400";
+      let rankBadge = `${index + 1}`;
+      if (index === 0) {
+        rankBadge = "🥇 ১ম";
+        rankColor = "text-amber-400 font-extrabold";
+      } else if (index === 1) {
+        rankBadge = "🥈 ২য়";
+        rankColor = "text-slate-300 font-bold";
+      } else if (index === 2) {
+        rankBadge = "🥉 ৩য়";
+        rankColor = "text-amber-600 font-bold";
+      }
+
+      html += `
+        <div class="glass-panel p-3 rounded-xl flex items-center justify-between gap-3 border border-white/5">
+          <div class="flex items-center gap-3">
+            <span class="text-sm ${rankColor} w-10 text-center">${rankBadge}</span>
+            <img src="${p.url}" alt="${p.title}" class="w-12 h-12 rounded-lg object-cover bg-slate-900">
+            <div>
+              <h4 class="font-bold text-white text-xs line-clamp-1">${p.title}</h4>
+              <p class="text-[11px] text-gray-400">${p.authorName} · ${p.category}</p>
+            </div>
+          </div>
+          <div class="text-right">
+            <span class="text-rose-400 font-bold text-xs">❤️ ${p.votes || 0} ভোট</span>
+            <span class="text-[10px] text-gray-500 block">👁️ ${p.views || 0} ভিউ</span>
+          </div>
+        </div>
+      `;
+    });
+
+    listEl.innerHTML = html;
+  }
+
+  // ১৩. থিম ভোটিং রেন্ডারিং
+  renderThemeVotes() {
+    const container = document.getElementById("theme-vote-list");
+    if (!container) return;
+
+    const themes = this.cfg.activeThemes || ["গ্রামের দৃশ্য", "শীতের সকাল", "পাখির ছবি", "নদী ও নৌকা"];
+    let votes = JSON.parse(localStorage.getItem("peg_theme_votes") || "{}");
+
+    let html = "";
+    themes.forEach(theme => {
+      const vCount = votes[theme] || Math.floor(Math.random() * 40) + 10;
+      html += `
+        <div class="glass-panel p-4 rounded-xl flex items-center justify-between gap-3 border border-white/5">
+          <div>
+            <h4 class="font-bold text-white text-sm">📷 ${theme}</h4>
+            <span class="text-xs text-gray-400">বর্তমান ভোট: <b class="text-indigo-400">${vCount}</b></span>
+          </div>
+          <button onclick="window.APP.voteTheme('${theme}')" class="px-4 py-1.5 bg-indigo-600/20 hover:bg-indigo-600 text-indigo-300 hover:text-white rounded-xl text-xs font-semibold transition-all">
+            ভোট দিন
+          </button>
+        </div>
+      `;
+    });
+
+    container.innerHTML = html;
+  }
+
+  voteTheme(theme) {
+    let votes = JSON.parse(localStorage.getItem("peg_theme_votes") || "{}");
+    votes[theme] = (votes[theme] || 0) + 1;
+    localStorage.setItem("peg_theme_votes", JSON.stringify(votes));
+    this.showToast(`"${theme}" থিমে আপনার ভোট যোগ হয়েছে!`, "success");
+    this.renderThemeVotes();
+  }
+
+  // ১৪. রিয়েল-টাইম কনটেস্ট টাইমার
+  startContestTimers() {
+    const update = () => {
+      const now = new Date();
+      // ২৪ ঘণ্টার টাইমার (আজ রাত ১২টা পর্যন্ত)
+      const endOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
+      const diff24 = Math.max(0, endOfDay - now);
+      const h24 = Math.floor(diff24 / 3600000);
+      const m24 = Math.floor((diff24 % 3600000) / 60000);
+      const s24 = Math.floor((diff24 % 60000) / 1000);
+
+      const timerEl = document.getElementById("timer-24h");
+      if (timerEl) {
+        timerEl.innerText = `${String(h24).padStart(2, '0')}:${String(m24).padStart(2, '0')}:${String(s24).padStart(2, '0')}`;
+      }
+    };
+    setInterval(update, 1000);
+    update();
+  }
+
+  // ১৫. পপআপ (ইউটিউব সাবস্ক্রাইব ইত্যাদি)
+  setupPopups() {
+    const delay = (this.cfg.youtubePopupDelaySeconds || 30) * 1000;
+    if (!sessionStorage.getItem("yt_popup_shown")) {
+      setTimeout(() => {
+        sessionStorage.setItem("yt_popup_shown", "true");
+        const modal = document.getElementById("yt-subscribe-modal");
+        if (modal) modal.classList.remove("hidden");
+      }, delay);
+    }
+  }
+
+  // ১৬. ইউআরএল প্যারামিটার চেকিং (রেফারেল ইত্যাদি)
+  checkUrlParams() {
+    const params = new URLSearchParams(window.location.search);
+    const ref = params.get("ref");
+    if (ref) {
+      localStorage.setItem("peg_pending_ref", ref);
+      this.showToast(`রেফারেল আমন্ত্রণ পেয়েছেন! একাউন্ট খুলে ২০ পয়েন্ট নিন।`, "info");
+    }
+    const view = params.get("view");
+    if (view) {
+      this.switchTab(view);
+    }
+  }
+
+  // মডাল ক্লোজ
+  closeModals() {
+    document.querySelectorAll(".app-modal").forEach(m => m.classList.add("hidden"));
+  }
+
+  // টোস্ট নোটিফিকেশন
+  showToast(message, type = "info") {
+    let container = document.getElementById("toast-container");
+    if (!container) {
+      container = document.createElement("div");
+      container.id = "toast-container";
+      document.body.appendChild(container);
+    }
+
+    const toast = document.createElement("div");
+    toast.className = "toast";
+
+    let icon = "ℹ️";
+    if (type === "success") icon = "✅";
+    if (type === "warning") icon = "⚠️";
+    if (type === "error") icon = "❌";
+
+    toast.innerHTML = `<span>${icon}</span><span>${message}</span>`;
+    container.appendChild(toast);
+
+    setTimeout(() => {
+      toast.style.opacity = "0";
+      toast.style.transform = "translateX(100%)";
+      toast.style.transition = "all 0.3s ease";
+      setTimeout(() => toast.remove(), 300);
+    }, 3500);
+  }
+}
+
+
+  </script>
+</body>
+</html>
+

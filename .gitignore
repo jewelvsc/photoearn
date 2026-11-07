@@ -1,0 +1,14 @@
+# OS generated files
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+.DS_Store
+
+# Temporary scratch scripts
+analyze.py
+bundle.py
+bundle_admin.py
+
+# Logs
+*.log

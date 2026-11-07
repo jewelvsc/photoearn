@@ -1,0 +1,1062 @@
+<!DOCTYPE html>
+<html lang="bn" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard - Photo Earn</title>
+  
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+@import url('https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap');
+
+:root {
+  --primary: #6366f1;
+  --primary-hover: #4f46e5;
+  --secondary: #ec4899;
+  --accent: #f59e0b;
+  --dark-bg: #0b0f19;
+  --card-bg: rgba(17, 24, 39, 0.75);
+  --border-color: rgba(255, 255, 255, 0.08);
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  font-family: 'Hind Siliguri', 'Outfit', sans-serif;
+  background-color: var(--dark-bg);
+  color: #f3f4f6;
+  min-height: 100vh;
+  overflow-x: hidden;
+  background-image: 
+    radial-gradient(at 10% 20%, rgba(99, 102, 241, 0.12) 0px, transparent 50%),
+    radial-gradient(at 90% 80%, rgba(236, 72, 153, 0.1) 0px, transparent 50%);
+  background-attachment: fixed;
+}
+
+/* Glassmorphism Classes */
+.glass-panel {
+  background: var(--card-bg);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--border-color);
+}
+
+.glass-nav {
+  background: rgba(11, 15, 25, 0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border-color);
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #0f172a;
+}
+::-webkit-scrollbar-thumb {
+  background: #334155;
+  border-radius: 999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #475569;
+}
+
+/* Contest Nav Chips */
+.nav-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  border-radius: 9999px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  white-space: nowrap;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  background: rgba(30, 41, 59, 0.5);
+  color: #cbd5e1;
+  text-decoration: none;
+}
+.nav-chip:hover {
+  background: rgba(51, 65, 85, 0.8);
+  color: #ffffff;
+  transform: translateY(-1px);
+}
+.nav-chip.active {
+  background: linear-gradient(135deg, #6366f1 0%, #ec4899 100%);
+  color: #ffffff;
+  border-color: transparent;
+  box-shadow: 0 4px 15px rgba(99, 102, 241, 0.35);
+}
+
+/* Glow Badges */
+.badge-blue-king {
+  background: linear-gradient(135deg, #0ea5e9, #38bdf8);
+  color: #082f49;
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+  box-shadow: 0 0 10px rgba(14, 165, 233, 0.5);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+.badge-red-king {
+  background: linear-gradient(135deg, #ef4444, #f43f5e);
+  color: #fff;
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+  box-shadow: 0 0 10px rgba(239, 68, 68, 0.6);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+/* Card Hover Animations */
+.photo-card {
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease;
+}
+.photo-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 30px -10px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(99, 102, 241, 0.3);
+}
+
+/* Heart Vote Button Pop */
+@keyframes heartPop {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.35); }
+  100% { transform: scale(1); }
+}
+.heart-active {
+  animation: heartPop 0.4s ease-out;
+  color: #f43f5e !important;
+}
+
+/* Live Dot Pulse */
+.live-pulse {
+  position: relative;
+}
+.live-pulse::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: -8px;
+  transform: translateY(-50%);
+  width: 6px;
+  height: 6px;
+  background-color: #ef4444;
+  border-radius: 50%;
+  box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
+  animation: pulseRed 1.8s infinite cubic-bezier(0.66, 0, 0, 1);
+}
+@keyframes pulseRed {
+  to {
+    box-shadow: 0 0 0 8px rgba(239, 68, 68, 0);
+  }
+}
+
+/* Floating Action Button */
+.fab-btn {
+  background: linear-gradient(135deg, #6366f1, #d946ef);
+  box-shadow: 0 10px 25px -5px rgba(99, 102, 241, 0.5);
+  transition: all 0.2s ease;
+}
+.fab-btn:hover {
+  transform: scale(1.05);
+  box-shadow: 0 12px 30px -5px rgba(217, 70, 239, 0.6);
+}
+
+/* Modal Backdrop */
+.modal-overlay {
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+/* Toast Notification */
+#toast-container {
+  position: fixed;
+  bottom: 80px;
+  right: 20px;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  pointer-events: none;
+}
+.toast {
+  pointer-events: auto;
+  background: #1e293b;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #fff;
+  padding: 12px 18px;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 500;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  animation: slideIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  max-width: 340px;
+}
+@keyframes slideIn {
+  from { transform: translateX(100%); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+
+</style>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect fill='%236366f1' width='64' height='64' rx='16'/><text y='42' x='18' fill='%23fff' font-size='32'>⚙️</text></svg>">
+</head>
+<body class="bg-slate-950 text-gray-100 min-h-screen">
+
+  <!-- ================= ADMIN PIN LOGIN OVERLAY ================= -->
+  <div id="admin-auth-overlay" class="fixed inset-0 z-50 bg-slate-950/95 backdrop-blur-xl flex items-center justify-center p-4">
+    <div class="glass-panel p-8 rounded-3xl w-full max-w-sm border border-indigo-500/30 text-center shadow-2xl">
+      <div class="w-16 h-16 rounded-2xl bg-indigo-600/20 text-indigo-400 flex items-center justify-center mx-auto mb-4 border border-indigo-500/30">
+        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+      </div>
+      <h2 class="text-xl font-black text-white">অ্যাডমিন প্যানেল লগইন</h2>
+      <p class="text-xs text-gray-400 mt-1 mb-6">ম্যানেজমেন্ট ড্যাশবোর্ডে প্রবেশ করতে আপনার সিক্রেট অ্যাডমিন পিন দিন। (ডিফল্ট: 8800)</p>
+
+      <form onsubmit="handleAdminLogin(event)" class="space-y-4">
+        <div>
+          <input type="password" id="admin-pin-input" maxlength="8" placeholder="গোপন পিন দিন" required class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-center text-xl font-mono tracking-widest text-white outline-none focus:border-indigo-500">
+        </div>
+        <button type="submit" class="w-full py-3 bg-gradient-to-r from-indigo-500 to-pink-500 hover:from-indigo-600 text-white font-bold rounded-xl text-sm shadow-lg shadow-indigo-500/30 transition-transform active:scale-95">
+          লগইন করুন
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- ================= MAIN ADMIN DASHBOARD ================= -->
+  <div id="admin-dashboard-view" class="hidden">
+    
+    <!-- হেডার -->
+    <header class="glass-nav sticky top-0 z-40 border-b border-white/10">
+      <div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <a href="/" class="text-xs bg-slate-800 text-gray-300 hover:text-white px-3 py-1.5 rounded-lg border border-white/5 flex items-center gap-1.5">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+            <span>মূল সাইটে যান</span>
+          </a>
+          <h1 class="text-base font-bold text-white flex items-center gap-1.5">
+            <span>⚙️ Photo Earn অ্যাডমিন প্যানেল</span>
+          </h1>
+        </div>
+        
+        <button onclick="handleAdminLogout()" class="text-xs text-rose-400 hover:text-rose-300 bg-rose-500/10 px-3 py-1.5 rounded-lg border border-rose-500/20">
+          লগআউট
+        </button>
+      </div>
+    </header>
+
+    <div class="max-w-6xl mx-auto px-4 py-6 space-y-6">
+
+      <!-- ১. মেট্রিক্স কার্ড গ্রিড -->
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div class="glass-panel p-5 rounded-2xl border border-indigo-500/20">
+          <span class="text-xs text-gray-400 block font-medium">পেন্ডিং উইথড্র আবেদন</span>
+          <p id="stat-pending-wd" class="text-2xl font-black text-amber-400 mt-1">০</p>
+          <span class="text-[10px] text-gray-500">বিকাশ/নগদ পেমেন্ট বাকি</span>
+        </div>
+        <div class="glass-panel p-5 rounded-2xl border border-emerald-500/20">
+          <span class="text-xs text-gray-400 block font-medium">মোট উইথড্র পরিশোধ</span>
+          <p id="stat-paid-amount" class="text-2xl font-black text-emerald-400 mt-1">৳০</p>
+          <span class="text-[10px] text-gray-500">সফল পেমেন্ট পরিমাণ</span>
+        </div>
+        <div class="glass-panel p-5 rounded-2xl border border-purple-500/20">
+          <span class="text-xs text-gray-400 block font-medium">মোট ছবি আপলোড</span>
+          <p id="stat-total-photos" class="text-2xl font-black text-purple-400 mt-1">০</p>
+          <span class="text-[10px] text-gray-500">গ্যালারিতে যুক্ত ছবি</span>
+        </div>
+        <div class="glass-panel p-5 rounded-2xl border border-pink-500/20">
+          <span class="text-xs text-gray-400 block font-medium">মোট ভিজিটর ট্রাফিক</span>
+          <p id="stat-total-visitors" class="text-2xl font-black text-pink-400 mt-1">০</p>
+          <span class="text-[10px] text-gray-500">লাইভ ভিউ কাউন্ট</span>
+        </div>
+      </div>
+
+      <!-- ২. উইথড্র রিকোয়েস্ট ম্যানেজমেন্ট টেবিল -->
+      <div class="glass-panel rounded-3xl p-6 border border-white/10">
+        <div class="flex items-center justify-between mb-4">
+          <div>
+            <h2 class="text-base font-bold text-white flex items-center gap-2">
+              <span>💳 ব্যবহারকারীদের উইথড্র আবেদন তালিকা</span>
+            </h2>
+            <p class="text-xs text-gray-400 mt-0.5">ইউজারদের নম্বরে বিকাশ/নগদ সেন্ড মানি করে 'পেইড' মার্ক করুন</p>
+          </div>
+          <button onclick="loadAdminData()" class="text-xs bg-slate-800 hover:bg-slate-700 text-gray-300 px-3 py-1.5 rounded-xl border border-white/10 flex items-center gap-1.5">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+            <span>রিফ্রেশ</span>
+          </button>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs text-gray-300 border-collapse">
+            <thead>
+              <tr class="border-b border-white/10 text-gray-400 uppercase text-[10px] tracking-wider">
+                <th class="py-3 px-3">তারিখ</th>
+                <th class="py-3 px-3">নাম ও পিন</th>
+                <th class="py-3 px-3">মেথড</th>
+                <th class="py-3 px-3">মোবাইল নম্বর</th>
+                <th class="py-3 px-3">টাকার পরিমাণ</th>
+                <th class="py-3 px-3">স্ট্যাটাস</th>
+                <th class="py-3 px-3 text-right">অ্যাকশন</th>
+              </tr>
+            </thead>
+            <tbody id="withdraw-table-body" class="divide-y divide-white/5">
+              <!-- ডাটা আসবে স্ক্রিপ্ট থেকে -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ৩. ছবি কন্ট্রোল ও স্প্যাম ডিলিট সেকশন -->
+      <div class="glass-panel rounded-3xl p-6 border border-white/10">
+        <h2 class="text-base font-bold text-white mb-1">🖼️ গ্যালারির ছবিসমূহ ও মডারেশন</h2>
+        <p class="text-xs text-gray-400 mb-4">আপত্তিকর বা নকল কোনো ছবি থাকলে এখান থেকে সরাসরি ডিলিট করতে পারবেন</p>
+
+        <div id="admin-photos-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
+          <!-- ফটোগুলো লোড হবে -->
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script>
+/**
+ * ========================================================
+ * ⚙️ Photo Earn - Configuration File (config.js)
+ * সমস্ত সেটিংস, পেমেন্ট নম্বর ও কন্ট্রোল এখান থেকেই আপডেট করা হয়েছে
+ * ========================================================
+ */
+
+window.APP_CONFIG = {
+  // ১. সাইটের প্রাথমিক তথ্য ও ব্র্যান্ডিং
+  siteName: "Photo Earn",
+  logoTextPrimary: "Photo",
+  logoTextSecondary: "Earn",
+  tagline: "ছবি আপলোড করুন, ভোট পান আর জিতে নিন প্রতিদিনের নগদ পুরস্কার",
+  currencySymbol: "৳",
+  siteUrl: "https://photoearn.chasherdokan.com",
+
+  // ২. আপনার অফিসিয়াল পেমেন্ট ও সাপোর্ট নম্বর (আপডেটেড)
+  bkashNumber: "01771136809",
+  nagadNumber: "01771136809",
+  supportWhatsApp: "https://wa.me/8801771136809", // হোয়াটসঅ্যাপ সাপোর্ট
+  supportTelegram: "https://t.me/photoearnOfficial", // আপনার অফিসিয়াল টেলিগ্রাম চ্যানেল
+  youtubeChannel: "https://youtube.com/@channel",   // ইউটিউব চ্যানেল
+  youtubePopupDelaySeconds: 30, // সাইটে প্রবেশের ৩০ সেকেন্ড পর পপআপ আসবে
+
+  // ৩. বাংলা কিউআর (BANGLA QR) পেমেন্ট তথ্য
+  banglaQr: {
+    enabled: true,
+    image: "images/bangla-qr.png",
+    name: "Md. Ziaur Rahman",
+    number: "01349538109",
+    tid: "T4230691",
+    bank: "ইসলামী ব্যাংক বাংলাদেশ পিএলসি (Bangla QR)",
+    supportedApps: "bKash, CellFin, mCash, Upay, VISA, MasterCard, NPSB"
+  },
+
+  // ৪. পেমেন্ট ও উইথড্র নিয়ম
+  minWithdrawPoints: 500,     // সর্বনিম্ন উইথড্র পয়েন্ট (৫০০ পয়েন্ট = ৫০ টাকা)
+  minWithdrawTaka: 50,
+  takaPerPoint: 0.10,         // ১ পয়েন্ট = ০.১০ টাকা (১০ পয়েন্ট = ১ টাকা)
+  minPhotosForWithdraw: 3,    // টাকা তুলতে কমপক্ষে ৩টি ছবি আপলোড থাকতে হবে (স্প্যাম রোধে)
+  telegramJoinBonusTaka: 10,  // টেলিগ্রামে যুক্ত হলে তাৎক্ষণিক ৳১০ বোনাস
+  referralPointsPerUser: 10,  // প্রতি সফল রেফারে ১০ পয়েন্ট
+
+  // ৫. কনটেস্ট ও ক্যাশ প্রাইজ (টাকা হিসেবে)
+  contestPrizes: {
+    c24: [50],                  // ২৪ ঘণ্টা কনটেস্ট: ১ম স্থান ৳৫০
+    c7: [150, 50],              // ৭ দিন কনটেস্ট: ১ম স্থান ৳১৫০, ২য় স্থান ৳৫০
+    c30: [500, 200, 100]        // ৩০ দিন কনটেস্ট: ১ম ৳৫০০, ২য় ৳২০০, ৩য় ৳১০০
+  },
+
+  // কনটেস্টের চলমান ক্যাটাগরি ও থিম
+  activeThemes: [
+    "গ্রামের দৃশ্য",
+    "শীতের সকাল",
+    "পাখির ছবি",
+    "নদী ও নৌকা",
+    "প্রকৃতি ও ফুল",
+    "রাতের আকাশ",
+    "রাস্তার ফটোগ্রাফি",
+    "সৃষ্টি ও কারুকাজ"
+  ],
+
+  // ৬. ব্যাজ রিকোয়ারমেন্ট
+  badgeBlueKingVotes: 30,  // ৩০+ ভোট পেলে Blue King ব্যাজ
+  badgeRedKingVotes: 70,   // ৭০+ ভোট পেলে Red King ব্যাজ
+
+  // ৭. বিজ্ঞাপন (Adsterra / Monetag / Direct Link) সেটিংস
+  ads: {
+    enabled: true,
+    downloadWaitSeconds: 5, // ৫ সেকেন্ড অপেক্ষা করিয়ে ডাউনলোড আনলক
+    sponsorDirectLink: "https://asiafilm.org/4/7dba13cd99d01214b30af2e53cea4c8a", // আপনার Adsterra Direct Link
+
+    topBannerSlot: `
+      <div class="ad-placeholder w-full py-2 bg-slate-900/80 border border-dashed border-amber-500/30 rounded-xl text-center text-xs text-amber-300 flex items-center justify-center gap-2">
+        <span class="bg-amber-500/20 px-2 py-0.5 rounded text-[10px] uppercase font-bold text-amber-400">Sponsored Ad</span>
+        <span>Adsterra Banner Slot (728x90 / 320x50)</span>
+      </div>
+    `,
+    inFeedNativeSlot: `
+      <div class="ad-placeholder w-full py-4 bg-slate-900/80 border border-dashed border-indigo-500/30 rounded-2xl text-center text-xs text-indigo-300 flex flex-col items-center justify-center gap-1">
+        <span class="bg-indigo-500/20 px-2 py-0.5 rounded text-[10px] uppercase font-bold text-indigo-400">Sponsored</span>
+        <span>In-Feed Native Adsterra Banner Slot</span>
+      </div>
+    `,
+    stickyBottomSlot: `
+      <div class="ad-placeholder w-full py-1.5 bg-slate-950/95 border-t border-slate-800 text-center text-[11px] text-gray-400 flex items-center justify-center gap-2 shadow-2xl">
+        <span class="bg-emerald-500/20 px-1.5 py-0.2 rounded text-[9px] uppercase font-bold text-emerald-400">Ad</span>
+        <span>Sticky Bottom Banner Ad (320x50)</span>
+      </div>
+    `
+  },
+
+  // ৮. Firebase Realtime Database
+  firebase: {
+    databaseURL: "https://photo-earn-official-default-rtdb.firebaseio.com"
+  },
+
+  // ৯. সিকিউরিটি ও অ্যাডমিন পিন
+  adminPin: "8800",
+  voteCoolDownSeconds: 5
+};
+
+  </script>
+  <script>
+/**
+ * ========================================================
+ * 🗄️ Database & Storage Layer (db.js)
+ * PHP Server API (Real Shared Database) + LocalStorage Fallback
+ * ========================================================
+ */
+
+class AppDB {
+  constructor() {
+    this.cfg = window.APP_CONFIG || {};
+    this.isServer = window.location.protocol.startsWith("http");
+    this.apiBase = "api.php";
+    this.hasFirebase = !!(this.cfg.firebase && this.cfg.firebase.databaseURL && this.cfg.firebase.databaseURL.trim().length > 0);
+    this.fbUrl = this.hasFirebase ? this.cfg.firebase.databaseURL.replace(/\/$/, "") : "";
+    this.initDefaultLocalData();
+  }
+
+  // ডিফল্ট ডেমো ডাটা ইনিশিয়ালাইজেশন (লোকাল মোডের জন্য)
+  initDefaultLocalData() {
+    if (!localStorage.getItem("peg_photos")) {
+      const defaultPhotos = [
+        {
+          id: "photo_1",
+          title: "গ্রামের শান্ত বিকেল ও সূর্যাস্ত",
+          category: "গ্রামের দৃশ্য",
+          authorName: "তানভীর হাসান",
+          authorPin: "1234",
+          url: "https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=800&auto=format&fit=crop&q=80",
+          views: 342,
+          votes: 68,
+          contestType: "c24",
+          approved: true,
+          date: new Date(Date.now() - 3600000 * 4).toISOString()
+        },
+        {
+          id: "photo_2",
+          title: "নদীর বুকে পালতোলা নৌকা",
+          category: "নদী ও নৌকা",
+          authorName: "রাকিবুল ইসলাম",
+          authorPin: "2345",
+          url: "https://images.unsplash.com/photo-1544644181-1484b3fdfc62?w=800&auto=format&fit=crop&q=80",
+          views: 654,
+          votes: 112,
+          contestType: "c7",
+          approved: true,
+          date: new Date(Date.now() - 3600000 * 20).toISOString()
+        },
+        {
+          id: "photo_3",
+          title: "কুয়াশা ঘেরা শীতের সকালের মাঠ",
+          category: "শীতের সকাল",
+          authorName: "আরিফ চৌধুরী",
+          authorPin: "3456",
+          url: "https://images.unsplash.com/photo-1470240731273-7821a6eeb6bd?w=800&auto=format&fit=crop&q=80",
+          views: 890,
+          votes: 145,
+          contestType: "c30",
+          approved: true,
+          date: new Date(Date.now() - 3600000 * 48).toISOString()
+        },
+        {
+          id: "photo_4",
+          title: "গাছের ডালে রঙিন মাছরাঙা পাখি",
+          category: "পাখির ছবি",
+          authorName: "মেহেদী হাসান",
+          authorPin: "4567",
+          url: "https://images.unsplash.com/photo-1444464666168-49d633b86797?w=800&auto=format&fit=crop&q=80",
+          views: 240,
+          votes: 45,
+          contestType: "c24",
+          approved: true,
+          date: new Date(Date.now() - 3600000 * 2).toISOString()
+        }
+      ];
+      localStorage.setItem("peg_photos", JSON.stringify(defaultPhotos));
+    }
+
+    if (!localStorage.getItem("peg_users")) {
+      const defaultUsers = {
+        "1234": { pin: "1234", name: "তানভীর হাসান", phone: "01711111111", points: 240, taka: "24.00", photosCount: 2, verified: false, telegramBonus: false },
+        "2345": { pin: "2345", name: "রাকিবুল ইসলাম", phone: "01822222222", points: 620, taka: "62.00", photosCount: 4, verified: true, telegramBonus: true }
+      };
+      localStorage.setItem("peg_users", JSON.stringify(defaultUsers));
+    }
+
+    if (!localStorage.getItem("peg_withdraws")) {
+      localStorage.setItem("peg_withdraws", JSON.stringify([]));
+    }
+  }
+
+  // ১. সাইটের লাইভ ভিজিটর সংখ্যা
+  async getVisitorStats() {
+    if (this.isServer) {
+      try {
+        const res = await fetch(`${this.apiBase}?action=stats`);
+        const data = await res.json();
+        if (data && data.stats) return data.stats;
+      } catch (e) {
+        console.warn("Server stats fallback:", e);
+      }
+    }
+
+    // লোকাল ফলব্যাক
+    const todayStr = new Date().toISOString().slice(0, 10);
+    let stats = JSON.parse(localStorage.getItem("peg_stats") || "{}");
+    if (!stats.total) stats.total = 12450;
+    if (stats.lastDate !== todayStr) {
+      stats.lastDate = todayStr;
+      stats.today = 0;
+    }
+    stats.total += 1;
+    stats.today = (stats.today || 0) + 1;
+    localStorage.setItem("peg_stats", JSON.stringify(stats));
+    return stats;
+  }
+
+  // ২. সব ছবি লোড করা (Firebase + Server API)
+  async getPhotos() {
+    if (this.hasFirebase) {
+      try {
+        const res = await fetch(`${this.fbUrl}/photos.json`);
+        const data = await res.json();
+        if (data) {
+          const list = Array.isArray(data) ? data : Object.keys(data).map(k => ({ ...data[k], fbKey: k }));
+          const validList = list.filter(p => p && p.title);
+          localStorage.setItem("peg_photos", JSON.stringify(validList));
+          return validList;
+        }
+      } catch (e) {
+        console.warn("Firebase fetch photos error:", e);
+      }
+    }
+
+    if (this.isServer) {
+      try {
+        const res = await fetch(`${this.apiBase}?action=get_photos`);
+        const data = await res.json();
+        if (data && data.photos) {
+          localStorage.setItem("peg_photos", JSON.stringify(data.photos));
+          return data.photos;
+        }
+      } catch (e) {
+        console.warn("Server fetch photos error, fallback to local:", e);
+      }
+    }
+    const local = localStorage.getItem("peg_photos");
+    return local ? JSON.parse(local) : [];
+  }
+
+  // ৩. নতুন ছবি আপলোড
+  async addPhoto(photoData) {
+    if (this.isServer) {
+      try {
+        const res = await fetch(`${this.apiBase}?action=upload_photo`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            title: photoData.title,
+            category: photoData.category,
+            contestType: photoData.contestType,
+            authorName: photoData.authorName,
+            authorPin: photoData.authorPin,
+            image: photoData.url
+          })
+        });
+        const data = await res.json();
+        if (data.success && data.photo) {
+          return data.photo;
+        }
+      } catch (e) {
+        console.warn("Server upload error, fallback to local:", e);
+      }
+    }
+
+    // লোকাল মোড
+    photoData.id = "photo_" + Date.now();
+    photoData.views = 0;
+    photoData.votes = 0;
+    photoData.date = new Date().toISOString();
+    photoData.approved = true;
+
+    const photos = await this.getPhotos();
+    photos.unshift(photoData);
+    localStorage.setItem("peg_photos", JSON.stringify(photos));
+
+    if (this.hasFirebase) {
+      try {
+        await fetch(`${this.fbUrl}/photos.json`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(photoData)
+        });
+      } catch (e) {
+        console.warn("Firebase photo post error:", e);
+      }
+    }
+
+    if (photoData.authorPin) {
+      const user = this.getUser(photoData.authorPin);
+      if (user) {
+        user.photosCount = (user.photosCount || 0) + 1;
+        this.saveUser(user);
+      }
+    }
+    return photoData;
+  }
+
+  // ৪. ছবিতে ভোট দেওয়া
+  async votePhoto(photoId) {
+    const votedKey = `voted_${photoId}`;
+    if (localStorage.getItem(votedKey)) {
+      return { success: false, message: "আপনি ইতিমধ্যে এই ছবিতে ভোট দিয়েছেন!" };
+    }
+
+    if (this.isServer) {
+      try {
+        const res = await fetch(`${this.apiBase}?action=vote`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ photoId })
+        });
+        const data = await res.json();
+        if (data.success) {
+          localStorage.setItem(votedKey, "true");
+          return { success: true, votes: data.votes };
+        }
+      } catch (e) {
+        console.warn("Server vote error, fallback to local:", e);
+      }
+    }
+
+    // লোকাল মোড
+    const photos = await this.getPhotos();
+    const photo = photos.find(p => p.id === photoId);
+    if (!photo) return { success: false, message: "ছবিটি খুঁজে পাওয়া যায়নি!" };
+
+    photo.votes = (photo.votes || 0) + 1;
+    localStorage.setItem("peg_photos", JSON.stringify(photos));
+    localStorage.setItem(votedKey, "true");
+
+    if (this.hasFirebase && photo.fbKey) {
+      try {
+        await fetch(`${this.fbUrl}/photos/${photo.fbKey}/votes.json`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(photo.votes)
+        });
+      } catch (e) {}
+    }
+
+    if (photo.authorPin) {
+      const artist = this.getUser(photo.authorPin);
+      if (artist) {
+        artist.points = (artist.points || 0) + 2;
+        artist.taka = (artist.points * 0.1).toFixed(2);
+        this.saveUser(artist);
+      }
+    }
+
+    return { success: true, votes: photo.votes };
+  }
+
+  // ৫. ছবির ভিউ কাউন্ট
+  async incrementView(photoId) {
+    const viewedKey = `viewed_${photoId}`;
+    if (sessionStorage.getItem(viewedKey)) return;
+    sessionStorage.setItem(viewedKey, "true");
+
+    if (this.isServer) {
+      try {
+        await fetch(`${this.apiBase}?action=view`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ photoId })
+        });
+      } catch (e) {}
+    }
+
+    const photos = await this.getPhotos();
+    const photo = photos.find(p => p.id === photoId);
+    if (photo) {
+      photo.views = (photo.views || 0) + 1;
+      localStorage.setItem("peg_photos", JSON.stringify(photos));
+    }
+  }
+
+  // ৬. ইউজার লগইন
+  async loginUser(pin) {
+    if (this.isServer) {
+      try {
+        const res = await fetch(`${this.apiBase}?action=login`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ pin })
+        });
+        const data = await res.json();
+        if (data.success && data.user) {
+          this.saveUser(data.user);
+          return { success: true, user: data.user };
+        } else {
+          return { success: false, message: data.message || "ভুল পিন!" };
+        }
+      } catch (e) {
+        console.warn("Server login fallback:", e);
+      }
+    }
+    const user = this.getUser(pin);
+    if (user) return { success: true, user };
+    return { success: false, message: "ভুল পিন! একাউন্ট না থাকলে রেজিস্ট্রেশন করুন।" };
+  }
+
+  // ৭. ইউজার রেজিস্ট্রেশন
+  async registerUser(pin, name, phone, refCode) {
+    if (this.isServer) {
+      try {
+        const res = await fetch(`${this.apiBase}?action=register`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ pin, name, phone, ref: refCode })
+        });
+        const data = await res.json();
+        if (data.success && data.user) {
+          this.saveUser(data.user);
+          return { success: true, user: data.user };
+        } else {
+          return { success: false, message: data.message || "রেজিস্ট্রেশন ব্যর্থ হয়েছে!" };
+        }
+      } catch (e) {
+        console.warn("Server register fallback:", e);
+      }
+    }
+
+    const existing = this.getUser(pin);
+    if (existing) {
+      return { success: false, message: "এই পিন দিয়ে ইতিমধ্যে একাউন্ট রয়েছে!" };
+    }
+
+    const newUser = {
+      pin: pin,
+      name: name,
+      phone: phone,
+      points: 20,
+      taka: "2.00",
+      photosCount: 0,
+      verified: false,
+      telegramBonus: false,
+      refCode: "REF" + pin,
+      created: new Date().toISOString()
+    };
+
+    this.saveUser(newUser);
+    return { success: true, user: newUser };
+  }
+
+  // ৮. টেলিগ্রাম বোনাস
+  async claimTelegramBonus(pin) {
+    if (this.isServer) {
+      try {
+        const res = await fetch(`${this.apiBase}?action=claim_telegram`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ pin })
+        });
+        const data = await res.json();
+        if (data.success) {
+          this.saveUser(data.user);
+          return { success: true, message: data.message, user: data.user };
+        } else {
+          return { success: false, message: data.message };
+        }
+      } catch (e) {}
+    }
+
+    const user = this.getUser(pin);
+    if (!user) return { success: false, message: "প্রথমে একাউন্টে লগইন করুন!" };
+    if (user.telegramBonus) return { success: false, message: "আপনি ইতিমধ্যে টেলিগ্রাম বোনাস পেয়েছেন!" };
+
+    user.telegramBonus = true;
+    user.taka = (parseFloat(user.taka || 0) + 10.0).toFixed(2);
+    user.points = Math.round(parseFloat(user.taka) / 0.1);
+    this.saveUser(user);
+    return { success: true, message: "অভিনন্দন! ৳১০ আপনার একাউন্টে যোগ হয়েছে!", user };
+  }
+
+  // ৯. উইথড্র রিকোয়েস্ট
+  async requestWithdraw(pin, phone, amountTaka, method) {
+    if (this.isServer) {
+      try {
+        const res = await fetch(`${this.apiBase}?action=withdraw`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ pin, phone, amount: amountTaka, method })
+        });
+        const data = await res.json();
+        if (data.success) {
+          // লোকাল ক্যাশ রিফ্রেশ
+          const user = this.getUser(pin);
+          if (user) {
+            user.taka = (parseFloat(user.taka) - amountTaka).toFixed(2);
+            user.points = Math.round(parseFloat(user.taka) / 0.1);
+            this.saveUser(user);
+          }
+          return { success: true, message: data.message };
+        } else {
+          return { success: false, message: data.message };
+        }
+      } catch (e) {}
+    }
+
+    const user = this.getUser(pin);
+    if (!user) return { success: false, message: "ইউজার পাওয়া যায়নি!" };
+    if (parseFloat(user.taka) < amountTaka) return { success: false, message: "পর্যাপ্ত ব্যালেন্স নেই!" };
+
+    user.taka = (parseFloat(user.taka) - amountTaka).toFixed(2);
+    user.points = Math.round(parseFloat(user.taka) / 0.1);
+    this.saveUser(user);
+
+    const withdraws = JSON.parse(localStorage.getItem("peg_withdraws") || "[]");
+    const newReq = {
+      id: "wd_" + Date.now(),
+      pin: pin,
+      name: user.name,
+      phone: phone,
+      amount: amountTaka,
+      method: method,
+      status: "pending",
+      date: new Date().toISOString()
+    };
+    withdraws.unshift(newReq);
+    localStorage.setItem("peg_withdraws", JSON.stringify(withdraws));
+    return { success: true, message: "উইথড্র রিকোয়েস্ট সফল হয়েছে! অ্যাডমিন যাচাই করে পেমেন্ট পাঠিয়ে দেবে।" };
+  }
+
+  // ১০. অ্যাডমিন: উইথড্র হিস্ট্রি
+  async getWithdraws() {
+    if (this.isServer) {
+      try {
+        const res = await fetch(`${this.apiBase}?action=get_withdraws`);
+        const data = await res.json();
+        if (data.success && data.withdraws) return data.withdraws;
+      } catch (e) {}
+    }
+    return JSON.parse(localStorage.getItem("peg_withdraws") || "[]");
+  }
+
+  // ১১. অ্যাডমিন: উইথড্র আপডেট
+  async updateWithdrawStatus(id, newStatus) {
+    if (this.isServer) {
+      try {
+        await fetch(`${this.apiBase}?action=update_withdraw`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ id, status: newStatus })
+        });
+      } catch (e) {}
+    }
+    const withdraws = JSON.parse(localStorage.getItem("peg_withdraws") || "[]");
+    const req = withdraws.find(w => w.id === id);
+    if (req) {
+      req.status = newStatus;
+      localStorage.setItem("peg_withdraws", JSON.stringify(withdraws));
+    }
+    return true;
+  }
+
+  // ১২. অ্যাডমিন: ছবি মুছে ফেলা
+  async deletePhoto(id) {
+    if (this.isServer) {
+      try {
+        await fetch(`${this.apiBase}?action=delete_photo`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ id })
+        });
+      } catch (e) {}
+    }
+    const photos = await this.getPhotos();
+    const updated = photos.filter(p => p.id !== id);
+    localStorage.setItem("peg_photos", JSON.stringify(updated));
+    return true;
+  }
+
+  getUser(pin) {
+    const users = JSON.parse(localStorage.getItem("peg_users") || "{}");
+    return users[pin] || null;
+  }
+
+  saveUser(userData) {
+    const users = JSON.parse(localStorage.getItem("peg_users") || "{}");
+    users[userData.pin] = userData;
+    localStorage.setItem("peg_users", JSON.stringify(users));
+  }
+}
+
+window.DB = new AppDB();
+
+  </script>
+  <script>
+    const cfg = window.APP_CONFIG || {};
+    const db = window.DB;
+
+    // ১. অ্যাডমিন লগইন চেক
+    function handleAdminLogin(e) {
+      e.preventDefault();
+      const inputPin = document.getElementById("admin-pin-input").value.trim();
+      const correctPin = cfg.adminPin || "8800";
+
+      if (inputPin === correctPin) {
+        sessionStorage.setItem("peg_admin_auth", "true");
+        document.getElementById("admin-auth-overlay").classList.add("hidden");
+        document.getElementById("admin-dashboard-view").classList.remove("hidden");
+        loadAdminData();
+      } else {
+        alert("ভুল অ্যাডমিন পিন! দয়া করে সঠিক পিন দিন।");
+      }
+    }
+
+    function checkAdminSession() {
+      if (sessionStorage.getItem("peg_admin_auth") === "true") {
+        document.getElementById("admin-auth-overlay").classList.add("hidden");
+        document.getElementById("admin-dashboard-view").classList.remove("hidden");
+        loadAdminData();
+      }
+    }
+
+    function handleAdminLogout() {
+      sessionStorage.removeItem("peg_admin_auth");
+      location.reload();
+    }
+
+    // ২. অ্যাডমিন ডাটা লোডিং
+    async function loadAdminData() {
+      // পরিসংখ্যান
+      const withdraws = await db.getWithdraws();
+      const photos = await db.getPhotos();
+      const stats = await db.getVisitorStats();
+
+      const pendingWd = withdraws.filter(w => w.status === "pending");
+      const paidWd = withdraws.filter(w => w.status === "paid");
+      const totalPaidAmount = paidWd.reduce((sum, w) => sum + parseFloat(w.amount || 0), 0);
+
+      document.getElementById("stat-pending-wd").innerText = pendingWd.length;
+      document.getElementById("stat-paid-amount").innerText = `৳${totalPaidAmount.toFixed(0)}`;
+      document.getElementById("stat-total-photos").innerText = photos.length;
+      document.getElementById("stat-total-visitors").innerText = stats.total.toLocaleString();
+
+      // টেবিল ডাটা রেন্ডার
+      const tbody = document.getElementById("withdraw-table-body");
+      if (withdraws.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="7" class="py-8 text-center text-gray-500">এখনো কোনো উইথড্র আবেদন আসেনি।</td></tr>`;
+      } else {
+        tbody.innerHTML = withdraws.map(w => {
+          let statusBadge = `<span class="bg-amber-500/20 text-amber-300 px-2 py-0.5 rounded-full text-[10px] font-bold">পেন্ডিং</span>`;
+          if (w.status === "paid") statusBadge = `<span class="bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded-full text-[10px] font-bold">পরিশোধিত</span>`;
+          if (w.status === "rejected") statusBadge = `<span class="bg-rose-500/20 text-rose-300 px-2 py-0.5 rounded-full text-[10px] font-bold">বাতিল</span>`;
+
+          return `
+            <tr class="hover:bg-white/5 transition-colors">
+              <td class="py-3 px-3 text-gray-400">${new Date(w.date).toLocaleDateString('bn-BD')}</td>
+              <td class="py-3 px-3 font-semibold text-white">${w.name} <span class="text-gray-500 text-[10px]">(${w.pin})</span></td>
+              <td class="py-3 px-3 uppercase font-bold text-indigo-400">${w.method}</td>
+              <td class="py-3 px-3 font-mono text-amber-300 flex items-center gap-2">
+                <span>${w.phone}</span>
+                <button onclick="navigator.clipboard.writeText('${w.phone}'); alert('নম্বর কপি হয়েছে: ${w.phone}')" class="text-[10px] bg-slate-800 text-gray-400 hover:text-white px-1.5 py-0.5 rounded border border-white/5">কপি</button>
+              </td>
+              <td class="py-3 px-3 font-bold text-emerald-400">৳${parseFloat(w.amount).toFixed(2)}</td>
+              <td class="py-3 px-3">${statusBadge}</td>
+              <td class="py-3 px-3 text-right">
+                ${w.status === "pending" ? `
+                  <div class="flex items-center justify-end gap-1.5">
+                    <button onclick="updateWd('${w.id}', 'paid')" class="bg-emerald-600 hover:bg-emerald-500 text-white px-2.5 py-1 rounded-lg text-[10px] font-bold">পেইড মার্ক</button>
+                    <button onclick="updateWd('${w.id}', 'rejected')" class="bg-rose-600/20 hover:bg-rose-600 text-rose-300 hover:text-white px-2 py-1 rounded-lg text-[10px]">বাতিল</button>
+                  </div>
+                ` : `<span class="text-gray-600 text-[11px]">সম্পন্ন</span>`}
+              </td>
+            </tr>
+          `;
+        }).join("");
+      }
+
+      // ফটো গ্রিড রেন্ডার
+      const pGrid = document.getElementById("admin-photos-grid");
+      pGrid.innerHTML = photos.map(p => `
+        <div class="glass-panel rounded-xl overflow-hidden border border-white/5 relative group">
+          <img src="${p.url}" alt="${p.title}" class="w-full h-24 object-cover">
+          <div class="p-2">
+            <h4 class="text-[11px] font-bold text-white truncate">${p.title}</h4>
+            <p class="text-[10px] text-gray-400 truncate">${p.authorName}</p>
+          </div>
+          <button onclick="deletePhoto('${p.id}')" title="ডিলিট করুন" class="absolute top-1.5 right-1.5 w-6 h-6 rounded-md bg-rose-600 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity text-xs">
+            &times;
+          </button>
+        </div>
+      `).join("");
+    }
+
+    async function updateWd(id, status) {
+      if (confirm(`আপনি কি এই আবেদনটিকে '${status === 'paid' ? 'পরিশোধিত' : 'বাতিল'}' হিসেবে মার্ক করতে চান?`)) {
+        await db.updateWithdrawStatus(id, status);
+        loadAdminData();
+      }
+    }
+
+    async function deletePhoto(id) {
+      if (confirm("আপনি কি নিশ্চিতভাবে এই ছবিটি গ্যালারি থেকে মুছে ফেলতে চান?")) {
+        await db.deletePhoto(id);
+        loadAdminData();
+      }
+    }
+
+    // রান
+    checkAdminSession();
+  </script>
+</body>
+</html>
+
