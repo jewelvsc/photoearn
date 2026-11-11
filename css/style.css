@@ -1,13 +1,27 @@
 @import url('https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap');
 
 :root {
+  --bg: #f4f5fb;
+  --card-bg: #ffffff;
+  --text-main: #14161f;
+  --text-muted: #6b7080;
   --primary: #6366f1;
   --primary-hover: #4f46e5;
   --secondary: #ec4899;
   --accent: #f59e0b;
-  --dark-bg: #0b0f19;
-  --card-bg: rgba(17, 24, 39, 0.75);
-  --border-color: rgba(255, 255, 255, 0.08);
+  --border-color: #e6e8f0;
+  --card-shadow: 0 4px 20px rgba(20, 22, 40, 0.06);
+  --glass-bg: rgba(255, 255, 255, 0.92);
+}
+
+html[data-t="dark"] {
+  --bg: #090d16;
+  --card-bg: #111827;
+  --text-main: #f3f4f6;
+  --text-muted: #9ca3af;
+  --border-color: #1f293d;
+  --card-shadow: 0 6px 24px rgba(0, 0, 0, 0.5);
+  --glass-bg: rgba(17, 24, 39, 0.85);
 }
 
 * {
@@ -19,29 +33,41 @@
 
 body {
   font-family: 'Hind Siliguri', 'Outfit', sans-serif;
-  background-color: var(--dark-bg);
-  color: #f3f4f6;
+  background-color: var(--bg);
+  color: var(--text-main);
   min-height: 100vh;
   overflow-x: hidden;
-  background-image: 
-    radial-gradient(at 10% 20%, rgba(99, 102, 241, 0.12) 0px, transparent 50%),
-    radial-gradient(at 90% 80%, rgba(236, 72, 153, 0.1) 0px, transparent 50%);
-  background-attachment: fixed;
+  transition: background-color 0.25s ease, color 0.25s ease;
 }
 
 /* Glassmorphism Classes */
 .glass-panel {
-  background: var(--card-bg);
+  background: var(--glass-bg);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   border: 1px solid var(--border-color);
+  box-shadow: var(--card-shadow);
 }
 
-.glass-nav {
-  background: rgba(11, 15, 25, 0.85);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border-bottom: 1px solid var(--border-color);
+/* Photo Card */
+.photo-card {
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  box-shadow: var(--card-shadow);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.photo-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 30px rgba(99, 102, 241, 0.15);
+  border-color: rgba(99, 102, 241, 0.35);
+}
+
+/* 9:16 Vertical Aspect Ratio */
+.aspect-9-16 {
+  aspect-ratio: 9 / 16;
+}
+.aspect-16-9 {
+  aspect-ratio: 16 / 9;
 }
 
 /* Custom Scrollbar */
@@ -50,160 +76,552 @@ body {
   height: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: #0f172a;
+  background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: #334155;
-  border-radius: 999px;
+  background: rgba(156, 163, 175, 0.4);
+  border-radius: 99px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #475569;
+  background: rgba(156, 163, 175, 0.6);
 }
 
-/* Contest Nav Chips */
+/* Nav chips */
 .nav-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem 1rem;
-  border-radius: 9999px;
-  font-size: 0.875rem;
-  font-weight: 600;
+  transition: all 0.2s ease;
   white-space: nowrap;
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-  border: 1px solid rgba(255, 255, 255, 0.07);
-  background: rgba(30, 41, 59, 0.5);
-  color: #cbd5e1;
-  text-decoration: none;
-}
-.nav-chip:hover {
-  background: rgba(51, 65, 85, 0.8);
-  color: #ffffff;
-  transform: translateY(-1px);
 }
 .nav-chip.active {
-  background: linear-gradient(135deg, #6366f1 0%, #ec4899 100%);
-  color: #ffffff;
-  border-color: transparent;
-  box-shadow: 0 4px 15px rgba(99, 102, 241, 0.35);
+  background: linear-gradient(135deg, #6366f1, #ec4899);
+  color: #ffffff !important;
+  box-shadow: 0 4px 14px rgba(99, 102, 241, 0.3);
+  border-color: transparent !important;
 }
 
-/* Glow Badges */
-.badge-blue-king {
-  background: linear-gradient(135deg, #0ea5e9, #38bdf8);
-  color: #082f49;
-  font-size: 0.7rem;
-  font-weight: 700;
-  padding: 0.15rem 0.5rem;
-  border-radius: 999px;
-  box-shadow: 0 0 10px rgba(14, 165, 233, 0.5);
-  display: inline-flex;
-  align-items: center;
-  gap: 0.25rem;
-}
-.badge-red-king {
-  background: linear-gradient(135deg, #ef4444, #f43f5e);
-  color: #fff;
-  font-size: 0.7rem;
-  font-weight: 700;
-  padding: 0.15rem 0.5rem;
-  border-radius: 999px;
-  box-shadow: 0 0 10px rgba(239, 68, 68, 0.6);
-  display: inline-flex;
-  align-items: center;
-  gap: 0.25rem;
-}
-
-/* Card Hover Animations */
-.photo-card {
-  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease;
-}
-.photo-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 12px 30px -10px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(99, 102, 241, 0.3);
-}
-
-/* Heart Vote Button Pop */
-@keyframes heartPop {
-  0% { transform: scale(1); }
-  50% { transform: scale(1.35); }
-  100% { transform: scale(1); }
-}
-.heart-active {
-  animation: heartPop 0.4s ease-out;
-  color: #f43f5e !important;
-}
-
-/* Live Dot Pulse */
-.live-pulse {
+/* Header Search Bar Pill */
+.search-pill {
   position: relative;
+  flex: 1;
+  max-width: 420px;
 }
-.live-pulse::after {
-  content: '';
-  position: absolute;
-  top: 50%;
-  left: -8px;
-  transform: translateY(-50%);
-  width: 6px;
-  height: 6px;
-  background-color: #ef4444;
-  border-radius: 50%;
-  box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
-  animation: pulseRed 1.8s infinite cubic-bezier(0.66, 0, 0, 1);
-}
-@keyframes pulseRed {
-  to {
-    box-shadow: 0 0 0 8px rgba(239, 68, 68, 0);
-  }
-}
-
-/* Floating Action Button */
-.fab-btn {
-  background: linear-gradient(135deg, #6366f1, #d946ef);
-  box-shadow: 0 10px 25px -5px rgba(99, 102, 241, 0.5);
+.search-pill input {
+  width: 100%;
+  padding: 8px 16px 8px 36px;
+  border-radius: 99px;
+  border: 1px solid var(--border-color);
+  background: var(--card-bg);
+  color: var(--text-main);
+  font-size: 12px;
+  outline: none;
   transition: all 0.2s ease;
 }
-.fab-btn:hover {
-  transform: scale(1.05);
-  box-shadow: 0 12px 30px -5px rgba(217, 70, 239, 0.6);
+.search-pill input:focus {
+  border-color: #6366f1;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+}
+.search-pill::before {
+  content: "🔍";
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 11px;
+  opacity: 0.7;
+  pointer-events: none;
 }
 
-/* Modal Backdrop */
+/* Category Navigation Pills (GalleryBD Style) */
+.cnav-bar {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  padding: 6px 0;
+}
+.cnav-bar::-webkit-scrollbar {
+  display: none;
+}
+.cn-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex: none;
+  padding: 7px 16px;
+  border-radius: 99px;
+  font-size: 12px;
+  font-weight: 700;
+  text-decoration: none;
+  border: 1px solid var(--border-color);
+  background: var(--card-bg);
+  color: var(--text-main);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+}
+.cn-pill:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
+}
+.cn-pill.active {
+  outline: 2px solid #6366f1;
+  outline-offset: 2px;
+}
+.cn-pill.hot {
+  background: linear-gradient(135deg, #ff416c, #ff4b2b) !important;
+  color: #ffffff !important;
+  border-color: transparent !important;
+  box-shadow: 0 4px 14px rgba(255, 65, 108, 0.35);
+}
+.cn-pill.gold {
+  background: linear-gradient(135deg, #f7971e, #ffd200) !important;
+  color: #3b2400 !important;
+  border-color: transparent !important;
+  box-shadow: 0 4px 14px rgba(247, 151, 30, 0.35);
+}
+.cn-pill.mega {
+  background: linear-gradient(135deg, #00c6ff, #0072ff) !important;
+  color: #ffffff !important;
+  border-color: transparent !important;
+  box-shadow: 0 4px 14px rgba(0, 198, 255, 0.35);
+}
+.cn-pill.lbn {
+  background: linear-gradient(135deg, #11998e, #38ef7d) !important;
+  color: #04281f !important;
+  border-color: transparent !important;
+  box-shadow: 0 4px 14px rgba(17, 153, 142, 0.35);
+}
+.cn-pill.potn {
+  background: linear-gradient(135deg, #ffd200, #ff8a00) !important;
+  color: #3b2400 !important;
+  border-color: transparent !important;
+  box-shadow: 0 4px 14px rgba(255, 138, 0, 0.35);
+}
+.cn-pill.incn {
+  background: linear-gradient(135deg, #e65c00, #f9d423) !important;
+  color: #3b2400 !important;
+  border-color: transparent !important;
+  box-shadow: 0 4px 14px rgba(230, 92, 0, 0.35);
+}
+.cn-pill.hofn {
+  background: linear-gradient(135deg, #8e2de2, #4a00e0) !important;
+  color: #ffffff !important;
+  border-color: transparent !important;
+  box-shadow: 0 4px 14px rgba(142, 45, 226, 0.35);
+}
+.cn-pill.thn {
+  background: linear-gradient(135deg, #f953c6, #b91d73) !important;
+  color: #ffffff !important;
+  border-color: transparent !important;
+  box-shadow: 0 4px 14px rgba(249, 83, 198, 0.35);
+}
+.cn-pill.stn {
+  background: linear-gradient(135deg, #f6d365, #fda085) !important;
+  color: #3b2400 !important;
+  border-color: transparent !important;
+  box-shadow: 0 4px 14px rgba(253, 160, 133, 0.35);
+}
+
+/* Sub filter chips & Theme pills (এক লাইনে লেখা ও ডানে-বামে মসৃণ স্ক্রল) */
+.sub-chip {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 4px !important;
+  padding: 6px 14px !important;
+  border-radius: 9999px !important;
+  font-size: 12px !important;
+  font-weight: 700 !important;
+  border: 1px solid var(--border-color) !important;
+  background: var(--card-bg) !important;
+  color: var(--text-muted) !important;
+  cursor: pointer !important;
+  white-space: nowrap !important;
+  flex-shrink: 0 !important;
+  word-break: keep-all !important;
+  transition: all 0.15s ease !important;
+  user-select: none !important;
+}
+.sub-chip:hover {
+  color: var(--text-main) !important;
+  border-color: #6366f1 !important;
+}
+.sub-chip.active {
+  background: #6366f1 !important;
+  color: #ffffff !important;
+  border-color: #6366f1 !important;
+  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.35) !important;
+}
+
+/* Modals */
 .modal-overlay {
-  background: rgba(0, 0, 0, 0.75);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
+  background: rgba(10, 15, 29, 0.65);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
 }
 
-/* Toast Notification */
+/* Animations */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-fade-in {
+  animation: fadeIn 0.25s ease-out forwards;
+}
+
+/* Toast */
 #toast-container {
   position: fixed;
   bottom: 80px;
-  right: 20px;
-  z-index: 9999;
+  right: 16px;
+  z-index: 99999;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
   pointer-events: none;
 }
 .toast {
   pointer-events: auto;
-  background: #1e293b;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  color: #fff;
-  padding: 12px 18px;
-  border-radius: 12px;
-  font-size: 14px;
-  font-weight: 500;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+  background: #111827;
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  padding: 10px 18px;
+  border-radius: 16px;
+  font-size: 13px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
   display: flex;
   align-items: center;
-  gap: 10px;
-  animation: slideIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-  max-width: 340px;
-}
-@keyframes slideIn {
-  from { transform: translateX(100%); opacity: 0; }
-  to { transform: translateX(0); opacity: 1; }
+  gap: 8px;
+  animation: fadeIn 0.25s ease-out;
 }
 
+/* ========================================================
+   💎 GalleryBD Features: Paid/Free Badges & Inbox Notifications
+   ======================================================== */
+.badge-paid {
+  background: linear-gradient(135deg, #f59e0b, #ec4899);
+  color: #0b0f19 !important;
+  font-weight: 800;
+  font-size: 10px;
+  padding: 2.5px 8px;
+  border-radius: 6px;
+  box-shadow: 0 2px 8px rgba(245, 158, 11, 0.35);
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+}
+
+.badge-free {
+  background: #10b981;
+  color: #ffffff !important;
+  font-weight: 700;
+  font-size: 10px;
+  padding: 2.5px 7px;
+  border-radius: 6px;
+  box-shadow: 0 2px 6px rgba(16, 185, 129, 0.25);
+  display: inline-flex;
+  align-items: center;
+}
+
+.inbi {
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  transition: all 0.2s ease;
+}
+.inbi.ok {
+  border-color: rgba(16, 185, 129, 0.5);
+  background: rgba(16, 185, 129, 0.08);
+}
+.inbi.bad {
+  border-color: rgba(244, 63, 94, 0.5);
+  background: rgba(244, 63, 94, 0.08);
+}
+.inbi.broadcast {
+  border-color: rgba(99, 102, 241, 0.5);
+  background: rgba(99, 102, 241, 0.1);
+}
+
+/* 9:16 Vertical Portrait Ratio for Feed Images */
+.aspect-9-16,
+.photo-img-wrap {
+  aspect-ratio: 9 / 16 !important;
+  width: 100% !important;
+  overflow: hidden !important;
+  position: relative !important;
+}
+
+.photo-img-wrap img,
+.aspect-9-16 img {
+  width: 100% !important;
+  height: 100% !important;
+  aspect-ratio: 9 / 16 !important;
+  object-fit: cover !important;
+  display: block !important;
+}
+
+
+/* Modal & Inbox Contrast Enhancements for Light and Dark Modes */
+html:not(.dark) #inbox-modal .glass-panel,
+html:not(.dark) #buy-modal .glass-panel,
+html:not(.dark) #upload-modal .glass-panel {
+  background: #ffffff !important;
+  color: #1e293b !important;
+  border-color: #e2e8f0 !important;
+  box-shadow: 0 20px 45px -10px rgba(0, 0, 0, 0.25) !important;
+}
+
+html:not(.dark) .inbi.ok {
+  background: #ecfdf5 !important;
+  border-color: #34d399 !important;
+}
+html:not(.dark) .inbi.bad {
+  background: #fff1f2 !important;
+  border-color: #fb7185 !important;
+}
+html:not(.dark) .inbi.broadcast {
+  background: #eff6ff !important;
+  border-color: #818cf8 !important;
+}
+
+
+/* ========================================================
+   🌟 Universal Light / Dark Mode High Contrast Form Rules
+   ======================================================== */
+
+/* 1. Modal Containers in Light Mode */
+html:not(.dark) .glass-panel {
+  background: #ffffff !important;
+  border-color: #e2e8f0 !important;
+  color: #0f172a !important;
+  box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.04) !important;
+}
+
+html:not(.dark) .app-modal .glass-panel {
+  background: #ffffff !important;
+  color: #0f172a !important;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.35) !important;
+}
+
+/* 2. Labels inside forms in Light Mode */
+html:not(.dark) form label,
+html:not(.dark) .app-modal label {
+  color: #1e293b !important;
+  font-weight: 700 !important;
+  opacity: 1 !important;
+  font-size: 12px !important;
+}
+
+/* 3. Inputs, Selects, and Textareas in Light Mode */
+html:not(.dark) form input:not([type="submit"]):not([type="button"]),
+html:not(.dark) form select,
+html:not(.dark) form textarea,
+html:not(.dark) .app-modal input:not([type="submit"]):not([type="button"]),
+html:not(.dark) .app-modal select,
+html:not(.dark) .app-modal textarea {
+  background-color: #f8fafc !important;
+  border: 1px solid #cbd5e1 !important;
+  color: #0f172a !important;
+  font-weight: 600 !important;
+}
+
+html:not(.dark) form input::placeholder,
+html:not(.dark) form textarea::placeholder,
+html:not(.dark) .app-modal input::placeholder,
+html:not(.dark) .app-modal textarea::placeholder {
+  color: #64748b !important;
+  opacity: 0.85 !important;
+}
+
+html:not(.dark) form input:focus,
+html:not(.dark) form select:focus,
+html:not(.dark) form textarea:focus {
+  background-color: #ffffff !important;
+  border-color: #6366f1 !important;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2) !important;
+  outline: none !important;
+}
+
+/* 4. Headings & Subheadings inside modals */
+html:not(.dark) .app-modal h2,
+html:not(.dark) .app-modal h3,
+html:not(.dark) .app-modal h4 {
+  color: #0f172a !important;
+  font-weight: 800 !important;
+}
+
+html:not(.dark) .app-modal p {
+  color: #334155 !important;
+}
+
+/* 5. Close buttons inside modals */
+html:not(.dark) .app-modal button[onclick*="closeModals"] {
+  background-color: #f1f5f9 !important;
+  color: #334155 !important;
+  border: 1px solid #e2e8f0 !important;
+}
+html:not(.dark) .app-modal button[onclick*="closeModals"]:hover {
+  background-color: #e2e8f0 !important;
+  color: #0f172a !important;
+}
+
+/* 6. Human Verify Box in Light Mode */
+html:not(.dark) #up-verify-box {
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.08), rgba(236, 72, 153, 0.08)) !important;
+  border-color: rgba(245, 158, 11, 0.35) !important;
+}
+html:not(.dark) #up-verify-box p {
+  color: #1e293b !important;
+  font-weight: 600 !important;
+}
+
+/* 7. Profile Modal stat cards in Light Mode */
+html:not(.dark) #profile-modal-content .bg-slate-900 {
+  background-color: #f8fafc !important;
+  border-color: #e2e8f0 !important;
+}
+html:not(.dark) #profile-modal-content span.text-gray-400 {
+  color: #475569 !important;
+  font-weight: 600 !important;
+}
+html:not(.dark) #profile-modal-content h3 {
+  color: #0f172a !important;
+}
+html:not(.dark) #profile-modal-content p.text-gray-400 {
+  color: #64748b !important;
+}
+
+/* 8. Photo Details Modal in Light Mode */
+html:not(.dark) #photo-details-modal .p-3.5.rounded-xl.bg-slate-900 {
+  background-color: #f8fafc !important;
+  border-color: #e2e8f0 !important;
+}
+html:not(.dark) #photo-details-modal h2 {
+  color: #0f172a !important;
+}
+html:not(.dark) #photo-details-modal p {
+  color: #475569 !important;
+}
+
+/* 9. Buy Modal in Light Mode */
+html:not(.dark) #buy-modal-content .bg-slate-900,
+html:not(.dark) #buy-modal-content .bg-slate-900\/80 {
+  background-color: #f8fafc !important;
+  border-color: #e2e8f0 !important;
+}
+html:not(.dark) #buy-modal-content span.font-mono {
+  color: #0f172a !important;
+}
+
+/* 10. File Input styling in Light Mode */
+html:not(.dark) input[type="file"] {
+  color: #334155 !important;
+}
+
+
+/* Global Light Mode Contrast Guarantees */
+html:not(.dark) h1,
+html:not(.dark) h2,
+html:not(.dark) h3,
+html:not(.dark) h4 {
+  color: #0f172a !important;
+}
+
+html:not(.dark) p.text-gray-400,
+html:not(.dark) p.text-gray-300,
+html:not(.dark) span.text-gray-400,
+html:not(.dark) span.text-gray-300 {
+  color: #475569 !important;
+}
+
+html:not(.dark) .glass-panel {
+  background-color: #ffffff !important;
+  border-color: #e2e8f0 !important;
+  color: #0f172a !important;
+}
+
+html:not(.dark) .photo-card {
+  background: #ffffff !important;
+  border: 1px solid #e2e8f0 !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05) !important;
+}
+
+html:not(.dark) .photo-card h3 {
+  color: #0f172a !important;
+}
+
+html:not(.dark) .photo-card p {
+  color: #475569 !important;
+}
+
+
+/* Precise Light Mode High Contrast Enhancements */
+html:not(.dark) #income-rules-container .bg-slate-900\/60,
+html:not(.dark) #income-rules-container .bg-slate-900\/90 {
+  background-color: #f8fafc !important;
+  border-color: #e2e8f0 !important;
+}
+
+html:not(.dark) #income-rules-container .bg-slate-950\/80 {
+  background-color: #ffffff !important;
+  border-color: #e2e8f0 !important;
+}
+
+html:not(.dark) #income-rules-container h3,
+html:not(.dark) #income-rules-container h4 {
+  color: #0f172a !important;
+}
+
+html:not(.dark) #income-rules-container p {
+  color: #334155 !important;
+}
+
+html:not(.dark) #income-rules-container span.font-mono {
+  color: #0f172a !important;
+}
+
+html:not(.dark) #income-rules-container ul li {
+  color: #064e3b !important;
+}
+
+html:not(.dark) #income-rules-container .from-emerald-950\/40 {
+  background: #ecfdf5 !important;
+  border-color: #a7f3d0 !important;
+}
+
+/* Light mode for theme votes */
+html:not(.dark) #theme-vote-container .glass-panel {
+  background: #ffffff !important;
+  border-color: #e2e8f0 !important;
+}
+
+html:not(.dark) #theme-vote-container h4 {
+  color: #0f172a !important;
+}
+
+html:not(.dark) #theme-vote-container span {
+  color: #475569 !important;
+}
+
+html:not(.dark) #theme-vote-container b {
+  color: #4338ca !important;
+}
+
+html:not(.dark) #theme-vote-container button {
+  background-color: #4f46e5 !important;
+  color: #ffffff !important;
+}
+
+/* Light mode for leaderboard */
+html:not(.dark) #leaderboard-container .glass-panel {
+  background: #ffffff !important;
+  border-color: #e2e8f0 !important;
+}
+
+html:not(.dark) #leaderboard-container h4 {
+  color: #0f172a !important;
+}
+
+html:not(.dark) #leaderboard-container p {
+  color: #475569 !important;
+}

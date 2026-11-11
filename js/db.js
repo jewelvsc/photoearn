@@ -180,7 +180,10 @@ class AppDB {
     photoData.views = 0;
     photoData.votes = 0;
     photoData.date = new Date().toISOString();
-    photoData.approved = true;
+    photoData.approved = photoData.approved !== undefined ? photoData.approved : false; // পেন্ডিং অনুমোদন
+    photoData.status = photoData.approved ? "approved" : "pending";
+    photoData.photoType = photoData.photoType || "FREE";
+    photoData.price = photoData.photoType === "PAID" ? (parseInt(photoData.price, 10) || 10) : 0;
 
     // ১. হোস্টিং সার্ভারে ইমেজ ফাইল সেভ করা (api.php) যাতে ক্লিন ইমেজ URL পাওয়া যায়
     if (this.isServer) {
@@ -225,9 +228,9 @@ class AppDB {
     photos.unshift(photoData);
     localStorage.setItem("peg_photos", JSON.stringify(photos));
 
-    // ৪. ইউজারের আপলোড সংখ্যা বৃদ্ধি
+    // ৪. ইউজারের আপলোড সংখ্যা বৃদ্ধি (Firebase থেকে সর্বশেষ ডাটা নিয়ে আপডেট)
     if (photoData.authorPin) {
-      const user = this.getUser(photoData.authorPin);
+      const user = await this.fetchFirebaseUser(photoData.authorPin);
       if (user) {
         user.photosCount = (user.photosCount || 0) + 1;
         this.saveUser(user);
@@ -245,7 +248,7 @@ class AppDB {
   }
 
   // ৪. ছবিতে ভোট দেওয়া (Firebase + Server + Local)
-  async votePhoto(photoId) {
+  async votePhoto(photoId, voterPin) {
     const votedKey = `voted_${photoId}`;
     if (localStorage.getItem(votedKey)) {
       return { success: false, message: "আপনি ইতিমধ্যে এই ছবিতে ভোট দিয়েছেন!" };
@@ -258,6 +261,20 @@ class AppDB {
     photo.votes = (photo.votes || 0) + 1;
     localStorage.setItem("peg_photos", JSON.stringify(photos));
     localStorage.setItem(votedKey, "true");
+
+    // ইউজারের মোট দেওয়া লাইক/ভোট সংখ্যা বৃদ্ধি
+    const totalLikes = parseInt(localStorage.getItem("peg_user_likes") || "0") + 1;
+    localStorage.setItem("peg_user_likes", totalLikes.toString());
+    if (voterPin) {
+      localStorage.setItem(`peg_user_likes_${voterPin}`, totalLikes.toString());
+      if (this.hasFirebase) {
+        fetch(`${this.fbUrl}/users/${voterPin}/likes_given.json`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(totalLikes)
+        }).catch(() => {});
+      }
+    }
 
     // ১. ফায়ারবেস আপডেট
     if (this.hasFirebase) {
@@ -277,24 +294,12 @@ class AppDB {
       }).catch(() => {});
     }
 
-    // ৩. আর্টিস্টের ব্যালেন্স বৃদ্ধি (প্রতি ভোটে ২ পয়েন্ট)
+    // ৩. আর্টিস্টের ব্যালেন্স বৃদ্ধি (প্রতি ভোটে ২ পয়েন্ট — সরাসরি Firebase + Local সিঙ্ক)
     if (photo.authorPin) {
-      const artist = this.getUser(photo.authorPin);
-      if (artist) {
-        artist.points = (artist.points || 0) + 2;
-        artist.taka = (artist.points * (this.cfg.takaPerPoint || 0.1)).toFixed(2);
-        this.saveUser(artist);
-        if (this.hasFirebase) {
-          fetch(`${this.fbUrl}/users/${artist.pin}.json`, {
-            method: "PUT",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(artist)
-          }).catch(() => {});
-        }
-      }
+      this.creditUserPoints(photo.authorPin, 2).catch(() => {});
     }
 
-    return { success: true, votes: photo.votes };
+    return { success: true, votes: photo.votes, totalGivenLikes: totalLikes };
   }
 
   // ৫. ছবির ভিউ কাউন্ট বৃদ্ধি
@@ -364,6 +369,11 @@ class AppDB {
 
   // ৭. ইউজার রেজিস্ট্রেশন (Firebase + Server + Local)
   async registerUser(pin, name, phone, refCode) {
+    const existing = await this.fetchFirebaseUser(pin);
+    if (existing && existing.pin) {
+      return { success: false, message: "এই পিন নম্বরটি ইতিমধ্যে ব্যবহৃত হয়েছে! অন্য পিন দিন বা লগইন করুন।" };
+    }
+
     const newUser = {
       pin: pin,
       name: name,
@@ -371,6 +381,7 @@ class AppDB {
       points: 20, // ওয়েলকাম বোনাস
       taka: "2.00",
       photosCount: 0,
+      referralsCount: 0,
       verified: false,
       telegramBonus: false,
       refCode: "REF" + pin,
@@ -399,12 +410,30 @@ class AppDB {
     }
 
     this.saveUser(newUser);
+
+    // সফল রেফারেল বোনাস প্রদান (যদি রেফার কোড দিয়ে একাউন্ট খোলা হয়)
+    const cleanRef = (refCode || "").trim().toUpperCase();
+    const referrerPin = cleanRef.startsWith("REF") ? cleanRef.slice(3) : cleanRef;
+    if (referrerPin && referrerPin !== pin) {
+      const refPoints = this.cfg.referralPointsPerUser || 10;
+      const updatedRef = await this.creditUserPoints(referrerPin, refPoints, { isReferral: true });
+      if (updatedRef) {
+        const refTaka = (refPoints * (this.cfg.takaPerPoint || 0.1)).toFixed(2);
+        this.sendNotification(referrerPin, {
+          title: "🎁 নতুন রেফারেল বোনাস!",
+          message: `আপনার রেফার লিংকে "${name}" যোগ দিয়েছেন! আপনার ব্যালেন্সে +৳${refTaka} (${refPoints} পয়েন্ট) যোগ হয়েছে।`,
+          type: "ok",
+          ts: Date.now()
+        }).catch(() => {});
+      }
+    }
+
     return { success: true, user: newUser };
   }
 
   // ৮. টেলিগ্রাম বোনাস ক্লেইম
   async claimTelegramBonus(pin) {
-    let user = this.getUser(pin);
+    let user = await this.fetchFirebaseUser(pin);
     if (!user) return { success: false, message: "প্রথমে একাউন্টে লগইন করুন!" };
     if (user.telegramBonus) return { success: false, message: "আপনি ইতিমধ্যে বোনাস পেয়েছেন!" };
 
@@ -434,7 +463,7 @@ class AppDB {
 
   // ৯. উইথড্র রিকোয়েস্ট (Firebase + Server + Local)
   async requestWithdraw(pin, phone, amountTaka, method) {
-    const user = this.getUser(pin);
+    const user = await this.fetchFirebaseUser(pin);
     if (!user) return { success: false, message: "ইউজার পাওয়া যায়নি!" };
 
     const minTaka = this.cfg.minWithdrawTaka || 50;
@@ -574,6 +603,100 @@ class AppDB {
     localStorage.setItem("peg_users", JSON.stringify(users));
   }
 
+  // Firebase থেকে নির্দিষ্ট ইউজারের লেটেস্ট তথ্য আনা (অফলাইনে লোকাল ফলব্যাক)
+  async fetchFirebaseUser(pin) {
+    if (!pin) return null;
+    if (this.hasFirebase) {
+      try {
+        const res = await fetch(`${this.fbUrl}/users/${pin}.json`);
+        const fbUser = await res.json();
+        if (fbUser && fbUser.pin) {
+          this.saveUser(fbUser);
+          return fbUser;
+        }
+      } catch (e) {}
+    }
+    return this.getUser(pin);
+  }
+
+  // ইউজারের পয়েন্ট ও টাকা সিঙ্ক করে আপডেট করা (ভোট, রেফারেল ও অ্যাডমিন রিওয়ার্ড)
+  async creditUserPoints(pin, addPoints, opts = {}) {
+    const user = await this.fetchFirebaseUser(pin);
+    if (!user) return null;
+
+    const takaPerPoint = this.cfg.takaPerPoint || 0.1;
+    const basePoints = (user.points !== undefined && user.points !== null)
+      ? (parseInt(user.points, 10) || 0)
+      : Math.round(parseFloat(user.taka || 0) / takaPerPoint);
+
+    user.points = Math.max(0, basePoints + (parseInt(addPoints, 10) || 0));
+    user.taka = (user.points * takaPerPoint).toFixed(2);
+    if (opts.isReferral) {
+      user.referralsCount = (user.referralsCount || 0) + 1;
+    }
+
+    this.saveUser(user);
+    if (this.hasFirebase) {
+      try {
+        await fetch(`${this.fbUrl}/users/${pin}.json`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(user)
+        });
+      } catch (e) {}
+    }
+    return user;
+  }
+
+  // অ্যাডমিন: সকল রেজিস্টার্ড ইউজার ও তাদের আয়ের তালিকা আনা
+  async getAllUsers() {
+    let list = [];
+    if (this.hasFirebase) {
+      try {
+        const res = await fetch(`${this.fbUrl}/users.json`);
+        const data = await res.json();
+        if (data && typeof data === "object") {
+          list = Object.keys(data)
+            .map(k => ({ ...data[k], pin: (data[k] && data[k].pin) || k }))
+            .filter(u => u && u.name);
+        }
+      } catch (e) {}
+    }
+
+    if (list.length === 0) {
+      try {
+        const localMap = JSON.parse(localStorage.getItem("peg_users") || "{}");
+        list = Object.values(localMap).filter(u => u && u.name);
+      } catch (e) {}
+    }
+
+    list.sort((a, b) => parseFloat(b.taka || 0) - parseFloat(a.taka || 0));
+    return list;
+  }
+
+  // অ্যাডমিন: ইউজারের ব্যালেন্সে পুরস্কার/টাকা যোগ বা সমন্বয় করা
+  async adjustUserBalance(pin, deltaTaka, note = "") {
+    const takaPerPoint = this.cfg.takaPerPoint || 0.1;
+    const addPoints = Math.round((parseFloat(deltaTaka) || 0) / takaPerPoint);
+    if (!pin || addPoints === 0) return { success: false, message: "সঠিক পরিমাণ দিন!" };
+
+    const updated = await this.creditUserPoints(pin, addPoints);
+    if (!updated) return { success: false, message: "ইউজার পাওয়া যায়নি!" };
+
+    const amtText = Math.abs(parseFloat(deltaTaka)).toFixed(2);
+    const isPositive = parseFloat(deltaTaka) >= 0;
+    await this.sendNotification(pin, {
+      title: isPositive ? "🏆 অ্যাডমিন রিওয়ার্ড প্রাপ্তি!" : "💳 ব্যালেন্স সমন্বয়",
+      message: isPositive
+        ? `অভিনন্দন! অ্যাডমিন আপনার অ্যাকাউন্টে +৳${amtText} যোগ করেছেন।${note ? " (" + note + ")" : ""}`
+        : `অ্যাডমিন আপনার ব্যালেন্স থেকে ৳${amtText} সমন্বয় করেছেন।${note ? " (" + note + ")" : ""}`,
+      type: isPositive ? "ok" : "info",
+      ts: Date.now()
+    });
+
+    return { success: true, user: updated };
+  }
+
   // ১৩. লাইভ পাবলিক চ্যাট মেসেজ আনা (Firebase + Local)
   async getChatMessages() {
     if (this.hasFirebase) {
@@ -599,7 +722,7 @@ class AppDB {
       text: text.trim(),
       name: authorName || "অতিথি",
       pin: authorPin || "",
-      isAdmin: authorPin === (this.cfg.adminPin || "8800"),
+      isAdmin: authorPin === (this.cfg.adminPin || "1802"),
       time: new Date().toISOString()
     };
 
@@ -620,6 +743,387 @@ class AppDB {
 
     return newMsg;
   }
+
+  async deleteChatMessage(msgId) {
+    if (this.hasFirebase) {
+      try {
+        await fetch(`${this.fbUrl}/chat/${msgId}.json`, { method: "DELETE" });
+      } catch (e) {}
+    }
+    let local = JSON.parse(localStorage.getItem("peg_chat") || "[]");
+    local = local.filter(m => m.id !== msgId);
+    localStorage.setItem("peg_chat", JSON.stringify(local));
+    return { success: true };
+  }
+
+  async clearAllChat() {
+    if (this.hasFirebase) {
+      try {
+        await fetch(`${this.fbUrl}/chat.json`, { method: "DELETE" });
+      } catch (e) {}
+    }
+    localStorage.removeItem("peg_chat");
+    return { success: true };
+  }
+
+
+  // ১৫. ফটো লাইক সিস্টেম (GalleryBD স্টাইল)
+  async likePhoto(photoId) {
+    const likedKey = `liked_${photoId}`;
+    if (localStorage.getItem(likedKey)) {
+      return { success: false, message: "আপনি ইতিমধ্যে এই ছবিতে লাইক দিয়েছেন!" };
+    }
+
+    const photos = await this.getPhotos();
+    const photo = photos.find(p => p.id === photoId);
+    if (!photo) return { success: false, message: "ছবি পাওয়া যায়নি!" };
+
+    photo.likes = (photo.likes || 0) + 1;
+    localStorage.setItem("peg_photos", JSON.stringify(photos));
+    localStorage.setItem(likedKey, "true");
+
+    // ইউজারের মোট দেওয়া লাইক সংখ্যা বৃদ্ধি
+    const totalLikes = parseInt(localStorage.getItem("peg_user_likes") || "0") + 1;
+    localStorage.setItem("peg_user_likes", totalLikes.toString());
+
+    // ফায়ারবেসে সেভ
+    if (this.hasFirebase) {
+      fetch(`${this.fbUrl}/photos/${photoId}/likes.json`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(photo.likes)
+      }).catch(() => {});
+    }
+
+    // প্রতি ৫ লাইকে ভেরিফাই লাগলে ফ্ল্যাগ
+    const verifyEvery = this.cfg.likeVerifyEvery || 5;
+    const needVerify = (totalLikes % verifyEvery === 0);
+
+    return {
+      success: true,
+      likes: photo.likes,
+      totalGivenLikes: totalLikes,
+      needVerify: needVerify
+    };
+  }
+
+  // ১৬. ক্রিয়েটর ফলো সিস্টেম (GalleryBD স্টাইল)
+  async toggleFollowCreator(creatorPin) {
+    if (!creatorPin) return { success: false, message: "ক্রিয়েটর তথ্য নেই" };
+    let follows = JSON.parse(localStorage.getItem("peg_follows") || "[]");
+    const idx = follows.indexOf(creatorPin);
+    let isFollowing = false;
+
+    if (idx !== -1) {
+      follows.splice(idx, 1);
+      isFollowing = false;
+    } else {
+      follows.push(creatorPin);
+      isFollowing = true;
+    }
+
+    localStorage.setItem("peg_follows", JSON.stringify(follows));
+
+    // ক্রিয়েটরের ফলোয়ার সংখ্যা আপডেট
+    if (this.hasFirebase) {
+      try {
+        const res = await fetch(`${this.fbUrl}/users/${creatorPin}/followers.json`);
+        let count = (await res.json()) || 0;
+        count = isFollowing ? count + 1 : Math.max(0, count - 1);
+        fetch(`${this.fbUrl}/users/${creatorPin}/followers.json`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(count)
+        }).catch(() => {});
+      } catch (e) {}
+    }
+
+    return { success: true, isFollowing, totalFollowed: follows.length };
+  }
+
+  isFollowing(creatorPin) {
+    if (!creatorPin) return false;
+    const follows = JSON.parse(localStorage.getItem("peg_follows") || "[]");
+    return follows.includes(creatorPin);
+  }
+
+  // ১৭. আপলোড কোটা ক্যালকুলেশন (১৫ লাইক ও ২০ ফলোর শর্ত)
+  getUploadQuota(pin) {
+    const user = pin ? this.getUser(pin) : null;
+    const needL = this.cfg.uploadNeedLikes || 30;
+    const needF = this.cfg.uploadNeedFollows || 20;
+
+    const pinLikes = pin ? parseInt(localStorage.getItem(`peg_user_likes_${pin}`) || "0") : 0;
+    const globalLikes = parseInt(localStorage.getItem("peg_user_likes") || "0");
+    const currentLikes = Math.max(pinLikes, globalLikes, (user && user.likesGiven) || 0);
+
+    const follows = JSON.parse(localStorage.getItem("peg_follows") || "[]");
+    const currentFollows = follows.length;
+
+    return {
+      ok: currentLikes >= needL && currentFollows >= needF,
+      likes: currentLikes,
+      needLikes: needL,
+      follows: currentFollows,
+      needFollows: needF
+    };
+  }
+
+  // ১৮. উইথড্র সিকিউরিটি: ব্যান চেক
+  getWithdrawBan() {
+    try {
+      return JSON.parse(localStorage.getItem("peg_wd_ban") || "{}");
+    } catch (e) {
+      return {};
+    }
+  }
+
+  recordWrongWithdrawPin() {
+    const ban = this.getWithdrawBan();
+    ban.strikes = (ban.strikes || 0) + 1;
+    const maxStrikes = this.cfg.strikesToPermanent || 2;
+    if (ban.strikes >= maxStrikes) {
+      ban.perm = true;
+    } else {
+      ban.until = Date.now() + (this.cfg.banHours || 24) * 3600 * 1000;
+    }
+    localStorage.setItem("peg_wd_ban", JSON.stringify(ban));
+    return ban;
+  }
+
+  // ১৯. অটোমেটিক ছবি অনুমোদন সেটিংস (Admin Auto-Approve Toggle)
+  async isAutoApproveEnabled() {
+    let local = localStorage.getItem("peg_auto_approve") === "true";
+    if (this.hasFirebase) {
+      try {
+        const res = await fetch(`${this.fbUrl}/settings/auto_approve.json`);
+        const val = await res.json();
+        if (val !== null) {
+          local = !!val;
+          localStorage.setItem("peg_auto_approve", local ? "true" : "false");
+        }
+      } catch (e) {}
+    }
+    return local;
+  }
+
+  async setAutoApprove(enabled) {
+    localStorage.setItem("peg_auto_approve", enabled ? "true" : "false");
+    if (this.hasFirebase) {
+      fetch(`${this.fbUrl}/settings/auto_approve.json`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(enabled)
+      }).catch(() => {});
+    }
+    if (this.isServer) {
+      fetch(`${this.apiBase}?action=set_auto_approve`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ enabled })
+      }).catch(() => {});
+    }
+    return enabled;
+  }
+
+  // ========================================================
+  // 🔔 নোটিফিকেশন ও অ্যাডমিন অনুমোদন সিস্টেম (GalleryBD স্টাইল)
+  // ========================================================
+
+  // ছবি অনুমোদন করা (Approve Photo)
+  async approvePhoto(photoId) {
+    const photos = await this.getPhotos();
+    const photo = photos.find(p => p.id === photoId);
+    if (!photo) return { success: false, message: "ছবি পাওয়া যায়নি" };
+
+    photo.approved = true;
+    photo.status = "approved";
+    localStorage.setItem("peg_photos", JSON.stringify(photos));
+
+    // ফায়ারবেস আপডেট
+    if (this.hasFirebase) {
+      try {
+        await fetch(`${this.fbUrl}/photos/${photoId}/approved.json`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(true)
+        });
+        await fetch(`${this.fbUrl}/photos/${photoId}/status.json`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify("approved")
+        });
+      } catch (e) {
+        console.warn("Firebase approve error:", e);
+      }
+    }
+
+    // সার্ভার আপডেট
+    if (this.isServer) {
+      try {
+        await fetch(`${this.apiBase}?action=approve_photo`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ id: photoId })
+        });
+      } catch (e) {}
+    }
+
+    // ইউজারের ইনবক্সে নোটিফিকেশন পাঠানো
+    if (photo.authorPin) {
+      await this.sendNotification(photo.authorPin, {
+        title: "ছবি অনুমোদিত হয়েছে! 🎉",
+        message: `অভিনন্দন! আপনার ছবি "${photo.title}" অ্যাডমিন কর্তৃক অনুমোদিত হয়েছে এবং পাবলিক ফিডে লাইভ হয়েছে।`,
+        type: "ok",
+        ts: Date.now()
+      });
+    }
+
+    return { success: true, photo };
+  }
+
+  // ছবি বাতিল করা (Reject Photo)
+  async rejectPhoto(photoId, reason = "নীতিমালা পরিপন্থী বা অস্পষ্ট ছবি") {
+    const photos = await this.getPhotos();
+    const photo = photos.find(p => p.id === photoId);
+    if (!photo) return { success: false, message: "ছবি পাওয়া যায়নি" };
+
+    // ডিলিট অথবা রিজেক্টেড মার্ক করা
+    const filtered = photos.filter(p => p.id !== photoId);
+    localStorage.setItem("peg_photos", JSON.stringify(filtered));
+
+    if (this.hasFirebase) {
+      try {
+        await fetch(`${this.fbUrl}/photos/${photoId}.json`, { method: "DELETE" });
+      } catch (e) {}
+    }
+
+    if (this.isServer) {
+      try {
+        await fetch(`${this.apiBase}?action=delete_photo`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ id: photoId })
+        });
+      } catch (e) {}
+    }
+
+    // ইউজারের ইনবক্সে বাতিলের কারণ জানানো
+    if (photo.authorPin) {
+      await this.sendNotification(photo.authorPin, {
+        title: "ছবি অনুমোদন হয়নি",
+        message: `দুঃখিত! আপনার ছবি "${photo.title}" বাতিল করা হয়েছে। কারণ: ${reason}`,
+        type: "bad",
+        ts: Date.now()
+      });
+    }
+
+    return { success: true };
+  }
+
+  // ব্যক্তিগত নোটিফিকেশন পাঠানো
+  async sendNotification(pin, notif) {
+    if (!pin) return;
+    const notifObj = {
+      id: "nt_" + Date.now() + "_" + Math.floor(Math.random() * 1000),
+      title: notif.title || "নতুন নোটিফিকেশন",
+      message: notif.message || "",
+      type: notif.type || "info", // ok, bad, info
+      ts: notif.ts || Date.now()
+    };
+
+    // লোকালস্টোরেজ
+    const key = `peg_notifs_${pin}`;
+    let list = [];
+    try {
+      list = JSON.parse(localStorage.getItem(key) || "[]");
+    } catch (e) {}
+    list.unshift(notifObj);
+    localStorage.setItem(key, JSON.stringify(list.slice(0, 30)));
+
+    // ফায়ারবেস
+    if (this.hasFirebase) {
+      try {
+        await fetch(`${this.fbUrl}/notif/${pin}/${notifObj.id}.json`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(notifObj)
+        });
+      } catch (e) {}
+    }
+
+    return notifObj;
+  }
+
+  // সাইটব্যাপী ব্রডকাস্ট নোটিশ পাঠানো
+  async sendBroadcastNotice(title, message) {
+    const notifObj = {
+      id: "bc_" + Date.now(),
+      title: title || "📢 সাইট নোটিশ",
+      message: message,
+      type: "broadcast",
+      ts: Date.now()
+    };
+
+    let list = [];
+    try {
+      list = JSON.parse(localStorage.getItem("peg_notifs_broadcast") || "[]");
+    } catch (e) {}
+    list.unshift(notifObj);
+    localStorage.setItem("peg_notifs_broadcast", JSON.stringify(list.slice(0, 30)));
+
+    if (this.hasFirebase) {
+      try {
+        await fetch(`${this.fbUrl}/notif/_all/${notifObj.id}.json`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(notifObj)
+        });
+      } catch (e) {}
+    }
+
+    return notifObj;
+  }
+
+  // ইউজারের সমস্ত নোটিফিকেশন ও সাইট নোটিশ পাওয়া
+  async getNotifications(pin) {
+    let personalList = [];
+    let broadcastList = [];
+
+    // ১. লোকালস্টোরেজ থেকে
+    if (pin) {
+      try {
+        personalList = JSON.parse(localStorage.getItem(`peg_notifs_${pin}`) || "[]");
+      } catch (e) {}
+    }
+    try {
+      broadcastList = JSON.parse(localStorage.getItem("peg_notifs_broadcast") || "[]");
+    } catch (e) {}
+
+    // ২. ফায়ারবেস থেকে সিঙ্ক
+    if (this.hasFirebase) {
+      try {
+        if (pin) {
+          const r1 = await fetch(`${this.fbUrl}/notif/${pin}.json`);
+          const d1 = await r1.json();
+          if (d1 && typeof d1 === "object") {
+            personalList = Object.values(d1);
+          }
+        }
+        const r2 = await fetch(`${this.fbUrl}/notif/_all.json`);
+        const d2 = await r2.json();
+        if (d2 && typeof d2 === "object") {
+          broadcastList = Object.values(d2);
+        }
+      } catch (e) {}
+    }
+
+    // মার্জ ও তারিখ অনুযায়ী সাজানো (নতুন সবার আগে)
+    const all = [...personalList, ...broadcastList];
+    all.sort((a, b) => (b.ts || 0) - (a.ts || 0));
+    return all.slice(0, 35);
+  }
+
 }
 
 window.DB = new AppDB();

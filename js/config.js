@@ -14,14 +14,14 @@ window.APP_CONFIG = {
   currencySymbol: "৳",
   siteUrl: "https://photoearn.chasherdokan.com",
 
-  // ২. আপনার অফিসিয়াল পেমেন্ট ও সাপোর্ট নম্বর (আপডেটেড)
+  // ২. অফিসিয়াল পেমেন্ট ও সাপোর্ট নম্বর
   bkashNumber: "01771136809",
   nagadNumber: "01771136809",
-  supportWhatsApp: "https://wa.me/8801771136809", // হোয়াটসঅ্যাপ সাপোর্ট
-  supportTelegram: "https://t.me/photoearnOfficial", // আপনার অফিসিয়াল টেলিগ্রাম চ্যানেল
-  youtubePopupDelaySeconds: 0, // ইউটিউব চ্যানেল না থাকায় পপআপ বন্ধ করা হয়েছে
-  telegramPopupDelaySeconds: 20, // সাইটে প্রবেশের ২০ সেকেন্ড পর টেলিগ্রাম পপআপ আসবে
+  supportWhatsApp: "https://wa.me/8801771136809",
+  supportTelegram: "https://t.me/photoearnOfficial",
+  telegramPopupDelaySeconds: 20,
   telegramPopupEnabled: true,
+  judges: ["Md. Ziaur Rahman", "PhotoEarn Team"],
 
   // ৩. বাংলা কিউআর (BANGLA QR) পেমেন্ট তথ্য
   banglaQr: {
@@ -34,22 +34,36 @@ window.APP_CONFIG = {
     supportedApps: "bKash, CellFin, mCash, Upay, VISA, MasterCard, NPSB"
   },
 
-  // ৪. পেমেন্ট ও উইথড্র নিয়ম
-  minWithdrawPoints: 500,     // সর্বনিম্ন উইথড্র পয়েন্ট (৫০০ পয়েন্ট = ৫০ টাকা)
-  minWithdrawTaka: 50,
-  takaPerPoint: 0.10,         // ১ পয়েন্ট = ০.১০ টাকা (১০ পয়েন্ট = ১ টাকা)
-  minPhotosForWithdraw: 3,    // টাকা তুলতে কমপক্ষে ৩টি ছবি আপলোড থাকতে হবে (স্প্যাম রোধে)
-  telegramJoinBonusTaka: 10,  // টেলিগ্রামে যুক্ত হলে তাৎক্ষণিক ৳১০ বোনাস
-  referralPointsPerUser: 10,  // প্রতি সফল রেফারে ১০ পয়েন্ট
+  // ৪. ভাইরাল লাইক ও ফলো আপলোড শর্ত (GalleryBD ভাইরাল সিস্টেম)
+  uploadNeedLikes: 30,          // প্রতিটি ছবির জন্য ১৫ লাইক (১ম ছবি ১৫, ২য় ছবি ৩০ ...)
+  uploadNeedFollows: 20,        // ছবি আপলোডের জন্য কমপক্ষে ২০ জনকে ফলো করা থাকতে হবে
+  likeVerifyEvery: 5,           // প্রতি ৫টি লাইকে Adsterra স্পনসর ভেরিফিকেশন (ইনকাম বাড়াতে)
+  likeWaitSeconds: 5,           // লাইক ভেরিফাই অপেক্ষা ৫ সেকেন্ড
 
-  // ৫. কনটেস্ট ও ক্যাশ প্রাইজ (টাকা হিসেবে)
+  // ৫. ভোট দেওয়ার শর্ত ও ২-ধাপের Adsterra গেট (ডাবল ইনকাম)
+  voteWaitSeconds: 5,
+  voteCoolDownSeconds: 5,
+  verifyAd1: "https://araplhn.org/4/7decde193b07302555c7d1b18a2dfcbe",
+  verifyAd2: "https://araplhn.org/4/7decde193b07302555c7d1b18a2dfcbe",
+
+  // ৬. পেমেন্ট, উইথড্র ও সিকিউরিটি
+  minWithdrawPoints: 500,       // ৫০০ পয়েন্ট = ৫০ টাকা
+  minWithdrawTaka: 50,
+  takaPerPoint: 0.10,
+  minPhotosForWithdraw: 3,
+  banHours: 24,                 // ভুল পিন দিলে ২৪ ঘণ্টা সাময়িক ব্যান
+  strikesToPermanent: 2,        // ২ বার ভুল করলে পার্মানেন্ট ব্যান
+  telegramJoinBonusTaka: 10,
+  referralPointsPerUser: 10,
+
+  // ৭. কনটেস্ট ও ক্যাশ প্রাইজ
   contestPrizes: {
-    c24: [50],                  // ২৪ ঘণ্টা কনটেস্ট: ১ম স্থান ৳৫০
-    c7: [150, 50],              // ৭ দিন কনটেস্ট: ১ম স্থান ৳১৫০, ২য় স্থান ৳৫০
-    c30: [500, 200, 100]        // ৩০ দিন কনটেস্ট: ১ম ৳৫০০, ২য় ৳২০০, ৩য় ৳১০০
+    c24: [50],                  // ২৪ ঘণ্টা: ১ম স্থান ৳৫০
+    c7: [150, 50],              // ৭ দিন: ১ম স্থান ৳১৫০, ২য় স্থান ৳৫০
+    c30: [500, 200, 100]        // ৩০ দিন: ১ম ৳৫০০, ২য় ৳২০০, ৩য় ৳১০০
   },
 
-  // কনটেস্টের চলমান ক্যাটাগরি ও থিম
+  // চলমান থিম তালিকা
   activeThemes: [
     "গ্রামের দৃশ্য",
     "শীতের সকাল",
@@ -61,53 +75,51 @@ window.APP_CONFIG = {
     "সৃষ্টি ও কারুকাজ"
   ],
 
-  // ৬. ব্যাজ রিকোয়ারমেন্ট
-  badgeBlueKingVotes: 30,  // ৩০+ ভোট পেলে Blue King ব্যাজ
-  badgeRedKingVotes: 70,   // ৭০+ ভোট পেলে Red King ব্যাজ
+  // ৮. ব্যাজ ও লেভেল
+  badgeBlueKingVotes: 30,
+  badgeRedKingVotes: 70,
+  levels: [
+    { name: "ব্রোঞ্জ", icon: "🥉", photos: 3, views: 500 },
+    { name: "সিলভার", icon: "🥈", photos: 10, views: 5000 },
+    { name: "গোল্ড", icon: "🥇", photos: 25, views: 25000 }
+  ],
 
-  // ৭. বিজ্ঞাপন (Adsterra / Monetag / Direct Link) সেটিংস
+  // ৯. বিজ্ঞাপন (Adsterra / Monetag / Direct Link) সেটিংস
   ads: {
     enabled: true,
-    downloadWaitSeconds: 5, // ৫ সেকেন্ড অপেক্ষা করিয়ে ডাউনলোড আনলক
-    sponsorDirectLink: "https://asiafilm.org/4/7dba13cd99d01214b30af2e53cea4c8a", // আপনার Adsterra Direct Link
-    uploadHumanVerifyEnabled: true, // ছবি জমার আগে Human Verify (GalleryBD স্টাইল - ইনকাম বাড়াতে)
-    uploadWaitSeconds: 5, // ভেরিফাই অপেক্ষা ৫ সেকেন্ড
+    downloadWaitSeconds: 5,
+    sponsorDirectLink: "https://araplhn.org/4/7decde193b07302555c7d1b18a2dfcbe",
+    uploadHumanVerifyEnabled: true,
+    uploadWaitSeconds: 5,
 
-    // টপ ব্যানার অ্যাড (সরাসরি ক্লিক করলেই Adsterra ডিরেক্ট লিংকে চলে যাবে)
     topBannerSlot: `
-      <a href="https://asiafilm.org/4/7dba13cd99d01214b30af2e53cea4c8a" target="_blank" rel="noopener" class="block w-full py-2.5 px-4 bg-gradient-to-r from-amber-500/15 via-rose-500/15 to-indigo-500/15 border border-amber-500/30 hover:border-amber-400 rounded-2xl text-center shadow-lg transition-all group">
+      <a href="https://araplhn.org/4/7decde193b07302555c7d1b18a2dfcbe" target="_blank" rel="noopener" class="block w-full py-2.5 px-4 bg-gradient-to-r from-amber-500/10 via-rose-500/10 to-indigo-500/10 border border-amber-500/30 hover:border-amber-400 rounded-2xl text-center shadow transition-all group">
         <div class="flex items-center justify-between gap-2">
           <div class="flex items-center gap-2">
             <span class="bg-amber-500 text-slate-950 px-2 py-0.5 rounded text-[10px] uppercase font-black tracking-wider">Sponsored</span>
-            <span class="text-xs font-bold text-white group-hover:text-amber-300 transition-colors">🔥 আজকের সেরা অনলাইন রিওয়ার্ড ও স্পনসর অফার দেখুন</span>
+            <span class="text-xs font-bold text-gray-800 dark:text-white group-hover:text-amber-500 transition-colors">🔥 আজকের সেরা অনলাইন রিওয়ার্ড ও স্পনসর অফার দেখুন</span>
           </div>
           <span class="text-[11px] bg-amber-500 hover:bg-amber-400 text-slate-950 font-black px-3 py-1 rounded-xl shadow whitespace-nowrap">ভিজিট করুন ➔</span>
         </div>
       </a>
     `,
 
-    // ইন-ফিড নেটিভ বিজ্ঞাপন কার্ড
     inFeedNativeSlot: `
-      <a href="https://asiafilm.org/4/7dba13cd99d01214b30af2e53cea4c8a" target="_blank" rel="noopener" class="block w-full p-4 bg-gradient-to-r from-indigo-950/80 via-purple-950/70 to-slate-900 border border-indigo-500/30 hover:border-pink-500/50 rounded-2xl shadow-xl transition-all text-center group">
-        <div class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 text-[10px] font-bold uppercase mb-1.5">
-          <span class="w-1.5 h-1.5 rounded-full bg-pink-500 animate-ping"></span>
-          <span>Sponsored Promotion</span>
+      <div class="p-3 bg-gradient-to-r from-indigo-50/60 dark:from-slate-900/90 to-purple-50/60 dark:to-slate-900/90 rounded-2xl border border-indigo-500/20 shadow-md my-2">
+        <div class="flex items-center justify-between mb-2">
+          <span class="text-[10px] font-black uppercase tracking-wider text-amber-500 bg-amber-500/10 px-2 py-0.5 rounded">Sponsored Partner</span>
+          <a href="https://araplhn.org/4/7decde193b07302555c7d1b18a2dfcbe" target="_blank" rel="noopener" class="text-[11px] text-indigo-500 dark:text-indigo-400 font-bold hover:underline">অফার দেখুন ➔</a>
         </div>
-        <h4 class="text-sm font-black text-white group-hover:text-pink-400 transition-colors">🎁 প্রতিদিন ৫০০ থেকে ১,০০০ টাকা আয়ের বিশেষ সুযোগ!</h4>
-        <p class="text-xs text-gray-400 mt-0.5">নিচের লিংকে ক্লিক করে সরাসরি স্পনসর অফারটি দেখুন ও জিতে নিন উপহার</p>
-        <div class="mt-3">
-          <span class="inline-block px-5 py-1.5 bg-gradient-to-r from-pink-500 to-indigo-600 hover:from-pink-600 hover:to-indigo-700 text-white font-bold rounded-xl text-xs shadow-md">এখনই অফারটি দেখুন ➔</span>
-        </div>
-      </a>
+        <div id="container-8c6bfb10b7e61f9bc4ea4d93fc41e5f6" class="min-h-[100px] flex items-center justify-center"></div>
+      </div>
     `,
 
-    // স্টিকি বটম মোবাইল ব্যানার
     stickyBottomSlot: `
-      <a href="https://asiafilm.org/4/7dba13cd99d01214b30af2e53cea4c8a" target="_blank" rel="noopener" class="block w-full py-2 px-3 bg-slate-950/95 border-t border-amber-500/30 text-center shadow-2xl transition-colors hover:bg-slate-900">
+      <a href="https://araplhn.org/4/7decde193b07302555c7d1b18a2dfcbe" target="_blank" rel="noopener" class="block w-full py-2 px-3 bg-white/95 dark:bg-slate-950/95 border-t border-amber-500/30 text-center shadow-lg transition-colors hover:bg-slate-50 dark:hover:bg-slate-900">
         <div class="max-w-6xl mx-auto flex items-center justify-between gap-2">
           <div class="flex items-center gap-2 truncate">
             <span class="bg-amber-500 text-slate-950 px-1.5 py-0.5 rounded text-[9px] uppercase font-black">AD</span>
-            <span class="text-xs font-bold text-amber-300 truncate">🔥 বিশেষ স্পনসর অফার দেখতে এখানে ট্যাপ করুন</span>
+            <span class="text-xs font-bold text-amber-600 dark:text-amber-300 truncate">🔥 বিশেষ স্পনসর অফার দেখতে এখানে ট্যাপ করুন</span>
           </div>
           <span class="text-[11px] bg-amber-500 text-slate-950 font-black px-2.5 py-0.5 rounded-lg whitespace-nowrap">Open ➔</span>
         </div>
@@ -115,24 +127,21 @@ window.APP_CONFIG = {
     `
   },
 
-  // ৮. লাইভ পাবলিক চ্যাট (GalleryBD স্টাইল - Firebase Powered)
+  // ১০. লাইভ চ্যাট ও PWA
   chat: {
     enabled: true,
-    pollIntervalMs: 3500 // প্রতি ৩.৫ সেকেন্ডে রিয়েল-টাইম নতুন মেসেজ রিফ্রেশ
+    pollIntervalMs: 3500
   },
-
-  // ৯. PWA মোবাইল অ্যাপ ইনস্টল সুবিধা
   pwa: {
     enabled: true,
-    promptDelaySeconds: 40 // সাইটে প্রবেশের ৪০ সেকেন্ড পর অ্যাপ ইনস্টল নোটিস
+    promptDelaySeconds: 40
   },
 
-  // ১০. Firebase Realtime Database
+  // ১১. Firebase Realtime Database
   firebase: {
     databaseURL: "https://photo-earn-official-default-rtdb.firebaseio.com"
   },
 
-  // ১১. সিকিউরিটি ও অ্যাডমিন পিন
-  adminPin: "8800",
-  voteCoolDownSeconds: 5
+  // ১২. সিকিউরিটি ও অ্যাডমিন পিন
+  adminPin: "1802"
 };

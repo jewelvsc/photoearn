@@ -9,6 +9,9 @@ $RECYCLE.BIN/
 analyze.py
 bundle.py
 bundle_admin.py
+detailed_inspect.py
+scratch/
+photo-earn-production.zip
 
 # Logs
 *.log

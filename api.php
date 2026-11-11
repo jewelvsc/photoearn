@@ -179,6 +179,8 @@ switch ($action) {
             $fileUrl = $imgData; // অলরেডি URL থাকলে
         }
 
+        $photoType = trim($input['photoType'] ?? 'FREE');
+        $price = intval($input['price'] ?? 0);
         $newPhoto = [
             "id" => $photoId,
             "title" => $title,
@@ -186,10 +188,13 @@ switch ($action) {
             "contestType" => $contestType,
             "authorName" => $authorName,
             "authorPin" => $authorPin,
+            "photoType" => $photoType,
+            "price" => $price,
             "url" => $fileUrl,
             "views" => 0,
             "votes" => 0,
-            "approved" => true,
+            "approved" => false,
+            "status" => "pending",
             "date" => date('c')
         ];
 
@@ -408,6 +413,26 @@ switch ($action) {
         break;
 
     // ১২. অ্যাডমিন: ছবি মুছে ফেলা
+    case 'approve_photo':
+        $photoId = trim($input['id'] ?? '');
+        $photos = readJson($photosFile, []);
+        $found = false;
+        foreach ($photos as &$p) {
+            if ($p['id'] === $photoId) {
+                $p['approved'] = true;
+                $p['status'] = 'approved';
+                $found = true;
+                break;
+            }
+        }
+        if ($found) {
+            writeJson($photosFile, $photos);
+            echo json_encode(["success" => true, "message" => "ছবি অনুমোদিত হয়েছে"]);
+        } else {
+            echo json_encode(["success" => false, "message" => "ছবি পাওয়া যায়নি"]);
+        }
+        break;
+
     case 'delete_photo':
         $id = $input['id'] ?? '';
         $photos = readJson($photosFile, []);
