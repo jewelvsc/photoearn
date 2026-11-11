@@ -1043,13 +1043,6 @@ html.dark .photo-img-wrap {
     </div>
   </footer>
 
-  <!-- ================= MOBILE FLOATING ACTION BUTTON (FAB) ================= -->
-  <div class="fixed bottom-14 right-4 z-40 md:hidden">
-    <button onclick="window.APP.openUploadModal()" class="fab-btn w-14 h-14 rounded-full flex items-center justify-center text-white shadow-2xl active:scale-95 transition-transform">
-      <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"></path></svg>
-    </button>
-  </div>
-
   <!-- ================= STICKY BOTTOM AD SLOT ================= -->
   <div class="fixed bottom-0 left-0 right-0 z-30" id="ad-sticky-slot">
     <!-- 320x50 Adsterra স্টিকি ব্যানার কোড এখানে রেন্ডার হবে -->
@@ -4711,17 +4704,17 @@ class PicPrizeApp {
 }
 </script>
   <!-- ================= PWA INSTALL BANNER ================= -->
-  <div id="pwa-install-banner" class="fixed bottom-16 left-4 right-4 md:left-auto md:right-6 md:w-96 z-40 hidden animate-fade-in">
-    <div class="p-3.5 bg-slate-900/95 backdrop-blur-xl border border-amber-500/40 rounded-2xl shadow-2xl flex items-center justify-between gap-3 text-white">
+  <div id="pwa-install-banner" class="fixed bottom-[102px] left-3 right-3 md:left-auto md:right-6 md:bottom-[104px] md:w-96 z-40 hidden animate-fade-in">
+    <div class="p-3 bg-slate-900/95 backdrop-blur-xl border border-amber-500/40 rounded-2xl shadow-2xl flex items-center justify-between gap-2.5 text-white">
       <div class="flex items-center gap-2.5 min-w-0">
-        <div class="w-10 h-10 rounded-xl bg-amber-500 text-slate-950 flex items-center justify-center font-black text-xl flex-none shadow-md">📲</div>
+        <div class="w-9 h-9 rounded-xl bg-amber-500 text-slate-950 flex items-center justify-center font-black text-lg flex-none shadow-md">📲</div>
         <div class="truncate">
           <div class="text-xs font-bold text-white">Photo Earn অ্যাপ</div>
           <div class="text-[11px] text-gray-400 truncate">ফোনে ইনস্টল করে সহজে ইনকাম করুন</div>
         </div>
       </div>
       <div class="flex items-center gap-1.5 flex-none">
-        <button onclick="window.APP.triggerPwaInstall()" class="px-3 py-1.5 bg-gradient-to-r from-amber-500 to-rose-500 hover:from-amber-600 hover:to-rose-600 text-slate-950 font-black text-xs rounded-xl shadow whitespace-nowrap active:scale-95">⬇ ইনস্টল</button>
+        <button onclick="window.APP.triggerPwaInstall()" class="px-2.5 py-1.5 bg-gradient-to-r from-amber-500 to-rose-500 hover:from-amber-600 hover:to-rose-600 text-slate-950 font-black text-xs rounded-xl shadow whitespace-nowrap active:scale-95">⬇ ইনস্টল</button>
         <button onclick="window.APP.dismissPwaBanner()" class="w-7 h-7 text-gray-400 hover:text-white text-sm flex items-center justify-center">&times;</button>
       </div>
     </div>
@@ -4729,14 +4722,14 @@ class PicPrizeApp {
 
   <!-- ================= LIVE CHAT WIDGET (GALLERYBD STYLE) ================= -->
   <!-- Floating Live Chat Button -->
-  <button id="lc-btn" type="button" aria-label="Live Chat" class="fixed bottom-16 right-4 md:bottom-6 md:right-6 z-40 flex items-center gap-2 px-4 py-2.5 rounded-full bg-gradient-to-r from-amber-500 via-rose-500 to-indigo-600 text-white font-bold text-xs shadow-2xl hover:scale-105 active:scale-95 transition-all">
+  <button id="lc-btn" type="button" aria-label="Live Chat" class="fixed bottom-[52px] right-3 md:bottom-[54px] md:right-6 z-40 flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-amber-500 via-rose-500 to-indigo-600 text-white font-bold text-xs shadow-2xl hover:scale-105 active:scale-95 transition-all">
     <span class="text-base">💬</span>
     <span>লাইভ চ্যাট</span>
     <span id="lc-badge" class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping"></span>
   </button>
 
   <!-- Live Chat Dialog Box -->
-  <div id="lc-box" class="fixed bottom-16 right-4 md:bottom-20 md:right-6 z-50 w-[340px] max-w-[calc(100vw-24px)] h-[470px] max-h-[calc(100vh-100px)] hidden flex-col rounded-3xl bg-slate-950/95 backdrop-blur-2xl border border-slate-700/60 shadow-2xl overflow-hidden text-white animate-fade-in">
+  <div id="lc-box" class="fixed bottom-[52px] right-3 md:bottom-[54px] md:right-6 z-50 w-[340px] max-w-[calc(100vw-24px)] h-[470px] max-h-[calc(100vh-110px)] hidden flex-col rounded-3xl bg-slate-950/95 backdrop-blur-2xl border border-slate-700/60 shadow-2xl overflow-hidden text-white animate-fade-in">
     <!-- Header -->
     <div class="p-3.5 bg-gradient-to-r from-amber-500/20 via-rose-500/20 to-slate-900 border-b border-slate-800 flex items-center justify-between">
       <div class="flex items-center gap-2">
