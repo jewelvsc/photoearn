@@ -449,7 +449,7 @@ class PicPrizeApp {
         priceBadge = `<span class="badge-free">FREE</span>`;
       }
 
-      const creatorPin = photo.authorPin || photo.authorName || "creator";
+      const creatorPin = photo.authorId || photo.authorPin || photo.authorName || "creator";
       const isFollowing = this.db.isFollowing(creatorPin);
 
       html += `
@@ -578,7 +578,7 @@ class PicPrizeApp {
       return;
     }
 
-    if (this.activeUser.pin === creatorPin) {
+    if (this.activeUser.pin === creatorPin || (this.activeUser.creatorId && this.activeUser.creatorId === creatorPin)) {
       this.showToast("আপনি নিজেকে ফলো করতে পারবেন না!", "warning");
       return;
     }
@@ -721,13 +721,14 @@ class PicPrizeApp {
     const content = document.getElementById("photo-details-content");
     if (!modal || !content) return;
 
+    const modalCreatorId = photo.authorId || photo.authorPin || photo.authorName || "creator";
     content.innerHTML = `
       <div class="relative rounded-2xl overflow-hidden bg-black/90 max-h-[65vh] flex items-center justify-center">
         <img src="${photo.url}" alt="${photo.title}" class="max-h-[60vh] max-w-full object-contain mx-auto">
         <div class="absolute bottom-3 left-3 bg-black/70 backdrop-blur-md px-3 py-1.5 rounded-xl text-xs text-gray-200 flex items-center gap-2">
           <span>ছবি সৌজন্যে: <b class="text-indigo-400">${photo.authorName}</b></span>
-          <button type="button" onclick="window.APP.handleToggleFollow('${photo.authorPin || photo.authorName}', '${photo.authorName || 'শিল্পী'}', event)" class="follow-btn-${photo.authorPin || photo.authorName} text-[10px] px-2 py-0.5 rounded-full font-bold transition-all ${this.db.isFollowing(photo.authorPin || photo.authorName) ? 'bg-indigo-500/20 text-indigo-400 border border-indigo-500/40' : 'bg-white/20 text-white hover:text-indigo-300 border border-white/30'}">
-            ${this.db.isFollowing(photo.authorPin || photo.authorName) ? '✓ ফলো করছেন' : '+ ফলো'}
+          <button type="button" onclick="window.APP.handleToggleFollow('${modalCreatorId}', '${photo.authorName || 'শিল্পী'}', event)" class="follow-btn-${modalCreatorId} text-[10px] px-2 py-0.5 rounded-full font-bold transition-all ${this.db.isFollowing(modalCreatorId) ? 'bg-indigo-500/20 text-indigo-400 border border-indigo-500/40' : 'bg-white/20 text-white hover:text-indigo-300 border border-white/30'}">
+            ${this.db.isFollowing(modalCreatorId) ? '✓ ফলো করছেন' : '+ ফলো'}
           </button>
         </div>
       </div>
@@ -987,10 +988,15 @@ class PicPrizeApp {
           date: new Date().toISOString()
         };
 
-        await this.db.addPhoto(newPhoto);
+        const savedPhoto = await this.db.addPhoto(newPhoto);
+        if (savedPhoto && savedPhoto.error) {
+          this.showToast(savedPhoto.message || "ছবি আপলোড করা যায়নি!", "error");
+          return;
+        }
+        const liveApproved = savedPhoto && typeof savedPhoto.approved === "boolean" ? savedPhoto.approved : isApproved;
 
         // ইউজারের ইনবক্সে তাৎক্ষণিক নোটিফিকেশন দেওয়া
-        if (isApproved) {
+        if (liveApproved) {
           await this.db.sendNotification(this.activeUser.pin, {
             title: "🎉 আপনার ছবি সরাসরি লাইভ হয়েছে!",
             message: `আপনার "${title}" ছবিটি সরাসরি গ্যালারিতে লাইভ হয়েছে। এখনই বন্ধুদের সাথে শেয়ার করে ভোট জোগাড় করুন!`,
@@ -1478,10 +1484,11 @@ class PicPrizeApp {
     }
 
     const currentPin = this.activeUser ? this.activeUser.pin : "";
+    const currentSenderId = this.activeUser ? (this.activeUser.creatorId || `u_${this.activeUser.pin}`) : (localStorage.getItem("peg_guest_chat_id") || "");
     let html = "";
     messages.forEach(msg => {
-      const isMe = currentPin && msg.pin === currentPin;
-      const isAdmin = msg.isAdmin || msg.pin === "1802";
+      const isMe = (currentSenderId && msg.senderId === currentSenderId) || (currentPin && msg.pin === currentPin);
+      const isAdmin = !!msg.isAdmin;
       const timeStr = msg.time ? new Date(msg.time).toLocaleTimeString("bn-BD", { hour: "2-digit", minute: "2-digit" }) : "";
 
       if (isMe) {

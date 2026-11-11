@@ -137,11 +137,9 @@ window.APP_CONFIG = {
     promptDelaySeconds: 40
   },
 
-  // ১১. Firebase Realtime Database
+  // ১১. সিকিউরিটি: ক্লায়েন্ট-সাইড থেকে Firebase ডাইরেক্ট এক্সেস ও পিন সম্পূর্ণ বন্ধ রাখা হয়েছে
+  // সমস্ত ডাটা ও অ্যাডমিন যাচাই নিরাপদ Hostinger PHP ব্যাকএন্ড (api.php) দিয়ে পরিচালিত হবে।
   firebase: {
-    databaseURL: "https://photo-earn-official-default-rtdb.firebaseio.com"
-  },
-
-  // ১২. সিকিউরিটি ও অ্যাডমিন পিন
-  adminPin: "1802"
+    databaseURL: ""
+  }
 };

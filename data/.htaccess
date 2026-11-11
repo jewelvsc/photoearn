@@ -1,6 +1,10 @@
-# Protect data files from direct web access
-<FilesMatch "\.(json|lock)$">
-    Order allow,deny
-    Deny from all
+# Protect private database, auth hashes, and lock files from direct HTTP access
+<FilesMatch "\.(json|lock|txt|log)$">
+    <IfModule mod_authz_core.c>
+        Require all denied
+    </IfModule>
+    <IfModule !mod_authz_core.c>
+        Order allow,deny
+        Deny from all
+    </IfModule>
 </FilesMatch>
-

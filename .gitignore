@@ -5,13 +5,21 @@ Desktop.ini
 $RECYCLE.BIN/
 .DS_Store
 
-# Temporary scratch scripts
+# Temporary scratch scripts & archives
 analyze.py
 bundle.py
 bundle_admin.py
 detailed_inspect.py
 scratch/
 photo-earn-production.zip
+
+# Runtime database & user uploads (never commit live user data/auth hashes)
+data/*.json
+data/*.lock
+uploads/*.jpg
+uploads/*.jpeg
+uploads/*.png
+uploads/*.webp
 
 # Logs
 *.log
