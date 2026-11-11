@@ -1105,9 +1105,23 @@ class PicPrizeApp {
   }
 
   // ১০. লগইন ও রেজিস্ট্রেশন মডাল
-  openAuthModal() {
+  openAuthModal(initialTab = "login") {
     const modal = document.getElementById("auth-modal");
-    if (modal) modal.classList.remove("hidden");
+    if (!modal) return;
+    modal.classList.remove("hidden");
+
+    // পেন্ডিং রেফারেল কোড থাকলে অটো-ফিল করা
+    const pendingRef = localStorage.getItem("peg_pending_ref") || "";
+    const refInput = document.getElementById("reg-ref");
+    if (refInput && pendingRef && !refInput.value) {
+      refInput.value = pendingRef;
+    }
+
+    // যদি রেফারেল লিংক থেকে আসা হয় বা সরাসরি রেজিস্ট্রেশন চাওয়া হয়
+    if (initialTab === "register" || (pendingRef && !this.activeUser)) {
+      const regTabBtn = document.getElementById("auth-tab-reg-btn");
+      if (regTabBtn) regTabBtn.click();
+    }
   }
 
   async handleLogin(e) {
@@ -1132,7 +1146,10 @@ class PicPrizeApp {
     const name = document.getElementById("reg-name").value.trim();
     const phone = document.getElementById("reg-phone").value.trim();
     const pin = document.getElementById("reg-pin").value.trim();
-    const ref = document.getElementById("reg-ref").value.trim();
+    let ref = document.getElementById("reg-ref") ? document.getElementById("reg-ref").value.trim() : "";
+    if (!ref) {
+      ref = localStorage.getItem("peg_pending_ref") || "";
+    }
 
     if (!name || !phone || !pin) {
       this.showToast("দয়া করে নাম, মোবাইল নম্বর এবং ৪ ডিজিটের পিন দিন!", "warning");
@@ -1148,6 +1165,7 @@ class PicPrizeApp {
     if (res.success && res.user) {
       this.activeUser = res.user;
       localStorage.setItem("peg_auth_pin", pin);
+      localStorage.removeItem("peg_pending_ref");
       this.updateUserNavButton();
       this.closeModals();
       this.showToast(`একাউন্ট সফলভাবে তৈরি হয়েছে! বোনাস ২০ পয়েন্ট যোগ হয়েছে। 🎉`, "success");
@@ -1172,6 +1190,7 @@ class PicPrizeApp {
     if (fresh && !modal.classList.contains("hidden")) {
       this.activeUser = fresh;
       this._renderProfileContent(content, fresh, false);
+      this.updateUserNavButton();
     }
   }
 
@@ -1815,7 +1834,12 @@ class PicPrizeApp {
     const ref = params.get("ref");
     if (ref) {
       localStorage.setItem("peg_pending_ref", ref);
-      this.showToast(`রেফারেল আমন্ত্রণ পেয়েছেন! একাউন্ট খুলে ২০ পয়েন্ট নিন।`, "info");
+      this.showToast(`🎁 রেফারেল আমন্ত্রণ পেয়েছেন! একাউন্ট খুলে ২০ পয়েন্ট নিন।`, "info");
+      const refInput = document.getElementById("reg-ref");
+      if (refInput) refInput.value = ref;
+      if (!this.activeUser) {
+        setTimeout(() => this.openAuthModal("register"), 800);
+      }
     }
     const view = params.get("view");
     if (view) {

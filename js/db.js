@@ -278,8 +278,33 @@ class AppDB {
     this.saveUser(newUser);
     const cleanRef = (refCode || "").trim().toUpperCase();
     const refPin = cleanRef.startsWith("REF") ? cleanRef.slice(3) : cleanRef;
-    if (refPin && refPin !== pin) {
-      await this.creditUserPoints(refPin, this.cfg.referralPointsPerUser || 10, { isReferral: true });
+    const cleanPhone = (refCode || "").replace(/\D/g, "");
+    const allUsers = JSON.parse(localStorage.getItem("peg_users") || "{}");
+    let targetPin = "";
+
+    if (allUsers[refPin]) targetPin = refPin;
+    else if (allUsers[cleanRef]) targetPin = cleanRef;
+    else {
+      for (const k in allUsers) {
+        const u = allUsers[k];
+        const uPin = String(k || "").toUpperCase();
+        const uRef = String(u.refCode || ("REF" + k)).toUpperCase();
+        const uPhone = String(u.phone || "").replace(/\D/g, "");
+        if (
+          uPin === cleanRef ||
+          uPin === refPin ||
+          uRef === cleanRef ||
+          uRef === ("REF" + cleanRef) ||
+          (cleanPhone && cleanPhone.length >= 10 && uPhone && uPhone === cleanPhone)
+        ) {
+          targetPin = k;
+          break;
+        }
+      }
+    }
+
+    if (targetPin && targetPin !== pin) {
+      await this.creditUserPoints(targetPin, this.cfg.referralPointsPerUser || 10, { isReferral: true });
     }
     return { success: true, user: newUser };
   }

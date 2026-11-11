@@ -779,7 +779,7 @@ switch ($action) {
         $pin   = cleanText($input['pin'] ?? '', 20);
         $name  = cleanText($input['name'] ?? '', 60);
         $phone = cleanText($input['phone'] ?? '', 20);
-        $ref   = strtoupper(cleanText($input['ref'] ?? '', 30));
+        $rawRef = cleanText($input['ref'] ?? '', 40);
 
         if (strlen($pin) < 4 || strpos(strtolower($pin), 'demo_') === 0 || $name === '' || $phone === '') {
             echo json_encode(["success" => false, "message" => "সঠিক তথ্য দিন! পিন কমপক্ষে ৪ সংখ্যার হতে হবে।"]);
@@ -804,17 +804,50 @@ switch ($action) {
             "verified"       => false,
             "telegramBonus"  => false,
             "refCode"        => "REF" . $pin,
-            "referredBy"     => $ref,
+            "referredBy"     => $rawRef,
             "created"        => date('c')
         ];
 
         // রেফারেল বোনাস প্রদান (১০ পয়েন্ট = ৳১.০০)
-        if ($ref !== '') {
-            $refPin = (strpos($ref, 'REF') === 0) ? substr($ref, 3) : $ref;
-            if ($refPin !== '' && $refPin !== $pin && isset($users[$refPin])) {
-                if (creditUserInMap($users, $refPin, 10, true) !== null) {
+        // নিখুঁত কেস-ইনসেনসিটিভ, স্পেস-ক্লিন ও ফোন/পিন/রেফকোড ম্যাচিং
+        if ($rawRef !== '') {
+            $cleanRef = strtoupper(preg_replace('/[^a-zA-Z0-9]/', '', $rawRef));
+            $refCandidate = (strpos($cleanRef, 'REF') === 0) ? substr($cleanRef, 3) : $cleanRef;
+            $cleanPhone = preg_replace('/[^0-9]/', '', $rawRef);
+            $targetRefPin = '';
+
+            // ১. সরাসরি পিন ম্যাচ
+            if (isset($users[$refCandidate])) {
+                $targetRefPin = $refCandidate;
+            } elseif (isset($users[$rawRef])) {
+                $targetRefPin = $rawRef;
+            } else {
+                // ২. কেস-ইনসেনসিটিভ পিন, refCode অথবা ফোন নাম্বার ম্যাচ
+                foreach ($users as $upin => $u) {
+                    $uPinClean = strtoupper(preg_replace('/[^a-zA-Z0-9]/', '', (string)$upin));
+                    $uRefClean = strtoupper(preg_replace('/[^a-zA-Z0-9]/', '', (string)($u['refCode'] ?? ('REF' . $upin))));
+                    $uPhoneClean = preg_replace('/[^0-9]/', '', (string)($u['phone'] ?? ''));
+
+                    if (
+                        $uPinClean === $cleanRef ||
+                        $uPinClean === $refCandidate ||
+                        $uRefClean === $cleanRef ||
+                        $uRefClean === ('REF' . $cleanRef) ||
+                        ($cleanPhone !== '' && strlen($cleanPhone) >= 10 && $uPhoneClean !== '' && $uPhoneClean === $cleanPhone)
+                    ) {
+                        $targetRefPin = $upin;
+                        break;
+                    }
+                }
+            }
+
+            // নিজেকে রেফার করা যাবে না
+            if ($targetRefPin !== '' && $targetRefPin !== $pin && isset($users[$targetRefPin])) {
+                $refUser = &$users[$targetRefPin];
+                $newUser['referredBy'] = $refUser['refCode'] ?? ('REF' . $targetRefPin);
+                if (creditUserInMap($users, $targetRefPin, 10, true) !== null) {
                     $notifs = readJson($notifsFile, ["personal" => [], "broadcast" => []]);
-                    addNotification($notifs, $refPin, "🎁 নতুন রেফারেল বোনাস!", "আপনার রেফার লিংকে \"{$name}\" যোগ দিয়েছেন! আপনার ব্যালেন্সে +৳1.00 (10 পয়েন্ট) যোগ হয়েছে।", "ok");
+                    addNotification($notifs, $targetRefPin, "🎁 নতুন রেফারেল বোনাস!", "আপনার রেফার লিংকে \"{$name}\" যোগ দিয়েছেন! আপনার ব্যালেন্সে +৳1.00 (10 পয়েন্ট) যোগ হয়েছে।", "ok");
                     writeJson($notifsFile, $notifs);
                 }
             }
