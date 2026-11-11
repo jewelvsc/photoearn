@@ -44,6 +44,7 @@
   <meta name="keywords" content="photo earn, photo contest, ছবি তুলে টাকা আয়, photo gallery, photo earn gallery">
   <link rel="canonical" href="https://photoearn.chasherdokan.com/">
   <meta property="og:site_name" content="Photo Earn">
+  <meta property="fb:app_id" content="966242223397117">
   <meta property="og:title" content="Photo Earn - সেরা ছবির জন্য প্রতিদিন নগদ বিকাশ পুরস্কার!">
   <meta property="og:description" content="আপনার তোলা ছবি আপলোড করুন আর জিতে নিন ২৪ ঘণ্টা, ৭ দিন ও ৩০ দিনের মেগা ক্যাশ প্রাইজ।">
   <meta property="og:type" content="website">
@@ -1322,10 +1323,14 @@ html.dark .photo-img-wrap {
       <div id="auth-login-box">
         <form onsubmit="window.APP.handleLogin(event)" class="space-y-3">
           <div>
-            <label class="text-xs text-gray-300 block mb-1">আপনার ৪ সংখ্যার গোপন পিন (PIN)</label>
-            <input type="password" id="login-pin" maxlength="10" placeholder="যেমন: 1234" required class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white placeholder-gray-500 outline-none focus:border-indigo-500 text-center text-lg tracking-widest font-mono">
+            <label class="text-xs font-bold text-gray-800 dark:text-gray-200 block mb-1">মোবাইল নম্বর</label>
+            <input type="tel" id="login-phone" placeholder="যেমন: 017xxxxxxxx" required class="w-full bg-gray-50 dark:bg-slate-900 border border-gray-300 dark:border-slate-700 rounded-xl px-3 py-2 text-xs text-gray-900 dark:text-white placeholder-gray-500 outline-none focus:border-indigo-500 font-mono font-medium">
           </div>
-          <button type="submit" class="w-full py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl text-xs shadow-lg transition-transform active:scale-95">
+          <div>
+            <label class="text-xs font-bold text-gray-800 dark:text-gray-200 block mb-1">৪ সংখ্যার গোপন পিন (PIN)</label>
+            <input type="password" id="login-pin" maxlength="10" placeholder="যেমন: 1234" required class="w-full bg-gray-50 dark:bg-slate-900 border border-gray-300 dark:border-slate-700 rounded-xl px-3 py-2 text-xs text-gray-900 dark:text-white placeholder-gray-500 outline-none focus:border-indigo-500 text-center text-lg tracking-widest font-mono font-bold">
+          </div>
+          <button type="submit" class="w-full py-2.5 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold rounded-xl text-xs shadow-lg transition-transform active:scale-95">
             লগইন করুন
           </button>
         </form>
@@ -1828,20 +1833,20 @@ class AppDB {
     }
   }
 
-  // ৬. ইউজার লগইন
-  async loginUser(pin) {
-    const res = await this.apiCall("login", { pin });
+  // ৬. ইউজার লগইন (মোবাইল নম্বর ও পিন)
+  async loginUser(pin, phone = "") {
+    const res = await this.apiCall("login", { pin, phone });
     if (res && res.data) {
       if (res.data.success && res.data.user) {
         this.saveUser(res.data.user);
         return { success: true, user: res.data.user };
       }
-      return { success: false, message: res.data.message || "ভুল পিন! একাউন্ট না থাকলে রেজিস্ট্রেশন করুন।" };
+      return { success: false, message: res.data.message || "ভুল মোবাইল নম্বর বা পিন! একাউন্ট না থাকলে নতুন একাউন্ট খুলুন।" };
     }
 
-    const localUser = this.getUser(pin);
+    const localUser = this.getUser(pin) || this.getUser(phone);
     if (localUser) return { success: true, user: localUser };
-    return { success: false, message: "ভুল পিন! একাউন্ট না থাকলে রেজিস্ট্রেশন করুন।" };
+    return { success: false, message: "ভুল মোবাইল নম্বর বা পিন! একাউন্ট না থাকলে নতুন একাউন্ট খুলুন।" };
   }
 
   // ৭. ইউজার রেজিস্ট্রেশন
@@ -2010,17 +2015,47 @@ class AppDB {
     return true;
   }
 
-  getUser(pin) {
-    if (!pin) return null;
+  getUser(identifier) {
+    if (!identifier) return null;
+    const clean = String(identifier).trim();
+    const cleanPhone = clean.replace(/\D/g, "");
     const users = JSON.parse(localStorage.getItem("peg_users") || "{}");
-    return users[pin] || null;
+    if (users[clean]) return users[clean];
+    for (const k in users) {
+      const u = users[k];
+      if (!u) continue;
+      if (u.userId === clean || u.id === clean || u.pin === clean) return u;
+      const uPhone = String(u.phone || "").replace(/\D/g, "");
+      if (cleanPhone.length >= 10 && uPhone.length >= 10 && (uPhone === cleanPhone || uPhone.slice(-10) === cleanPhone.slice(-10))) {
+        return u;
+      }
+    }
+    return null;
   }
 
   saveUser(userData) {
-    if (!userData || !userData.pin) return;
+    if (!userData) return;
+    const key = userData.userId || userData.id || userData.pin;
+    if (!key) return;
     const users = JSON.parse(localStorage.getItem("peg_users") || "{}");
-    users[userData.pin] = userData;
+    users[key] = userData;
+    if (userData.pin && userData.pin !== key) users[userData.pin] = userData;
     localStorage.setItem("peg_users", JSON.stringify(users));
+  }
+
+  async toggleBlockUser(userId) {
+    const res = await this.apiCall("toggle_block_user", { userId });
+    return res && res.data ? res.data : { success: false, message: "সার্ভারে যোগাযোগ ব্যর্থ!" };
+  }
+
+  async deleteUser(userId) {
+    const res = await this.apiCall("delete_user", { userId });
+    return res && res.data ? res.data : { success: false, message: "সার্ভারে যোগাযোগ ব্যর্থ!" };
+  }
+
+  async syncMissedReferrals() {
+    const res = await this.apiCall("sync_missed_referrals");
+    return res && res.data ? res.data : { success: false, message: "সার্ভারে যোগাযোগ ব্যর্থ!" };
   }
 
   async fetchFirebaseUser(pin) {
@@ -3514,18 +3549,21 @@ class PicPrizeApp {
 
   async handleLogin(e) {
     e.preventDefault();
-    const pin = document.getElementById("login-pin").value.trim();
+    const phone = document.getElementById("login-phone") ? document.getElementById("login-phone").value.trim() : "";
+    const pin = document.getElementById("login-pin") ? document.getElementById("login-pin").value.trim() : "";
     if (!pin) return;
 
-    const res = await this.db.loginUser(pin);
+    const res = await this.db.loginUser(pin, phone);
     if (res.success && res.user) {
       this.activeUser = res.user;
       localStorage.setItem("peg_auth_pin", pin);
+      if (phone || res.user.phone) localStorage.setItem("peg_auth_phone", phone || res.user.phone);
+      if (res.user.userId || res.user.id) localStorage.setItem("peg_auth_uid", res.user.userId || res.user.id);
       this.updateUserNavButton();
       this.closeModals();
-      this.showToast(`স্বাগতম, ${res.user.name}! আপনি লগইন করেছেন।`, "success");
+      this.showToast(`স্বাগতম, ${res.user.name}! আপনি সফলভাবে লগইন করেছেন।`, "success");
     } else {
-      this.showToast(res.message || "ভুল পিন! একাউন্ট না থাকলে রেজিস্ট্রেশন করুন।", "error");
+      this.showToast(res.message || "ভুল মোবাইল নম্বর বা পিন! একাউন্ট না থাকলে নতুন একাউন্ট খুলুন।", "error");
     }
   }
 

@@ -1126,18 +1126,21 @@ class PicPrizeApp {
 
   async handleLogin(e) {
     e.preventDefault();
-    const pin = document.getElementById("login-pin").value.trim();
+    const phone = document.getElementById("login-phone") ? document.getElementById("login-phone").value.trim() : "";
+    const pin = document.getElementById("login-pin") ? document.getElementById("login-pin").value.trim() : "";
     if (!pin) return;
 
-    const res = await this.db.loginUser(pin);
+    const res = await this.db.loginUser(pin, phone);
     if (res.success && res.user) {
       this.activeUser = res.user;
       localStorage.setItem("peg_auth_pin", pin);
+      if (phone || res.user.phone) localStorage.setItem("peg_auth_phone", phone || res.user.phone);
+      if (res.user.userId || res.user.id) localStorage.setItem("peg_auth_uid", res.user.userId || res.user.id);
       this.updateUserNavButton();
       this.closeModals();
-      this.showToast(`স্বাগতম, ${res.user.name}! আপনি লগইন করেছেন।`, "success");
+      this.showToast(`স্বাগতম, ${res.user.name}! আপনি সফলভাবে লগইন করেছেন।`, "success");
     } else {
-      this.showToast(res.message || "ভুল পিন! একাউন্ট না থাকলে রেজিস্ট্রেশন করুন।", "error");
+      this.showToast(res.message || "ভুল মোবাইল নম্বর বা পিন! একাউন্ট না থাকলে নতুন একাউন্ট খুলুন।", "error");
     }
   }
 

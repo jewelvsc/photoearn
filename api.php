@@ -59,6 +59,7 @@ $followersFile     = $dataDir . '/followers.json';
 $adminAuthFile     = $dataDir . '/admin_auth.json';
 $adminAttemptsFile = $dataDir . '/admin_attempts.json';
 $loginAttemptsFile = $dataDir . '/login_attempts.json';
+$ledgerFile        = $dataDir . '/referrals_ledger.json';
 
 // প্রাথমিক অ্যাডমিন পিনের SHA-256 হ্যাশ (সোর্স কোডে প্লেইনটেক্সট পিন রাখা হয়নি)
 define('PEG_INIT_PIN_HASH', '3db9f914c5ae28fee256bd211cbd48e6824b56fc3ebed4f5221637de6363912a');
@@ -120,6 +121,168 @@ function readPhotosSafe($photosFile) {
         writeJson($photosFile, $photos);
     }
     return $photos;
+}
+
+function readUsersSafe($usersFile) {
+    $raw = readJson($usersFile, []);
+    if (!is_array($raw)) return [];
+    $users = [];
+    $changed = false;
+    foreach ($raw as $k => $u) {
+        if (!is_array($u)) continue;
+        $id = trim((string)($u['userId'] ?? ($u['id'] ?? '')));
+        if ($id === '') {
+            $pin = trim((string)($u['pin'] ?? $k));
+            $id = 'u_' . (preg_match('/^[a-zA-Z0-9_]+$/', $pin) ? $pin : substr(md5($pin), 0, 10));
+            $u['userId'] = $id;
+            $u['id']     = $id;
+            $changed = true;
+        }
+        if (empty($u['pin'])) {
+            $u['pin'] = (string)$k;
+            $changed = true;
+        }
+        if (empty($u['creatorId'])) {
+            $u['creatorId'] = makeCreatorId($u['pin'] ?? $id);
+            $changed = true;
+        }
+        if (empty($u['refCode'])) {
+            $u['refCode'] = 'REF' . ($u['pin'] ?? substr($id, 2, 6));
+            $changed = true;
+        }
+        if (!isset($u['blocked'])) {
+            $u['blocked'] = false;
+            $changed = true;
+        }
+        $users[$id] = $u;
+    }
+    if ($changed) {
+        writeJson($usersFile, $users);
+    }
+    return $users;
+}
+
+function findUserByIdentifier($users, $identifier) {
+    $clean = trim((string)$identifier);
+    if ($clean === '') return null;
+    $cleanPhone = preg_replace('/[^0-9]/', '', $clean);
+
+    if (isset($users[$clean])) return $users[$clean];
+
+    foreach ($users as $id => $u) {
+        $uId    = (string)($u['userId'] ?? ($u['id'] ?? ''));
+        $uPin   = (string)($u['pin'] ?? '');
+        $uPhone = preg_replace('/[^0-9]/', '', (string)($u['phone'] ?? ''));
+        $uCid   = (string)($u['creatorId'] ?? '');
+
+        if ($uId === $clean || $uPin === $clean || $uCid === $clean) return $u;
+        if ($cleanPhone !== '' && strlen($cleanPhone) >= 10 && $uPhone !== '') {
+            if ($uPhone === $cleanPhone || (strlen($uPhone) >= 10 && substr($uPhone, -10) === substr($cleanPhone, -10))) {
+                return $u;
+            }
+        }
+    }
+    return null;
+}
+
+function findUserByCredentials($users, $phone, $pin) {
+    $cleanPhone = preg_replace('/[^0-9]/', '', (string)$phone);
+    $cleanPin   = trim((string)$pin);
+    if ($cleanPin === '') return null;
+
+    if ($cleanPhone !== '') {
+        foreach ($users as $id => $u) {
+            $uPhone = preg_replace('/[^0-9]/', '', (string)($u['phone'] ?? ''));
+            $uPin   = trim((string)($u['pin'] ?? ''));
+            if ($uPhone !== '' && (strlen($uPhone) >= 10 && strlen($cleanPhone) >= 10 && substr($uPhone, -10) === substr($cleanPhone, -10))) {
+                if ($uPin === $cleanPin) {
+                    return $u;
+                }
+            }
+        }
+    }
+
+    // Legacy fallback: single PIN match
+    $matches = [];
+    foreach ($users as $id => $u) {
+        if (trim((string)($u['pin'] ?? '')) === $cleanPin) {
+            $matches[] = $u;
+        }
+    }
+    if (count($matches) === 1) {
+        return $matches[0];
+    }
+    return null;
+}
+
+function syncMissedReferralsSafe(&$users, &$notifs, $ledgerFile) {
+    $ledger = readJson($ledgerFile, []);
+    $recoveredCount = 0;
+    $changed = false;
+
+    foreach ($users as $refereeId => &$refereeUser) {
+        $rawRef = trim((string)($refereeUser['referredBy'] ?? ''));
+        if ($rawRef === '') continue;
+
+        $refereeKey = $refereeUser['userId'] ?? $refereeId;
+        if (isset($ledger[$refereeKey])) continue;
+
+        $cleanRef = strtoupper(preg_replace('/[^a-zA-Z0-9]/', '', $rawRef));
+        $refCandidate = (strpos($cleanRef, 'REF') === 0) ? substr($cleanRef, 3) : $cleanRef;
+        $cleanPhoneRef = preg_replace('/[^0-9]/', '', $rawRef);
+        $targetRefId = null;
+
+        foreach ($users as $uId => $u) {
+            $uPinClean   = strtoupper(preg_replace('/[^a-zA-Z0-9]/', '', (string)($u['pin'] ?? '')));
+            $uRefClean   = strtoupper(preg_replace('/[^a-zA-Z0-9]/', '', (string)($u['refCode'] ?? '')));
+            $uPhoneClean = preg_replace('/[^0-9]/', '', (string)($u['phone'] ?? ''));
+            $uIdClean    = strtoupper($uId);
+
+            if (
+                $uIdClean === $cleanRef ||
+                $uPinClean === $cleanRef ||
+                $uPinClean === $refCandidate ||
+                $uRefClean === $cleanRef ||
+                $uRefClean === ('REF' . $cleanRef) ||
+                ($cleanPhoneRef !== '' && strlen($cleanPhoneRef) >= 10 && $uPhoneClean !== '' && substr($uPhoneClean, -10) === substr($cleanPhoneRef, -10))
+            ) {
+                $targetRefId = $uId;
+                break;
+            }
+        }
+
+        if ($targetRefId !== null && $targetRefId !== $refereeId && isset($users[$targetRefId])) {
+            $refereeName = $refereeUser['name'] ?? 'নতুন ব্যবহারকারী';
+            if (creditUserInMap($users, $targetRefId, 10, true) !== null) {
+                $ledger[$refereeKey] = [
+                    "referrerId"    => $targetRefId,
+                    "refereeName"   => $refereeName,
+                    "date"          => date('c'),
+                    "autoRecovered" => true
+                ];
+                $targetPin = $users[$targetRefId]['pin'] ?? $targetRefId;
+                addNotification(
+                    $notifs,
+                    $targetPin,
+                    "🎁 রেফারেল বোনাস রিকভারি!",
+                    "আপনার রেফার লিংকে পূর্বে যুক্ত \"{$refereeName}\"-এর রেফারেল বোনাস (+৳1.00 / 10 পয়েন্ট) আপনার অ্যাকাউন্টে সফলভাবে যোগ হয়েছে।",
+                    "ok"
+                );
+                $recoveredCount++;
+                $changed = true;
+            }
+        }
+    }
+    unset($refereeUser);
+
+    if ($changed) {
+        writeJson($ledgerFile, $ledger);
+    }
+    return [
+        "changed"        => $changed,
+        "recoveredCount" => $recoveredCount,
+        "ledger"         => $ledger
+    ];
 }
 
 function cleanText($str, $maxLen = 200) {
@@ -194,8 +357,21 @@ function addNotification(&$notifs, $pin, $title, $message, $type = 'info') {
 }
 
 function creditUserInMap(&$users, $pin, $addPoints, $isReferral = false) {
-    if (!$pin || strpos(strtolower($pin), 'demo_') === 0 || !isset($users[$pin])) return null;
-    $u = &$users[$pin];
+    if (!$pin || strpos(strtolower($pin), 'demo_') === 0) return null;
+    $targetKey = null;
+    if (isset($users[$pin])) {
+        $targetKey = $pin;
+    } else {
+        foreach ($users as $k => $u) {
+            if ($k === $pin || ($u['userId'] ?? '') === $pin || ($u['pin'] ?? '') === $pin) {
+                $targetKey = $k;
+                break;
+            }
+        }
+    }
+    if ($targetKey === null || !isset($users[$targetKey])) return null;
+
+    $u = &$users[$targetKey];
     $basePts = isset($u['points']) ? intval($u['points']) : intval(round(floatval($u['taka'] ?? 0) / PEG_TAKA_PER_POINT));
     $u['points'] = max(0, $basePts + intval($addPoints));
     $u['taka']   = number_format($u['points'] * PEG_TAKA_PER_POINT, 2, '.', '');
@@ -538,6 +714,15 @@ switch ($action) {
             exit;
         }
 
+        if ($authorPin !== '') {
+            $users = readUsersSafe($usersFile);
+            $author = findUserByIdentifier($users, $authorPin);
+            if ($author && !empty($author['blocked'])) {
+                echo json_encode(["success" => false, "message" => "🚫 আপনার অ্যাকাউন্টটি ব্লক করা আছে। ছবি আপলোড করা যাবে না।"]);
+                exit;
+            }
+        }
+
         // সার্ভার থেকেই settings ও সর্বোচ্চ ছবির লিমিট যাচাই (অতিরিক্ত ফাইল সেভ হওয়া রোধ)
         $settings   = readJson($settingsFile, ["auto_approve" => false]);
         $maxPhotos  = max(0, intval($settings['max_photos_per_user'] ?? 0));
@@ -614,6 +799,15 @@ switch ($action) {
         if ($photoId === '') {
             echo json_encode(["success" => false, "message" => "ছবি আইডি নেই"]);
             exit;
+        }
+
+        if ($voterPin !== '') {
+            $users = readUsersSafe($usersFile);
+            $voter = findUserByIdentifier($users, $voterPin);
+            if ($voter && !empty($voter['blocked'])) {
+                echo json_encode(["success" => false, "message" => "🚫 আপনার অ্যাকাউন্টটি ব্লক করা আছে।"]);
+                exit;
+            }
         }
 
         $votesLog = readJson($votesLogFile, []);
@@ -727,15 +921,24 @@ switch ($action) {
             exit;
         }
 
+        $phone = cleanText($input['phone'] ?? '', 20);
         $pin   = cleanText($input['pin'] ?? '', 20);
-        $users = readJson($usersFile, []);
-        if ($pin !== '' && isset($users[$pin])) {
+        $users = readUsersSafe($usersFile);
+
+        $matchedUser = findUserByCredentials($users, $phone, $pin);
+
+        if ($matchedUser !== null) {
+            if (!empty($matchedUser['blocked'])) {
+                echo json_encode(["success" => false, "message" => "🚫 আপনার অ্যাকাউন্টটি অ্যাডমিন কর্তৃক সাময়িকভাবে ব্লক করা হয়েছে।"]);
+                exit;
+            }
             unset($attempts[$ipHash]);
             writeJson($loginAttemptsFile, $attempts);
             $photos    = readPhotosSafe($photosFile);
             $followers = readJson($followersFile, []);
             $statsMap  = buildUserStatsMap($photos, $followers);
-            $u         = attachUserAggregatedStats($users[$pin], $pin, $statsMap, true);
+            $uKey      = $matchedUser['pin'] ?? ($matchedUser['userId'] ?? '');
+            $u         = attachUserAggregatedStats($matchedUser, $uKey, $statsMap, true);
             $settings  = readJson($settingsFile, []);
             $u['max_photos_per_user'] = max(0, intval($settings['max_photos_per_user'] ?? 0));
             echo json_encode(["success" => true, "user" => $u]);
@@ -747,7 +950,7 @@ switch ($action) {
             }
             $attempts[$ipHash] = $rec;
             writeJson($loginAttemptsFile, $attempts);
-            echo json_encode(["success" => false, "message" => "ভুল পিন! একাউন্ট না থাকলে রেজিস্ট্রেশন করুন।"]);
+            echo json_encode(["success" => false, "message" => "ভুল মোবাইল নম্বর বা পিন! একাউন্ট না থাকলে নতুন একাউন্ট খুলুন।"]);
         }
         break;
 
@@ -759,14 +962,25 @@ switch ($action) {
             echo json_encode(["success" => false, "message" => "অনেকবার ভুল চেষ্টা হয়েছে! কিছুক্ষণ পর চেষ্টা করুন।"]);
             exit;
         }
-        $pin   = cleanText($input['pin'] ?? '', 20);
-        $users = readJson($usersFile, []);
-        if ($pin !== '' && isset($users[$pin])) {
+        $targetId = cleanText($input['userId'] ?? ($input['pin'] ?? ($input['id'] ?? '')), 40);
+        $phone    = cleanText($input['phone'] ?? '', 20);
+        $users    = readUsersSafe($usersFile);
+
+        $user = null;
+        if ($phone !== '' && !empty($input['pin'])) {
+            $user = findUserByCredentials($users, $phone, $input['pin']);
+        }
+        if ($user === null && $targetId !== '') {
+            $user = findUserByIdentifier($users, $targetId);
+        }
+
+        if ($user !== null) {
             $photos    = readPhotosSafe($photosFile);
             $followers = readJson($followersFile, []);
             $settings  = readJson($settingsFile, []);
             $statsMap  = buildUserStatsMap($photos, $followers);
-            $u         = attachUserAggregatedStats($users[$pin], $pin, $statsMap, true);
+            $uPin      = $user['pin'] ?? ($user['userId'] ?? '');
+            $u         = attachUserAggregatedStats($user, $uPin, $statsMap, true);
             $maxP      = max(0, intval($settings['max_photos_per_user'] ?? 0));
             $u['max_photos_per_user'] = $maxP;
             echo json_encode(["success" => true, "user" => $u, "max_photos_per_user" => $maxP]);
@@ -776,25 +990,34 @@ switch ($action) {
         break;
 
     case 'register':
-        $pin   = cleanText($input['pin'] ?? '', 20);
-        $name  = cleanText($input['name'] ?? '', 60);
-        $phone = cleanText($input['phone'] ?? '', 20);
+        $name   = cleanText($input['name'] ?? '', 60);
+        $phone  = cleanText($input['phone'] ?? '', 20);
+        $pin    = cleanText($input['pin'] ?? '', 20);
         $rawRef = cleanText($input['ref'] ?? '', 40);
 
-        if (strlen($pin) < 4 || strpos(strtolower($pin), 'demo_') === 0 || $name === '' || $phone === '') {
-            echo json_encode(["success" => false, "message" => "সঠিক তথ্য দিন! পিন কমপক্ষে ৪ সংখ্যার হতে হবে।"]);
+        $cleanPhone = preg_replace('/[^0-9]/', '', $phone);
+        if (strlen($pin) < 4 || strpos(strtolower($pin), 'demo_') === 0 || $name === '' || strlen($cleanPhone) < 10) {
+            echo json_encode(["success" => false, "message" => "সঠিক তথ্য দিন! মোবাইল নম্বর (কমপক্ষে ১০ সংখ্যা) এবং পিন (কমপক্ষে ৪ সংখ্যা) হতে হবে।"]);
             exit;
         }
 
-        $users = readJson($usersFile, []);
-        if (isset($users[$pin])) {
-            echo json_encode(["success" => false, "message" => "এই পিন নম্বরটি ইতিমধ্যে ব্যবহৃত হয়েছে! অন্য পিন দিন বা লগইন করুন।"]);
-            exit;
+        $users = readUsersSafe($usersFile);
+
+        // ১ সিমে ১ একাউন্ট চেক (Duplicate Mobile Prevention)
+        foreach ($users as $id => $u) {
+            $uPhone = preg_replace('/[^0-9]/', '', (string)($u['phone'] ?? ''));
+            if ($uPhone !== '' && (strlen($uPhone) >= 10 && strlen($cleanPhone) >= 10 && substr($uPhone, -10) === substr($cleanPhone, -10))) {
+                echo json_encode(["success" => false, "message" => "এই মোবাইল নম্বর দিয়ে ইতিমধ্যে একটি অ্যাকাউন্ট রয়েছে! দয়া করে লগইন করুন।"]);
+                exit;
+            }
         }
 
+        $userId = 'u_' . round(microtime(true) * 1000) . '_' . rand(10, 99);
         $newUser = [
+            "id"             => $userId,
+            "userId"         => $userId,
+            "creatorId"      => $userId,
             "pin"            => $pin,
-            "creatorId"      => makeCreatorId($pin),
             "name"           => $name,
             "phone"          => $phone,
             "points"         => 20, // ওয়েলকাম বোনাস
@@ -803,57 +1026,58 @@ switch ($action) {
             "referralsCount" => 0,
             "verified"       => false,
             "telegramBonus"  => false,
-            "refCode"        => "REF" . $pin,
+            "refCode"        => "REF" . substr($cleanPhone, -4) . rand(10, 99),
             "referredBy"     => $rawRef,
+            "blocked"        => false,
             "created"        => date('c')
         ];
 
         // রেফারেল বোনাস প্রদান (১০ পয়েন্ট = ৳১.০০)
-        // নিখুঁত কেস-ইনসেনসিটিভ, স্পেস-ক্লিন ও ফোন/পিন/রেফকোড ম্যাচিং
         if ($rawRef !== '') {
             $cleanRef = strtoupper(preg_replace('/[^a-zA-Z0-9]/', '', $rawRef));
             $refCandidate = (strpos($cleanRef, 'REF') === 0) ? substr($cleanRef, 3) : $cleanRef;
-            $cleanPhone = preg_replace('/[^0-9]/', '', $rawRef);
-            $targetRefPin = '';
+            $cleanPhoneRef = preg_replace('/[^0-9]/', '', $rawRef);
+            $targetRefKey = null;
 
-            // ১. সরাসরি পিন ম্যাচ
-            if (isset($users[$refCandidate])) {
-                $targetRefPin = $refCandidate;
-            } elseif (isset($users[$rawRef])) {
-                $targetRefPin = $rawRef;
-            } else {
-                // ২. কেস-ইনসেনসিটিভ পিন, refCode অথবা ফোন নাম্বার ম্যাচ
-                foreach ($users as $upin => $u) {
-                    $uPinClean = strtoupper(preg_replace('/[^a-zA-Z0-9]/', '', (string)$upin));
-                    $uRefClean = strtoupper(preg_replace('/[^a-zA-Z0-9]/', '', (string)($u['refCode'] ?? ('REF' . $upin))));
-                    $uPhoneClean = preg_replace('/[^0-9]/', '', (string)($u['phone'] ?? ''));
+            foreach ($users as $upin => $u) {
+                $uPinClean   = strtoupper(preg_replace('/[^a-zA-Z0-9]/', '', (string)($u['pin'] ?? '')));
+                $uRefClean   = strtoupper(preg_replace('/[^a-zA-Z0-9]/', '', (string)($u['refCode'] ?? '')));
+                $uPhoneClean = preg_replace('/[^0-9]/', '', (string)($u['phone'] ?? ''));
+                $uIdClean    = strtoupper($upin);
 
-                    if (
-                        $uPinClean === $cleanRef ||
-                        $uPinClean === $refCandidate ||
-                        $uRefClean === $cleanRef ||
-                        $uRefClean === ('REF' . $cleanRef) ||
-                        ($cleanPhone !== '' && strlen($cleanPhone) >= 10 && $uPhoneClean !== '' && $uPhoneClean === $cleanPhone)
-                    ) {
-                        $targetRefPin = $upin;
-                        break;
-                    }
+                if (
+                    $uIdClean === $cleanRef ||
+                    $uPinClean === $cleanRef ||
+                    $uPinClean === $refCandidate ||
+                    $uRefClean === $cleanRef ||
+                    $uRefClean === ('REF' . $cleanRef) ||
+                    ($cleanPhoneRef !== '' && strlen($cleanPhoneRef) >= 10 && $uPhoneClean !== '' && substr($uPhoneClean, -10) === substr($cleanPhoneRef, -10))
+                ) {
+                    $targetRefKey = $upin;
+                    break;
                 }
             }
 
-            // নিজেকে রেফার করা যাবে না
-            if ($targetRefPin !== '' && $targetRefPin !== $pin && isset($users[$targetRefPin])) {
-                $refUser = &$users[$targetRefPin];
-                $newUser['referredBy'] = $refUser['refCode'] ?? ('REF' . $targetRefPin);
-                if (creditUserInMap($users, $targetRefPin, 10, true) !== null) {
+            if ($targetRefKey !== null && $targetRefKey !== $userId && isset($users[$targetRefKey])) {
+                $refUser = &$users[$targetRefKey];
+                $newUser['referredBy'] = $refUser['refCode'] ?? ('REF' . ($refUser['pin'] ?? $targetRefKey));
+                if (creditUserInMap($users, $targetRefKey, 10, true) !== null) {
+                    $ledger = readJson($ledgerFile, []);
+                    $ledger[$userId] = [
+                        "referrerId"  => $targetRefKey,
+                        "refereeName" => $name,
+                        "date"        => date('c')
+                    ];
+                    writeJson($ledgerFile, $ledger);
+
                     $notifs = readJson($notifsFile, ["personal" => [], "broadcast" => []]);
-                    addNotification($notifs, $targetRefPin, "🎁 নতুন রেফারেল বোনাস!", "আপনার রেফার লিংকে \"{$name}\" যোগ দিয়েছেন! আপনার ব্যালেন্সে +৳1.00 (10 পয়েন্ট) যোগ হয়েছে।", "ok");
+                    addNotification($notifs, $refUser['pin'] ?? $targetRefKey, "🎁 নতুন রেফারেল বোনাস!", "আপনার রেফার লিংকে \"{$name}\" যোগ দিয়েছেন! আপনার ব্যালেন্সে +৳1.00 (10 পয়েন্ট) যোগ হয়েছে।", "ok");
                     writeJson($notifsFile, $notifs);
                 }
             }
         }
 
-        $users[$pin] = $newUser;
+        $users[$userId] = $newUser;
         writeJson($usersFile, $users);
         echo json_encode(["success" => true, "user" => $newUser]);
         break;
@@ -885,13 +1109,16 @@ switch ($action) {
             ? strtolower(trim((string)$input['method']))
             : 'bkash';
 
-        $users = readJson($usersFile, []);
-        if (!isset($users[$pin])) {
+        $users = readUsersSafe($usersFile);
+        $user = findUserByIdentifier($users, $pin);
+        if (!$user) {
             echo json_encode(["success" => false, "message" => "ইউজার পাওয়া যায়নি!"]);
             exit;
         }
-
-        $user = &$users[$pin];
+        if (!empty($user['blocked'])) {
+            echo json_encode(["success" => false, "message" => "🚫 আপনার অ্যাকাউন্টটি ব্লক করা আছে।"]);
+            exit;
+        }
         if ($amount < PEG_MIN_WITHDRAW_TAKA) {
             echo json_encode(["success" => false, "message" => "সর্বনিম্ন উইথড্র ৳" . PEG_MIN_WITHDRAW_TAKA . " হতে হবে!"]);
             exit;
@@ -960,6 +1187,15 @@ switch ($action) {
         }
         $isAdmin  = isAdminLoggedIn() && !empty($input['asAdmin']);
         $rawPin   = cleanText($input['pin'] ?? '', 20);
+
+        if (!$isAdmin && $rawPin !== '') {
+            $users = readUsersSafe($usersFile);
+            $u = findUserByIdentifier($users, $rawPin);
+            if ($u && !empty($u['blocked'])) {
+                echo json_encode(["success" => false, "message" => "🚫 আপনার অ্যাকাউন্টটি ব্লক করা আছে।"]);
+                exit;
+            }
+        }
         $name     = $isAdmin ? "অ্যাডমিন (Admin)" : cleanText($input['name'] ?? 'অতিথি', 40);
         $senderId = $isAdmin ? "admin" : ($rawPin !== '' ? makeCreatorId($rawPin) : cleanText($input['guestId'] ?? $ipHash, 32));
 
@@ -1100,19 +1336,96 @@ switch ($action) {
 
     case 'get_all_users':
         requireAdmin();
-        $users     = readJson($usersFile, []);
+        $users     = readUsersSafe($usersFile);
+        $notifs    = readJson($notifsFile, ["personal" => [], "broadcast" => []]);
+        $recResult = syncMissedReferralsSafe($users, $notifs, $ledgerFile);
+        if ($recResult['changed']) {
+            writeJson($usersFile, $users);
+            writeJson($notifsFile, $notifs);
+        }
+
         $photos    = readPhotosSafe($photosFile);
         $followers = readJson($followersFile, []);
         $statsMap  = buildUserStatsMap($photos, $followers);
         $list      = [];
-        foreach ($users as $uPin => $uData) {
-            $pinKey = (string)($uData['pin'] ?? $uPin);
-            $list[] = attachUserAggregatedStats($uData, $pinKey, $statsMap, false);
+        foreach ($users as $uKey => $uData) {
+            $pinKey = (string)($uData['pin'] ?? $uKey);
+            $item = attachUserAggregatedStats($uData, $pinKey, $statsMap, false);
+            $item['userId'] = $uData['userId'] ?? ($uData['id'] ?? $uKey);
+            $item['blocked'] = !empty($uData['blocked']);
+            $item['referredBy'] = $uData['referredBy'] ?? '';
+            $list[] = $item;
         }
         usort($list, function($a, $b) {
             return floatval($b['taka'] ?? 0) <=> floatval($a['taka'] ?? 0);
         });
-        echo json_encode(["success" => true, "users" => $list]);
+        echo json_encode(["success" => true, "users" => $list, "recovered" => $recResult['recoveredCount']]);
+        break;
+
+    case 'sync_missed_referrals':
+        requireAdmin();
+        $users     = readUsersSafe($usersFile);
+        $notifs    = readJson($notifsFile, ["personal" => [], "broadcast" => []]);
+        $recResult = syncMissedReferralsSafe($users, $notifs, $ledgerFile);
+        if ($recResult['changed']) {
+            writeJson($usersFile, $users);
+            writeJson($notifsFile, $notifs);
+        }
+        echo json_encode([
+            "success"   => true,
+            "recovered" => $recResult['recoveredCount'],
+            "message"   => "মোট {$recResult['recoveredCount']} জন রেফারারের মিসড পয়েন্ট সফলভাবে রিকভার করা হয়েছে!"
+        ]);
+        break;
+
+    case 'toggle_block_user':
+        requireAdmin();
+        $targetId = cleanText($input['userId'] ?? ($input['pin'] ?? ''), 64);
+        $users    = readUsersSafe($usersFile);
+        $targetKey = null;
+        foreach ($users as $k => $u) {
+            if ($k === $targetId || ($u['userId'] ?? '') === $targetId || ($u['pin'] ?? '') === $targetId || ($u['phone'] ?? '') === $targetId) {
+                $targetKey = $k;
+                break;
+            }
+        }
+        if ($targetKey === null) {
+            echo json_encode(["success" => false, "message" => "ইউজার পাওয়া যায়নি!"]);
+            exit;
+        }
+        $isCurrentlyBlocked = !empty($users[$targetKey]['blocked']);
+        $users[$targetKey]['blocked'] = !$isCurrentlyBlocked;
+        writeJson($usersFile, $users);
+        $statusText = $users[$targetKey]['blocked'] ? 'ব্লক' : 'আনব্লক';
+        echo json_encode([
+            "success" => true,
+            "blocked" => $users[$targetKey]['blocked'],
+            "message" => "ইউজারকে সফলভাবে {$statusText} করা হয়েছে!"
+        ]);
+        break;
+
+    case 'delete_user':
+        requireAdmin();
+        $targetId = cleanText($input['userId'] ?? ($input['pin'] ?? ''), 64);
+        $users    = readUsersSafe($usersFile);
+        $targetKey = null;
+        foreach ($users as $k => $u) {
+            if ($k === $targetId || ($u['userId'] ?? '') === $targetId || ($u['pin'] ?? '') === $targetId || ($u['phone'] ?? '') === $targetId) {
+                $targetKey = $k;
+                break;
+            }
+        }
+        if ($targetKey === null) {
+            echo json_encode(["success" => false, "message" => "ইউজার পাওয়া যায়নি!"]);
+            exit;
+        }
+        $delName = $users[$targetKey]['name'] ?? 'ইউজার';
+        unset($users[$targetKey]);
+        writeJson($usersFile, $users);
+        echo json_encode([
+            "success" => true,
+            "message" => "\"{$delName}\"-এর অ্যাকাউন্ট স্থায়ীভাবে মুছে ফেলা হয়েছে!"
+        ]);
         break;
 
     case 'adjust_user_balance':

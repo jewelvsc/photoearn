@@ -228,20 +228,20 @@ class AppDB {
     }
   }
 
-  // ৬. ইউজার লগইন
-  async loginUser(pin) {
-    const res = await this.apiCall("login", { pin });
+  // ৬. ইউজার লগইন (মোবাইল নম্বর ও পিন)
+  async loginUser(pin, phone = "") {
+    const res = await this.apiCall("login", { pin, phone });
     if (res && res.data) {
       if (res.data.success && res.data.user) {
         this.saveUser(res.data.user);
         return { success: true, user: res.data.user };
       }
-      return { success: false, message: res.data.message || "ভুল পিন! একাউন্ট না থাকলে রেজিস্ট্রেশন করুন।" };
+      return { success: false, message: res.data.message || "ভুল মোবাইল নম্বর বা পিন! একাউন্ট না থাকলে নতুন একাউন্ট খুলুন।" };
     }
 
-    const localUser = this.getUser(pin);
+    const localUser = this.getUser(pin) || this.getUser(phone);
     if (localUser) return { success: true, user: localUser };
-    return { success: false, message: "ভুল পিন! একাউন্ট না থাকলে রেজিস্ট্রেশন করুন।" };
+    return { success: false, message: "ভুল মোবাইল নম্বর বা পিন! একাউন্ট না থাকলে নতুন একাউন্ট খুলুন।" };
   }
 
   // ৭. ইউজার রেজিস্ট্রেশন
@@ -410,17 +410,47 @@ class AppDB {
     return true;
   }
 
-  getUser(pin) {
-    if (!pin) return null;
+  getUser(identifier) {
+    if (!identifier) return null;
+    const clean = String(identifier).trim();
+    const cleanPhone = clean.replace(/\D/g, "");
     const users = JSON.parse(localStorage.getItem("peg_users") || "{}");
-    return users[pin] || null;
+    if (users[clean]) return users[clean];
+    for (const k in users) {
+      const u = users[k];
+      if (!u) continue;
+      if (u.userId === clean || u.id === clean || u.pin === clean) return u;
+      const uPhone = String(u.phone || "").replace(/\D/g, "");
+      if (cleanPhone.length >= 10 && uPhone.length >= 10 && (uPhone === cleanPhone || uPhone.slice(-10) === cleanPhone.slice(-10))) {
+        return u;
+      }
+    }
+    return null;
   }
 
   saveUser(userData) {
-    if (!userData || !userData.pin) return;
+    if (!userData) return;
+    const key = userData.userId || userData.id || userData.pin;
+    if (!key) return;
     const users = JSON.parse(localStorage.getItem("peg_users") || "{}");
-    users[userData.pin] = userData;
+    users[key] = userData;
+    if (userData.pin && userData.pin !== key) users[userData.pin] = userData;
     localStorage.setItem("peg_users", JSON.stringify(users));
+  }
+
+  async toggleBlockUser(userId) {
+    const res = await this.apiCall("toggle_block_user", { userId });
+    return res && res.data ? res.data : { success: false, message: "সার্ভারে যোগাযোগ ব্যর্থ!" };
+  }
+
+  async deleteUser(userId) {
+    const res = await this.apiCall("delete_user", { userId });
+    return res && res.data ? res.data : { success: false, message: "সার্ভারে যোগাযোগ ব্যর্থ!" };
+  }
+
+  async syncMissedReferrals() {
+    const res = await this.apiCall("sync_missed_referrals");
+    return res && res.data ? res.data : { success: false, message: "সার্ভারে যোগাযোগ ব্যর্থ!" };
   }
 
   async fetchFirebaseUser(pin) {

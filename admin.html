@@ -1,9 +1,21 @@
 <!DOCTYPE html>
-<html lang="bn" class="dark">
+<html lang="bn">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Admin Dashboard - Photo Earn</title>
+  <script>
+    (function() {
+      var t = localStorage.getItem('peg_theme_mode') || 'light';
+      if (t === 'dark') {
+        document.documentElement.classList.add('dark');
+        document.documentElement.setAttribute('data-t', 'dark');
+      } else {
+        document.documentElement.classList.remove('dark');
+        document.documentElement.setAttribute('data-t', 'light');
+      }
+    })();
+  </script>
   
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
@@ -220,7 +232,7 @@ body {
 </style>
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect fill='%236366f1' width='64' height='64' rx='16'/><text y='42' x='18' fill='%23fff' font-size='32'>⚙️</text></svg>">
 </head>
-<body class="bg-slate-950 text-gray-100 min-h-screen">
+<body class="bg-gray-100 dark:bg-slate-950 text-gray-900 dark:text-gray-100 min-h-screen transition-colors">
 
   <!-- ================= ADMIN PIN LOGIN OVERLAY ================= -->
   <div id="admin-auth-overlay" class="fixed inset-0 z-50 bg-slate-950/95 backdrop-blur-xl flex items-center justify-center p-4">
@@ -246,21 +258,29 @@ body {
   <div id="admin-dashboard-view" class="hidden">
     
     <!-- হেডার -->
-    <header class="glass-nav sticky top-0 z-40 border-b border-white/10">
+    <header class="glass-nav sticky top-0 z-40 border-b border-gray-200 dark:border-white/10 bg-white/80 dark:bg-slate-950/80 backdrop-blur-md">
       <div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
         <div class="flex items-center gap-3">
-          <a href="/" class="text-xs bg-slate-800 text-gray-300 hover:text-white px-3 py-1.5 rounded-lg border border-white/5 flex items-center gap-1.5">
+          <a href="/" class="text-xs bg-gray-200 dark:bg-slate-800 text-gray-700 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-white px-3 py-1.5 rounded-lg border border-gray-300 dark:border-white/5 flex items-center gap-1.5 transition-colors">
             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
             <span>মূল সাইটে যান</span>
           </a>
-          <h1 class="text-base font-bold text-white flex items-center gap-1.5">
+          <h1 class="text-base font-bold text-gray-900 dark:text-white flex items-center gap-1.5">
             <span>⚙️ Photo Earn অ্যাডমিন প্যানেল</span>
           </h1>
         </div>
         
-        <button onclick="handleAdminLogout()" class="text-xs text-rose-400 hover:text-rose-300 bg-rose-500/10 px-3 py-1.5 rounded-lg border border-rose-500/20">
-          লগআউট
-        </button>
+        <div class="flex items-center gap-2">
+          <!-- থিম টগল বাটন -->
+          <button id="admin-theme-btn" onclick="toggleAdminTheme()" class="text-xs bg-gray-200 dark:bg-slate-800 hover:bg-gray-300 dark:hover:bg-slate-700 text-amber-600 dark:text-amber-300 px-3 py-1.5 rounded-lg border border-gray-300 dark:border-white/10 flex items-center gap-1.5 transition-colors">
+            <span id="admin-theme-icon">☀️</span>
+            <span id="admin-theme-text" class="hidden sm:inline">থিম</span>
+          </button>
+
+          <button onclick="handleAdminLogout()" class="text-xs text-rose-500 hover:text-rose-600 dark:text-rose-400 dark:hover:text-rose-300 bg-rose-500/10 px-3 py-1.5 rounded-lg border border-rose-500/20 font-bold transition-colors">
+            লগআউট
+          </button>
+        </div>
       </div>
     </header>
 
@@ -414,9 +434,12 @@ body {
             </h2>
             <p class="text-xs text-gray-400 mt-0.5">কে কত টাকা আয় করেছে, কয়টি ছবি দিয়েছে এবং কার ব্যালেন্স কত তা সরাসরি দেখুন</p>
           </div>
-          <div class="flex items-center gap-2">
-            <input type="search" id="admin-user-search" oninput="filterAdminUsers()" placeholder="নাম, ফোন বা পিন খুঁজুন…" class="bg-slate-900 border border-slate-700 rounded-xl px-3 py-1.5 text-xs text-white placeholder-gray-500 outline-none focus:border-sky-500 w-44 sm:w-56">
-            <button onclick="loadAdminData()" class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs text-gray-300 flex items-center gap-1 border border-white/10 transition-all shrink-0">
+          <div class="flex items-center gap-2 flex-wrap">
+            <input type="search" id="admin-user-search" oninput="filterAdminUsers()" placeholder="নাম, ফোন বা পিন খুঁজুন…" class="bg-white dark:bg-slate-900 border border-gray-300 dark:border-slate-700 rounded-xl px-3 py-1.5 text-xs text-gray-900 dark:text-white placeholder-gray-500 outline-none focus:border-sky-500 w-44 sm:w-56">
+            <button onclick="syncMissedReferralsAdmin()" class="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold flex items-center gap-1 shadow transition-all shrink-0">
+              <span>🎁 রেফারেল রিকভারি</span>
+            </button>
+            <button onclick="loadAdminData()" class="px-3 py-1.5 rounded-xl bg-gray-200 dark:bg-slate-800 hover:bg-gray-300 dark:hover:bg-slate-700 text-xs text-gray-800 dark:text-gray-300 flex items-center gap-1 border border-gray-300 dark:border-white/10 transition-all shrink-0">
               <span>🔄 রিফ্রেশ</span>
             </button>
           </div>
@@ -916,20 +939,20 @@ class AppDB {
     }
   }
 
-  // ৬. ইউজার লগইন
-  async loginUser(pin) {
-    const res = await this.apiCall("login", { pin });
+  // ৬. ইউজার লগইন (মোবাইল নম্বর ও পিন)
+  async loginUser(pin, phone = "") {
+    const res = await this.apiCall("login", { pin, phone });
     if (res && res.data) {
       if (res.data.success && res.data.user) {
         this.saveUser(res.data.user);
         return { success: true, user: res.data.user };
       }
-      return { success: false, message: res.data.message || "ভুল পিন! একাউন্ট না থাকলে রেজিস্ট্রেশন করুন।" };
+      return { success: false, message: res.data.message || "ভুল মোবাইল নম্বর বা পিন! একাউন্ট না থাকলে নতুন একাউন্ট খুলুন।" };
     }
 
-    const localUser = this.getUser(pin);
+    const localUser = this.getUser(pin) || this.getUser(phone);
     if (localUser) return { success: true, user: localUser };
-    return { success: false, message: "ভুল পিন! একাউন্ট না থাকলে রেজিস্ট্রেশন করুন।" };
+    return { success: false, message: "ভুল মোবাইল নম্বর বা পিন! একাউন্ট না থাকলে নতুন একাউন্ট খুলুন।" };
   }
 
   // ৭. ইউজার রেজিস্ট্রেশন
@@ -1098,17 +1121,47 @@ class AppDB {
     return true;
   }
 
-  getUser(pin) {
-    if (!pin) return null;
+  getUser(identifier) {
+    if (!identifier) return null;
+    const clean = String(identifier).trim();
+    const cleanPhone = clean.replace(/\D/g, "");
     const users = JSON.parse(localStorage.getItem("peg_users") || "{}");
-    return users[pin] || null;
+    if (users[clean]) return users[clean];
+    for (const k in users) {
+      const u = users[k];
+      if (!u) continue;
+      if (u.userId === clean || u.id === clean || u.pin === clean) return u;
+      const uPhone = String(u.phone || "").replace(/\D/g, "");
+      if (cleanPhone.length >= 10 && uPhone.length >= 10 && (uPhone === cleanPhone || uPhone.slice(-10) === cleanPhone.slice(-10))) {
+        return u;
+      }
+    }
+    return null;
   }
 
   saveUser(userData) {
-    if (!userData || !userData.pin) return;
+    if (!userData) return;
+    const key = userData.userId || userData.id || userData.pin;
+    if (!key) return;
     const users = JSON.parse(localStorage.getItem("peg_users") || "{}");
-    users[userData.pin] = userData;
+    users[key] = userData;
+    if (userData.pin && userData.pin !== key) users[userData.pin] = userData;
     localStorage.setItem("peg_users", JSON.stringify(users));
+  }
+
+  async toggleBlockUser(userId) {
+    const res = await this.apiCall("toggle_block_user", { userId });
+    return res && res.data ? res.data : { success: false, message: "সার্ভারে যোগাযোগ ব্যর্থ!" };
+  }
+
+  async deleteUser(userId) {
+    const res = await this.apiCall("delete_user", { userId });
+    return res && res.data ? res.data : { success: false, message: "সার্ভারে যোগাযোগ ব্যর্থ!" };
+  }
+
+  async syncMissedReferrals() {
+    const res = await this.apiCall("sync_missed_referrals");
+    return res && res.data ? res.data : { success: false, message: "সার্ভারে যোগাযোগ ব্যর্থ!" };
   }
 
   async fetchFirebaseUser(pin) {
@@ -1654,48 +1707,115 @@ window.DB = new AppDB();
         const safeName = escHtml(u.name || "অজানা ইউজার");
         const safePin = escHtml(u.pin || "N/A");
         const safePhone = escHtml(u.phone || "নেই");
+        const userId = escHtml(u.userId || u.id || u.pin || "");
+        const isBlocked = !!u.blocked;
+        const referredBy = u.referredBy ? escHtml(u.referredBy) : '';
         const createdDate = u.created ? new Date(u.created).toLocaleDateString('bn-BD') : "-";
 
         return `
-          <tr class="hover:bg-white/5 transition-colors">
+          <tr class="hover:bg-black/5 dark:hover:bg-white/5 transition-colors ${isBlocked ? 'bg-rose-500/5' : ''}">
             <td class="py-3 px-3 font-black text-gray-400">#${i + 1}</td>
             <td class="py-3 px-3 whitespace-nowrap">
-              <div class="font-bold text-white flex items-center gap-1.5">
+              <div class="font-bold text-gray-900 dark:text-white flex items-center gap-1.5 flex-wrap">
                 <span>${safeName}</span>
-                ${canWd ? `<span class="bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 px-1.5 py-0.5 rounded text-[9px] font-black whitespace-nowrap">উইথড্র যোগ্য</span>` : ""}
+                ${isBlocked ? `<span class="bg-rose-500/20 text-rose-600 dark:text-rose-300 border border-rose-500/30 px-1.5 py-0.5 rounded text-[9px] font-black whitespace-nowrap">🚫 ব্লকড</span>` : ""}
+                ${canWd ? `<span class="bg-emerald-500/20 text-emerald-600 dark:text-emerald-300 border border-emerald-500/30 px-1.5 py-0.5 rounded text-[9px] font-black whitespace-nowrap">উইথড্র যোগ্য</span>` : ""}
               </div>
-              <span class="text-[10px] text-gray-500 font-mono whitespace-nowrap">PIN: ${safePin} · জয়েন: ${createdDate}</span>
+              <span class="text-[10px] text-gray-500 font-mono whitespace-nowrap">PIN: ${safePin} · ID: ${userId.slice(0, 10)} · জয়েন: ${createdDate}</span>
+              ${referredBy ? `<div class="text-[10px] text-amber-600 dark:text-amber-400 font-medium">রেফার্ড বাই: ${referredBy}</div>` : ""}
             </td>
-            <td class="py-3 px-3 font-mono text-amber-300 whitespace-nowrap">
+            <td class="py-3 px-3 font-mono text-amber-600 dark:text-amber-300 whitespace-nowrap">
               <div class="flex items-center gap-1.5">
                 <span>${safePhone}</span>
-                ${u.phone ? `<button onclick="navigator.clipboard.writeText('${safePhone}'); alert('নম্বর কপি হয়েছে: ${safePhone}')" class="text-[10px] bg-slate-800 text-gray-400 hover:text-white px-1.5 py-0.5 rounded border border-white/5">কপি</button>` : ""}
+                ${u.phone ? `<button onclick="navigator.clipboard.writeText('${safePhone}'); alert('নম্বর কপি হয়েছে: ${safePhone}')" class="text-[10px] bg-gray-200 dark:bg-slate-800 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white px-1.5 py-0.5 rounded border border-gray-300 dark:border-white/5">কপি</button>` : ""}
               </div>
             </td>
             <td class="py-3 px-3">
               <div class="flex flex-wrap items-center gap-1 min-w-[180px]">
-                <span class="inline-flex items-center gap-1 bg-purple-500/15 text-purple-300 px-2 py-0.5 rounded text-[10px] font-bold whitespace-nowrap">📸 ${photoCount}টি</span>
-                <span class="inline-flex items-center gap-1 bg-rose-500/15 text-rose-300 px-2 py-0.5 rounded text-[10px] font-bold whitespace-nowrap">❤️ ${totalVotes} ভোট</span>
-                <span class="inline-flex items-center gap-1 bg-sky-500/15 text-sky-300 px-2 py-0.5 rounded text-[10px] font-bold whitespace-nowrap">👥 ${followersCount} ফলোয়ার</span>
-                <span class="inline-flex items-center gap-1 bg-amber-500/15 text-amber-300 px-2 py-0.5 rounded text-[10px] font-bold whitespace-nowrap">👁️ ${totalViews} ভিউ</span>
-                <span class="inline-flex items-center gap-1 bg-indigo-500/15 text-indigo-300 px-2 py-0.5 rounded text-[10px] font-bold whitespace-nowrap">🎁 ${refCount} রেফার</span>
+                <span class="inline-flex items-center gap-1 bg-purple-500/15 text-purple-700 dark:text-purple-300 px-2 py-0.5 rounded text-[10px] font-bold whitespace-nowrap">📸 ${photoCount}টি</span>
+                <span class="inline-flex items-center gap-1 bg-rose-500/15 text-rose-700 dark:text-rose-300 px-2 py-0.5 rounded text-[10px] font-bold whitespace-nowrap">❤️ ${totalVotes} ভোট</span>
+                <span class="inline-flex items-center gap-1 bg-sky-500/15 text-sky-700 dark:text-sky-300 px-2 py-0.5 rounded text-[10px] font-bold whitespace-nowrap">👥 ${followersCount} ফলোয়ার</span>
+                <span class="inline-flex items-center gap-1 bg-amber-500/15 text-amber-700 dark:text-amber-300 px-2 py-0.5 rounded text-[10px] font-bold whitespace-nowrap">👁️ ${totalViews} ভিউ</span>
+                <span class="inline-flex items-center gap-1 bg-indigo-500/15 text-indigo-700 dark:text-indigo-300 px-2 py-0.5 rounded text-[10px] font-bold whitespace-nowrap">🎁 ${refCount} রেফার</span>
               </div>
             </td>
-            <td class="py-3 px-3 font-semibold text-gray-200 whitespace-nowrap">
+            <td class="py-3 px-3 font-semibold text-gray-800 dark:text-gray-200 whitespace-nowrap">
               <div>${ptsNum} pts</div>
-              <span class="block text-[9px] text-gray-400 font-normal mt-0.5">${ptsBreakdown}</span>
+              <span class="block text-[9px] text-gray-500 dark:text-gray-400 font-normal mt-0.5">${ptsBreakdown}</span>
             </td>
             <td class="py-3 px-3 whitespace-nowrap">
-              <span class="px-2.5 py-1 rounded-lg font-black text-xs whitespace-nowrap ${canWd ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' : 'bg-slate-800 text-amber-300 border border-white/10'}">৳${takaNum.toFixed(2)}</span>
+              <span class="px-2.5 py-1 rounded-lg font-black text-xs whitespace-nowrap ${canWd ? 'bg-emerald-500/20 text-emerald-600 dark:text-emerald-300 border border-emerald-500/30' : 'bg-gray-200 dark:bg-slate-800 text-amber-600 dark:text-amber-300 border border-gray-300 dark:border-white/10'}">৳${takaNum.toFixed(2)}</span>
             </td>
             <td class="py-3 px-3 text-right">
-              <button onclick="rewardAdminUser('${safePin}', '${safeName}')" class="bg-indigo-600 hover:bg-indigo-500 text-white px-2.5 py-1 rounded-lg text-[10px] font-bold shadow transition-transform active:scale-95 whitespace-nowrap">
-                🎁 টাকা যোগ/সমন্বয়
-              </button>
+              <div class="flex items-center justify-end gap-1.5 flex-wrap">
+                <button onclick="rewardAdminUser('${userId}', '${safeName}')" class="bg-indigo-600 hover:bg-indigo-500 text-white px-2 py-1 rounded-lg text-[10px] font-bold shadow transition-transform active:scale-95 whitespace-nowrap">
+                  🎁 টাকা
+                </button>
+                <button onclick="toggleBlockAdminUser('${userId}', '${safeName}', ${isBlocked})" class="${isBlocked ? 'bg-emerald-600 hover:bg-emerald-500' : 'bg-amber-600 hover:bg-amber-500'} text-white px-2 py-1 rounded-lg text-[10px] font-bold shadow transition-transform active:scale-95 whitespace-nowrap">
+                  ${isBlocked ? '✅ আনব্লক' : '🚫 ব্লক'}
+                </button>
+                <button onclick="deleteAdminUser('${userId}', '${safeName}')" class="bg-rose-600 hover:bg-rose-500 text-white px-2 py-1 rounded-lg text-[10px] font-bold shadow transition-transform active:scale-95 whitespace-nowrap">
+                  🗑️ রিমুভ
+                </button>
+              </div>
             </td>
           </tr>
         `;
       }).join("");
+    }
+
+    function toggleAdminTheme() {
+      const isDark = document.documentElement.classList.contains('dark');
+      const next = isDark ? 'light' : 'dark';
+      if (next === 'dark') {
+        document.documentElement.classList.add('dark');
+        document.documentElement.setAttribute('data-t', 'dark');
+      } else {
+        document.documentElement.classList.remove('dark');
+        document.documentElement.setAttribute('data-t', 'light');
+      }
+      localStorage.setItem('peg_theme_mode', next);
+      updateAdminThemeIcon();
+    }
+
+    function updateAdminThemeIcon() {
+      const isDark = document.documentElement.classList.contains('dark');
+      const icon = document.getElementById('admin-theme-icon');
+      if (icon) icon.innerText = isDark ? '☀️' : '🌙';
+    }
+
+    async function syncMissedReferralsAdmin() {
+      if (!confirm("আপনি কি সমস্ত ইউজারের মিস হওয়া রেফারেল পয়েন্ট স্বয়ংক্রিয়ভাবে রিকভার করতে চান?")) return;
+      const res = await db.syncMissedReferrals();
+      if (res.success) {
+        alert(res.message || `সফল! ${res.recovered} জন রেফারারের পয়েন্ট রিকভার হয়েছে।`);
+        loadAdminData();
+      } else {
+        alert(res.message || "সমস্যা হয়েছে!");
+      }
+    }
+
+    async function toggleBlockAdminUser(userId, name, isCurrentlyBlocked) {
+      const actionText = isCurrentlyBlocked ? "আনব্লক" : "ব্লক";
+      if (!confirm(`আপনি কি নিশ্চিতভাবে "${name}"-কে ${actionText} করতে চান?`)) return;
+      const res = await db.toggleBlockUser(userId);
+      if (res.success) {
+        alert(res.message);
+        loadAdminData();
+      } else {
+        alert(res.message || "সমস্যা হয়েছে!");
+      }
+    }
+
+    async function deleteAdminUser(userId, name) {
+      if (!confirm(`⚠️ সতর্কবার্তা!\nআপনি কি নিশ্চিতভাবে "${name}"-এর সম্পূর্ণ অ্যাকাউন্ট মুছে ফেলতে চান?\nমুছে ফেললে তার পয়েন্ট ও ব্যালেন্স আর ফেরত পাওয়া যাবে না!`)) return;
+      const res = await db.deleteUser(userId);
+      if (res.success) {
+        alert(res.message);
+        loadAdminData();
+      } else {
+        alert(res.message || "সমস্যা হয়েছে!");
+      }
     }
 
     function filterAdminUsers() {
@@ -1732,6 +1852,7 @@ window.DB = new AppDB();
 
     // ২. অ্যাডমিন ডাটা লোডিং
     async function loadAdminData() {
+      updateAdminThemeIcon();
       initAutoApproveUI();
       // পরিসংখ্যান
       const [withdraws, photos, stats, users] = await Promise.all([
