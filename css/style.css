@@ -454,13 +454,13 @@ html:not(.dark) .app-modal p {
   color: #334155 !important;
 }
 
-/* 5. Close buttons inside modals */
-html:not(.dark) .app-modal button[onclick*="closeModals"] {
+/* 5. Close (×) buttons inside modals ONLY — gradient CTA buttons stay white */
+html:not(.dark) .app-modal button[onclick="window.APP.closeModals()"] {
   background-color: #f1f5f9 !important;
   color: #334155 !important;
   border: 1px solid #e2e8f0 !important;
 }
-html:not(.dark) .app-modal button[onclick*="closeModals"]:hover {
+html:not(.dark) .app-modal button[onclick="window.APP.closeModals()"]:hover {
   background-color: #e2e8f0 !important;
   color: #0f172a !important;
 }

@@ -352,8 +352,14 @@ switch ($action) {
         break;
 
     case 'get_settings':
-        $settings = readJson($settingsFile, ["auto_approve" => false]);
-        echo json_encode(["success" => true, "auto_approve" => !empty($settings['auto_approve'])]);
+        $settings = readJson($settingsFile, []);
+        echo json_encode([
+            "success" => true,
+            "auto_approve" => !empty($settings['auto_approve']),
+            "upload_quota_enabled" => !empty($settings['upload_quota_enabled']),
+            "upload_need_likes" => isset($settings['upload_need_likes']) ? intval($settings['upload_need_likes']) : 5,
+            "upload_need_follows" => isset($settings['upload_need_follows']) ? intval($settings['upload_need_follows']) : 3
+        ]);
         break;
 
     case 'set_auto_approve':
@@ -363,6 +369,16 @@ switch ($action) {
         $settings['auto_approve'] = $enabled;
         writeJson($settingsFile, $settings);
         echo json_encode(["success" => true, "auto_approve" => $enabled]);
+        break;
+
+    case 'set_quota_settings':
+        requireAdmin();
+        $settings = readJson($settingsFile, []);
+        $settings['upload_quota_enabled'] = !empty($input['enabled']);
+        $settings['upload_need_likes'] = max(0, min(100, intval($input['needLikes'] ?? 5)));
+        $settings['upload_need_follows'] = max(0, min(100, intval($input['needFollows'] ?? 3)));
+        writeJson($settingsFile, $settings);
+        echo json_encode(["success" => true, "settings" => $settings]);
         break;
 
     // ===== ৩. ছবি গ্যালারি ও আপলোড =====

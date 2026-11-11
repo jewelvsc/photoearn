@@ -293,6 +293,39 @@ body {
         </div>
       </div>
 
+      <!-- 🎯 ছবি আপলোড শর্ত (ভোট ও ফলো কোটা কন্ট্রোল) -->
+      <div class="glass-panel p-4 sm:p-5 rounded-2xl border border-amber-500/30 bg-amber-500/5 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
+        <div class="flex items-start gap-3">
+          <div class="w-10 h-10 rounded-xl bg-amber-500/20 text-amber-400 border border-amber-500/30 flex items-center justify-center text-xl shrink-0">
+            🎯
+          </div>
+          <div>
+            <div class="flex items-center gap-2 flex-wrap">
+              <h2 class="text-sm font-bold text-white">ছবি আপলোডের শর্ত (ভোট ও ফলো কোটা)</h2>
+              <span id="quota-status-badge" class="text-[10px] font-black px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">লোড হচ্ছে…</span>
+            </div>
+            <p class="text-xs text-gray-400 mt-0.5">
+              <b>বন্ধ রাখলে</b> সব নতুন ভিজিটর কোনো বাধা ছাড়াই সরাসরি ছবি জমা দিতে পারবে (অ্যাড ক্যাম্পেইনের জন্য সেরা)। <b>চালু রাখলে</b> নিচের সংখ্যা পূরণ করতে হবে (কখনো গ্যালারির মোট ছবির চেয়ে বেশি চাইবে না)।
+            </p>
+          </div>
+        </div>
+        <div class="flex items-center gap-2.5 flex-wrap shrink-0">
+          <label class="relative inline-flex items-center cursor-pointer mr-1">
+            <input type="checkbox" id="upload-quota-toggle" onchange="saveQuotaSettings()" class="sr-only peer">
+            <div class="w-11 h-6 bg-slate-700 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-amber-500"></div>
+          </label>
+          <div class="flex items-center gap-1 text-xs">
+            <span class="text-gray-400">ভোট:</span>
+            <input type="number" id="quota-likes-input" min="0" max="100" value="5" class="w-14 bg-slate-900 border border-slate-700 rounded-lg px-2 py-1 text-xs text-white text-center outline-none">
+          </div>
+          <div class="flex items-center gap-1 text-xs">
+            <span class="text-gray-400">ফলো:</span>
+            <input type="number" id="quota-follows-input" min="0" max="100" value="3" class="w-14 bg-slate-900 border border-slate-700 rounded-lg px-2 py-1 text-xs text-white text-center outline-none">
+          </div>
+          <button onclick="saveQuotaSettings()" class="px-3 py-1.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs rounded-xl transition-all active:scale-95">সেভ</button>
+        </div>
+      </div>
+
       <!-- 🔐 সার্ভার সিকিউরিটি, পিন পরিবর্তন ও এককালীন Firebase ইমপোর্ট -->
       <div class="glass-panel p-4 sm:p-5 rounded-2xl border border-emerald-500/30 bg-emerald-500/5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
         <div>
@@ -1174,16 +1207,39 @@ class AppDB {
     return follows.includes(creatorId);
   }
 
-  getUploadQuota(pin) {
+  async getUploadQuota(pin) {
+    const settings = await this.getSettings();
     const user = pin ? this.getUser(pin) : null;
-    const needL = this.cfg.uploadNeedLikes || 30;
-    const needF = this.cfg.uploadNeedFollows || 20;
     const pinLikes = pin ? parseInt(localStorage.getItem(`peg_user_likes_${pin}`) || "0", 10) : 0;
     const globalLikes = parseInt(localStorage.getItem("peg_user_likes") || "0", 10);
     const currentLikes = Math.max(pinLikes, globalLikes, (user && user.likesGiven) || 0);
     const follows = JSON.parse(localStorage.getItem("peg_follows") || "[]");
+
+    // কোটা বন্ধ থাকলে সবাই সরাসরি ছবি জমা দিতে পারবে
+    if (!settings.upload_quota_enabled) {
+      return {
+        ok: true,
+        quotaEnabled: false,
+        likes: currentLikes,
+        needLikes: 0,
+        follows: follows.length,
+        needFollows: 0
+      };
+    }
+
+    // গ্যালারির প্রকৃত ছবির সংখ্যা ও শিল্পীর সংখ্যার চেয়ে বেশি শর্ত কখনো চাইবে না (ডেডলক রোধ)
+    const photos = Array.isArray(this.lastPhotosList) ? this.lastPhotosList : await this.getPhotos();
+    const availPhotos = photos.length;
+    const availCreators = new Set(photos.map(p => p.authorId || p.authorPin || p.authorName).filter(Boolean)).size;
+
+    const rawNeedL = settings.upload_need_likes !== undefined ? parseInt(settings.upload_need_likes, 10) : (this.cfg.uploadNeedLikes || 5);
+    const rawNeedF = settings.upload_need_follows !== undefined ? parseInt(settings.upload_need_follows, 10) : (this.cfg.uploadNeedFollows || 3);
+    const needL = Math.min(Math.max(0, rawNeedL), availPhotos);
+    const needF = Math.min(Math.max(0, rawNeedF), availCreators);
+
     return {
       ok: currentLikes >= needL && follows.length >= needF,
+      quotaEnabled: true,
       likes: currentLikes,
       needLikes: needL,
       follows: follows.length,
@@ -1204,14 +1260,36 @@ class AppDB {
     return ban;
   }
 
-  // ১৩. অটো-অ্যাপ্রুভ সেটিংস ও নোটিফিকেশন
-  async isAutoApproveEnabled() {
+  // ১৩. অটো-অ্যাপ্রুভ ও আপলোড কোটা সেটিংস ও নোটিফিকেশন
+  async getSettings() {
+    const fallback = {
+      auto_approve: localStorage.getItem("peg_auto_approve") === "true",
+      upload_quota_enabled: localStorage.getItem("peg_quota_enabled") === "true" || !!this.cfg.uploadQuotaEnabled,
+      upload_need_likes: parseInt(localStorage.getItem("peg_quota_likes") || this.cfg.uploadNeedLikes || "5", 10),
+      upload_need_follows: parseInt(localStorage.getItem("peg_quota_follows") || this.cfg.uploadNeedFollows || "3", 10)
+    };
     const res = await this.apiCall("get_settings");
-    if (res && res.data && typeof res.data.auto_approve === "boolean") {
+    if (res && res.data && res.data.success) {
       localStorage.setItem("peg_auto_approve", res.data.auto_approve ? "true" : "false");
-      return res.data.auto_approve;
+      localStorage.setItem("peg_quota_enabled", res.data.upload_quota_enabled ? "true" : "false");
+      localStorage.setItem("peg_quota_likes", String(res.data.upload_need_likes ?? 5));
+      localStorage.setItem("peg_quota_follows", String(res.data.upload_need_follows ?? 3));
+      return res.data;
     }
-    return localStorage.getItem("peg_auto_approve") === "true";
+    return fallback;
+  }
+
+  async setQuotaSettings({ enabled, needLikes, needFollows }) {
+    localStorage.setItem("peg_quota_enabled", enabled ? "true" : "false");
+    localStorage.setItem("peg_quota_likes", String(needLikes));
+    localStorage.setItem("peg_quota_follows", String(needFollows));
+    const res = await this.apiCall("set_quota_settings", { enabled: !!enabled, needLikes, needFollows });
+    return res && res.data ? res.data : { success: true };
+  }
+
+  async isAutoApproveEnabled() {
+    const s = await this.getSettings();
+    return !!s.auto_approve;
   }
 
   async setAutoApprove(enabled) {
@@ -1352,15 +1430,47 @@ window.DB = new AppDB();
       if (res.success) loadAdminData();
     }
 
-    // অটোমেটিক ছবি অনুমোদন UI ইনিশিয়ালাইজেশন
+    // অটোমেটিক ছবি অনুমোদন ও আপলোড কোটা UI ইনিশিয়ালাইজেশন
     async function initAutoApproveUI() {
+      const settings = await db.getSettings();
       const toggle = document.getElementById("auto-approve-toggle");
       const badge = document.getElementById("auto-approve-badge");
-      if (!toggle || !badge) return;
+      if (toggle && badge) {
+        toggle.checked = !!settings.auto_approve;
+        updateAutoApproveBadge(!!settings.auto_approve);
+      }
 
-      const isEnabled = await db.isAutoApproveEnabled();
-      toggle.checked = isEnabled;
-      updateAutoApproveBadge(isEnabled);
+      const qToggle = document.getElementById("upload-quota-toggle");
+      const qLikes = document.getElementById("quota-likes-input");
+      const qFollows = document.getElementById("quota-follows-input");
+      if (qToggle) qToggle.checked = !!settings.upload_quota_enabled;
+      if (qLikes) qLikes.value = settings.upload_need_likes ?? 5;
+      if (qFollows) qFollows.value = settings.upload_need_follows ?? 3;
+      updateQuotaBadge(!!settings.upload_quota_enabled, qLikes ? qLikes.value : 5, qFollows ? qFollows.value : 3);
+    }
+
+    function updateQuotaBadge(enabled, likes, follows) {
+      const b = document.getElementById("quota-status-badge");
+      if (!b) return;
+      if (enabled) {
+        b.className = "text-[10px] font-black px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30";
+        b.innerText = `চালু (${likes} ভোট / ${follows} ফলো)`;
+      } else {
+        b.className = "text-[10px] font-black px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30";
+        b.innerText = "বন্ধ (সরাসরি ফ্রি আপলোড চালু)";
+      }
+    }
+
+    async function saveQuotaSettings() {
+      const enabled = !!document.getElementById("upload-quota-toggle")?.checked;
+      const needLikes = parseInt(document.getElementById("quota-likes-input")?.value || "5", 10);
+      const needFollows = parseInt(document.getElementById("quota-follows-input")?.value || "3", 10);
+      await db.setQuotaSettings({ enabled, needLikes, needFollows });
+      updateQuotaBadge(enabled, needLikes, needFollows);
+      alert(enabled
+        ? `🔒 আপলোড শর্ত চালু হয়েছে: ${needLikes} ভোট ও ${needFollows} ফলো (সাইটে পর্যাপ্ত ছবি না থাকলে স্বয়ংক্রিয়ভাবে কমবে)।`
+        : "✅ আপলোড শর্ত বন্ধ করা হয়েছে! এখন সব ভিজিটর সরাসরি ছবি জমা দিতে পারবে।"
+      );
     }
 
     function updateAutoApproveBadge(isEnabled) {

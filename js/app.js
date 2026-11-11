@@ -353,6 +353,7 @@ class PicPrizeApp {
     `;
 
     const allPhotos = await this.db.getPhotos();
+    this.db.lastPhotosList = allPhotos;
     // কেবল অনুমোদিত ছবিগুলো সাধারণ গ্যালারিতে দেখাবে (পেন্ডিং ছবি অ্যাডমিন অনুমোদনের অপেক্ষায় থাকবে)
     let filtered = allPhotos.filter(p => p.approved !== false);
 
@@ -674,8 +675,8 @@ class PicPrizeApp {
     const followsBar = document.getElementById("quota-follows-bar");
     const followsRemain = document.getElementById("quota-follows-remain");
 
-    const lkPct = Math.min(100, Math.round((quota.likes / quota.needLikes) * 100));
-    const folPct = Math.min(100, Math.round((quota.follows / quota.needFollows) * 100));
+    const lkPct = quota.needLikes > 0 ? Math.min(100, Math.round((quota.likes / quota.needLikes) * 100)) : 100;
+    const folPct = quota.needFollows > 0 ? Math.min(100, Math.round((quota.follows / quota.needFollows) * 100)) : 100;
 
     if (likesText) {
       likesText.innerHTML = `${quota.likes} / ${quota.needLikes} টি ${quota.likes >= quota.needLikes ? '✅ সম্পন্ন' : ''}`;
@@ -840,16 +841,16 @@ class PicPrizeApp {
     }, 1000);
   }
 
-  // ৯. ছবি আপলোড মডাল ওপেন (GalleryBD স্টাইল)
-  openUploadModal() {
+  // ৯. ছবি আপলোড মডাল ওপেন (ডাইনামিক কোটা চেক সহ)
+  async openUploadModal() {
     if (!this.activeUser) {
       this.showToast("ছবি জমা দিতে প্রথমে লগইন বা একাউন্ট তৈরি করুন!", "info");
       this.openAuthModal();
       return;
     }
 
-    // ১. ভাইরাল আপলোড কোটা চেক (৩০ লাইক ও ২০ ফলো)
-    const quota = this.db.getUploadQuota(this.activeUser.pin);
+    // ১. ডাইনামিক আপলোড কোটা চেক (অ্যাডমিন সেটিংস ও ডেডলক গার্ড সহ)
+    const quota = await this.db.getUploadQuota(this.activeUser.pin);
     if (!quota.ok) {
       this.showUploadQuotaModal(quota);
       return;

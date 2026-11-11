@@ -34,9 +34,10 @@ window.APP_CONFIG = {
     supportedApps: "bKash, CellFin, mCash, Upay, VISA, MasterCard, NPSB"
   },
 
-  // ৪. ভাইরাল লাইক ও ফলো আপলোড শর্ত (GalleryBD ভাইরাল সিস্টেম)
-  uploadNeedLikes: 30,          // প্রতিটি ছবির জন্য ১৫ লাইক (১ম ছবি ১৫, ২য় ছবি ৩০ ...)
-  uploadNeedFollows: 20,        // ছবি আপলোডের জন্য কমপক্ষে ২০ জনকে ফলো করা থাকতে হবে
+  // ৪. ভাইরাল লাইক ও ফলো আপলোড শর্ত (ডাইনামিক ও ডেডলক-মুক্ত; অ্যাডমিন প্যানেল থেকে চালু/বন্ধ করা যাবে)
+  uploadQuotaEnabled: false,    // শুরুতে ফ্রি আপলোড চালু (সব নতুন ভিজিটর সরাসরি ছবি দিতে পারবে)
+  uploadNeedLikes: 5,           // কোটা চালু করলে প্রয়োজনীয় ভোট/লাইক
+  uploadNeedFollows: 3,         // কোটা চালু করলে প্রয়োজনীয় ফলো
   likeVerifyEvery: 5,           // প্রতি ৫টি লাইকে Adsterra স্পনসর ভেরিফিকেশন (ইনকাম বাড়াতে)
   likeWaitSeconds: 5,           // লাইক ভেরিফাই অপেক্ষা ৫ সেকেন্ড
 

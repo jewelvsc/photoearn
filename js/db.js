@@ -523,16 +523,39 @@ class AppDB {
     return follows.includes(creatorId);
   }
 
-  getUploadQuota(pin) {
+  async getUploadQuota(pin) {
+    const settings = await this.getSettings();
     const user = pin ? this.getUser(pin) : null;
-    const needL = this.cfg.uploadNeedLikes || 30;
-    const needF = this.cfg.uploadNeedFollows || 20;
     const pinLikes = pin ? parseInt(localStorage.getItem(`peg_user_likes_${pin}`) || "0", 10) : 0;
     const globalLikes = parseInt(localStorage.getItem("peg_user_likes") || "0", 10);
     const currentLikes = Math.max(pinLikes, globalLikes, (user && user.likesGiven) || 0);
     const follows = JSON.parse(localStorage.getItem("peg_follows") || "[]");
+
+    // কোটা বন্ধ থাকলে সবাই সরাসরি ছবি জমা দিতে পারবে
+    if (!settings.upload_quota_enabled) {
+      return {
+        ok: true,
+        quotaEnabled: false,
+        likes: currentLikes,
+        needLikes: 0,
+        follows: follows.length,
+        needFollows: 0
+      };
+    }
+
+    // গ্যালারির প্রকৃত ছবির সংখ্যা ও শিল্পীর সংখ্যার চেয়ে বেশি শর্ত কখনো চাইবে না (ডেডলক রোধ)
+    const photos = Array.isArray(this.lastPhotosList) ? this.lastPhotosList : await this.getPhotos();
+    const availPhotos = photos.length;
+    const availCreators = new Set(photos.map(p => p.authorId || p.authorPin || p.authorName).filter(Boolean)).size;
+
+    const rawNeedL = settings.upload_need_likes !== undefined ? parseInt(settings.upload_need_likes, 10) : (this.cfg.uploadNeedLikes || 5);
+    const rawNeedF = settings.upload_need_follows !== undefined ? parseInt(settings.upload_need_follows, 10) : (this.cfg.uploadNeedFollows || 3);
+    const needL = Math.min(Math.max(0, rawNeedL), availPhotos);
+    const needF = Math.min(Math.max(0, rawNeedF), availCreators);
+
     return {
       ok: currentLikes >= needL && follows.length >= needF,
+      quotaEnabled: true,
       likes: currentLikes,
       needLikes: needL,
       follows: follows.length,
@@ -553,14 +576,36 @@ class AppDB {
     return ban;
   }
 
-  // ১৩. অটো-অ্যাপ্রুভ সেটিংস ও নোটিফিকেশন
-  async isAutoApproveEnabled() {
+  // ১৩. অটো-অ্যাপ্রুভ ও আপলোড কোটা সেটিংস ও নোটিফিকেশন
+  async getSettings() {
+    const fallback = {
+      auto_approve: localStorage.getItem("peg_auto_approve") === "true",
+      upload_quota_enabled: localStorage.getItem("peg_quota_enabled") === "true" || !!this.cfg.uploadQuotaEnabled,
+      upload_need_likes: parseInt(localStorage.getItem("peg_quota_likes") || this.cfg.uploadNeedLikes || "5", 10),
+      upload_need_follows: parseInt(localStorage.getItem("peg_quota_follows") || this.cfg.uploadNeedFollows || "3", 10)
+    };
     const res = await this.apiCall("get_settings");
-    if (res && res.data && typeof res.data.auto_approve === "boolean") {
+    if (res && res.data && res.data.success) {
       localStorage.setItem("peg_auto_approve", res.data.auto_approve ? "true" : "false");
-      return res.data.auto_approve;
+      localStorage.setItem("peg_quota_enabled", res.data.upload_quota_enabled ? "true" : "false");
+      localStorage.setItem("peg_quota_likes", String(res.data.upload_need_likes ?? 5));
+      localStorage.setItem("peg_quota_follows", String(res.data.upload_need_follows ?? 3));
+      return res.data;
     }
-    return localStorage.getItem("peg_auto_approve") === "true";
+    return fallback;
+  }
+
+  async setQuotaSettings({ enabled, needLikes, needFollows }) {
+    localStorage.setItem("peg_quota_enabled", enabled ? "true" : "false");
+    localStorage.setItem("peg_quota_likes", String(needLikes));
+    localStorage.setItem("peg_quota_follows", String(needFollows));
+    const res = await this.apiCall("set_quota_settings", { enabled: !!enabled, needLikes, needFollows });
+    return res && res.data ? res.data : { success: true };
+  }
+
+  async isAutoApproveEnabled() {
+    const s = await this.getSettings();
+    return !!s.auto_approve;
   }
 
   async setAutoApprove(enabled) {

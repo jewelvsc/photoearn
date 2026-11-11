@@ -247,13 +247,13 @@ html:not(.dark) .app-modal p {
   color: #334155 !important;
 }
 
-/* 5. Close buttons inside modals */
-html:not(.dark) .app-modal button[onclick*="closeModals"] {
+/* 5. Close (×) buttons inside modals ONLY — keep gradient CTA button text crisp white */
+html:not(.dark) .app-modal button[onclick="window.APP.closeModals()"] {
   background-color: #f1f5f9 !important;
   color: #334155 !important;
   border: 1px solid #e2e8f0 !important;
 }
-html:not(.dark) .app-modal button[onclick*="closeModals"]:hover {
+html:not(.dark) .app-modal button[onclick="window.APP.closeModals()"]:hover {
   background-color: #e2e8f0 !important;
   color: #0f172a !important;
 }
@@ -1500,9 +1500,10 @@ window.APP_CONFIG = {
     supportedApps: "bKash, CellFin, mCash, Upay, VISA, MasterCard, NPSB"
   },
 
-  // ৪. ভাইরাল লাইক ও ফলো আপলোড শর্ত (GalleryBD ভাইরাল সিস্টেম)
-  uploadNeedLikes: 30,          // প্রতিটি ছবির জন্য ১৫ লাইক (১ম ছবি ১৫, ২য় ছবি ৩০ ...)
-  uploadNeedFollows: 20,        // ছবি আপলোডের জন্য কমপক্ষে ২০ জনকে ফলো করা থাকতে হবে
+  // ৪. ভাইরাল লাইক ও ফলো আপলোড শর্ত (ডাইনামিক ও ডেডলক-মুক্ত; অ্যাডমিন প্যানেল থেকে চালু/বন্ধ করা যাবে)
+  uploadQuotaEnabled: false,    // শুরুতে ফ্রি আপলোড চালু (সব নতুন ভিজিটর সরাসরি ছবি দিতে পারবে)
+  uploadNeedLikes: 5,           // কোটা চালু করলে প্রয়োজনীয় ভোট/লাইক
+  uploadNeedFollows: 3,         // কোটা চালু করলে প্রয়োজনীয় ফলো
   likeVerifyEvery: 5,           // প্রতি ৫টি লাইকে Adsterra স্পনসর ভেরিফিকেশন (ইনকাম বাড়াতে)
   likeWaitSeconds: 5,           // লাইক ভেরিফাই অপেক্ষা ৫ সেকেন্ড
 
@@ -2136,16 +2137,39 @@ class AppDB {
     return follows.includes(creatorId);
   }
 
-  getUploadQuota(pin) {
+  async getUploadQuota(pin) {
+    const settings = await this.getSettings();
     const user = pin ? this.getUser(pin) : null;
-    const needL = this.cfg.uploadNeedLikes || 30;
-    const needF = this.cfg.uploadNeedFollows || 20;
     const pinLikes = pin ? parseInt(localStorage.getItem(`peg_user_likes_${pin}`) || "0", 10) : 0;
     const globalLikes = parseInt(localStorage.getItem("peg_user_likes") || "0", 10);
     const currentLikes = Math.max(pinLikes, globalLikes, (user && user.likesGiven) || 0);
     const follows = JSON.parse(localStorage.getItem("peg_follows") || "[]");
+
+    // কোটা বন্ধ থাকলে সবাই সরাসরি ছবি জমা দিতে পারবে
+    if (!settings.upload_quota_enabled) {
+      return {
+        ok: true,
+        quotaEnabled: false,
+        likes: currentLikes,
+        needLikes: 0,
+        follows: follows.length,
+        needFollows: 0
+      };
+    }
+
+    // গ্যালারির প্রকৃত ছবির সংখ্যা ও শিল্পীর সংখ্যার চেয়ে বেশি শর্ত কখনো চাইবে না (ডেডলক রোধ)
+    const photos = Array.isArray(this.lastPhotosList) ? this.lastPhotosList : await this.getPhotos();
+    const availPhotos = photos.length;
+    const availCreators = new Set(photos.map(p => p.authorId || p.authorPin || p.authorName).filter(Boolean)).size;
+
+    const rawNeedL = settings.upload_need_likes !== undefined ? parseInt(settings.upload_need_likes, 10) : (this.cfg.uploadNeedLikes || 5);
+    const rawNeedF = settings.upload_need_follows !== undefined ? parseInt(settings.upload_need_follows, 10) : (this.cfg.uploadNeedFollows || 3);
+    const needL = Math.min(Math.max(0, rawNeedL), availPhotos);
+    const needF = Math.min(Math.max(0, rawNeedF), availCreators);
+
     return {
       ok: currentLikes >= needL && follows.length >= needF,
+      quotaEnabled: true,
       likes: currentLikes,
       needLikes: needL,
       follows: follows.length,
@@ -2166,14 +2190,36 @@ class AppDB {
     return ban;
   }
 
-  // ১৩. অটো-অ্যাপ্রুভ সেটিংস ও নোটিফিকেশন
-  async isAutoApproveEnabled() {
+  // ১৩. অটো-অ্যাপ্রুভ ও আপলোড কোটা সেটিংস ও নোটিফিকেশন
+  async getSettings() {
+    const fallback = {
+      auto_approve: localStorage.getItem("peg_auto_approve") === "true",
+      upload_quota_enabled: localStorage.getItem("peg_quota_enabled") === "true" || !!this.cfg.uploadQuotaEnabled,
+      upload_need_likes: parseInt(localStorage.getItem("peg_quota_likes") || this.cfg.uploadNeedLikes || "5", 10),
+      upload_need_follows: parseInt(localStorage.getItem("peg_quota_follows") || this.cfg.uploadNeedFollows || "3", 10)
+    };
     const res = await this.apiCall("get_settings");
-    if (res && res.data && typeof res.data.auto_approve === "boolean") {
+    if (res && res.data && res.data.success) {
       localStorage.setItem("peg_auto_approve", res.data.auto_approve ? "true" : "false");
-      return res.data.auto_approve;
+      localStorage.setItem("peg_quota_enabled", res.data.upload_quota_enabled ? "true" : "false");
+      localStorage.setItem("peg_quota_likes", String(res.data.upload_need_likes ?? 5));
+      localStorage.setItem("peg_quota_follows", String(res.data.upload_need_follows ?? 3));
+      return res.data;
     }
-    return localStorage.getItem("peg_auto_approve") === "true";
+    return fallback;
+  }
+
+  async setQuotaSettings({ enabled, needLikes, needFollows }) {
+    localStorage.setItem("peg_quota_enabled", enabled ? "true" : "false");
+    localStorage.setItem("peg_quota_likes", String(needLikes));
+    localStorage.setItem("peg_quota_follows", String(needFollows));
+    const res = await this.apiCall("set_quota_settings", { enabled: !!enabled, needLikes, needFollows });
+    return res && res.data ? res.data : { success: true };
+  }
+
+  async isAutoApproveEnabled() {
+    const s = await this.getSettings();
+    return !!s.auto_approve;
   }
 
   async setAutoApprove(enabled) {
@@ -2604,6 +2650,7 @@ class PicPrizeApp {
     `;
 
     const allPhotos = await this.db.getPhotos();
+    this.db.lastPhotosList = allPhotos;
     // কেবল অনুমোদিত ছবিগুলো সাধারণ গ্যালারিতে দেখাবে (পেন্ডিং ছবি অ্যাডমিন অনুমোদনের অপেক্ষায় থাকবে)
     let filtered = allPhotos.filter(p => p.approved !== false);
 
@@ -2925,8 +2972,8 @@ class PicPrizeApp {
     const followsBar = document.getElementById("quota-follows-bar");
     const followsRemain = document.getElementById("quota-follows-remain");
 
-    const lkPct = Math.min(100, Math.round((quota.likes / quota.needLikes) * 100));
-    const folPct = Math.min(100, Math.round((quota.follows / quota.needFollows) * 100));
+    const lkPct = quota.needLikes > 0 ? Math.min(100, Math.round((quota.likes / quota.needLikes) * 100)) : 100;
+    const folPct = quota.needFollows > 0 ? Math.min(100, Math.round((quota.follows / quota.needFollows) * 100)) : 100;
 
     if (likesText) {
       likesText.innerHTML = `${quota.likes} / ${quota.needLikes} টি ${quota.likes >= quota.needLikes ? '✅ সম্পন্ন' : ''}`;
@@ -3091,16 +3138,16 @@ class PicPrizeApp {
     }, 1000);
   }
 
-  // ৯. ছবি আপলোড মডাল ওপেন (GalleryBD স্টাইল)
-  openUploadModal() {
+  // ৯. ছবি আপলোড মডাল ওপেন (ডাইনামিক কোটা চেক সহ)
+  async openUploadModal() {
     if (!this.activeUser) {
       this.showToast("ছবি জমা দিতে প্রথমে লগইন বা একাউন্ট তৈরি করুন!", "info");
       this.openAuthModal();
       return;
     }
 
-    // ১. ভাইরাল আপলোড কোটা চেক (৩০ লাইক ও ২০ ফলো)
-    const quota = this.db.getUploadQuota(this.activeUser.pin);
+    // ১. ডাইনামিক আপলোড কোটা চেক (অ্যাডমিন সেটিংস ও ডেডলক গার্ড সহ)
+    const quota = await this.db.getUploadQuota(this.activeUser.pin);
     if (!quota.ok) {
       this.showUploadQuotaModal(quota);
       return;
