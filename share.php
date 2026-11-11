@@ -86,3 +86,4 @@ $canonicalShare = $photoId !== '' ? ($siteUrl . '/share.php?p=' . urlencode($pho
   <p><a href="<?= $e($targetUrl) ?>"><?= $e($title) ?></a></p>
 </body>
 </html>
+
