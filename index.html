@@ -29,20 +29,25 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Photo Earn">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>PhotoEarn BD - ছবি তুলে আয় করুন প্রতিদিন | ফটো কনটেস্ট ও আর্নিং গ্যালারি</title>
+  <title>Photo Earn - ছবি তুলে আয় করুন প্রতিদিন | ফটো কনটেস্ট ও আর্নিং গ্যালারি</title>
   <meta name="description" content="মোবাইল বা ক্যামেরা দিয়ে তোলা ছবি জমা দিন, লাইভ ভোট পান আর জিতে নিন প্রতিদিনের নগদ বিকাশ ও নগদ প্রাইজ।">
-  <meta name="keywords" content="photo earn, photo contest bd, ছবি তুলে টাকা আয়, photo gallery bd, photo earn gallery">
-  <meta property="og:title" content="PhotoEarn BD - সেরা ছবির জন্য প্রতিদিন নগদ বিকাশ পুরস্কার!">
+  <meta name="keywords" content="photo earn, photo contest, ছবি তুলে টাকা আয়, photo gallery, photo earn gallery">
+  <link rel="canonical" href="https://photoearn.chasherdokan.com/">
+  <meta property="og:site_name" content="Photo Earn">
+  <meta property="og:title" content="Photo Earn - সেরা ছবির জন্য প্রতিদিন নগদ বিকাশ পুরস্কার!">
   <meta property="og:description" content="আপনার তোলা ছবি আপলোড করুন আর জিতে নিন ২৪ ঘণ্টা, ৭ দিন ও ৩০ দিনের মেগা ক্যাশ প্রাইজ।">
   <meta property="og:type" content="website">
-  <meta property="og:url" content="https://photoearn.chasherdokan.com">
-  <meta property="og:image" content="https://photoearn.chasherdokan.com/images/og-preview.png">
+  <meta property="og:url" content="https://photoearn.chasherdokan.com/">
+  <meta property="og:image" content="https://photoearn.chasherdokan.com/images/og-preview.png?v=2">
+  <meta property="og:image:secure_url" content="https://photoearn.chasherdokan.com/images/og-preview.png?v=2">
+  <meta property="og:image:type" content="image/png">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="Photo Earn - ছবি তুলে আয় করুন প্রতিদিন">
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="PhotoEarn BD - ছবি তুলে আয় করুন প্রতিদিন">
+  <meta name="twitter:title" content="Photo Earn - ছবি তুলে আয় করুন প্রতিদিন">
   <meta name="twitter:description" content="ছবি আপলোড করুন, ভোট পান আর জিতে নিন প্রতিদিনের নগদ বিকাশ ও নগদ প্রাইজ।">
-  <meta name="twitter:image" content="https://photoearn.chasherdokan.com/images/og-preview.png">
+  <meta name="twitter:image" content="https://photoearn.chasherdokan.com/images/og-preview.png?v=2">
 
   <!-- প্রি-কম্পাইলড ফাস্ট Tailwind CSS (কোনো JS ব্লকিং ছাড়াই ০ms রেন্ডার) -->
   <link rel="stylesheet" href="css/tailwind.min.css?v=2">
@@ -859,7 +864,7 @@ html.dark .photo-img-wrap {
     <div class="glass-panel rounded-3xl p-6 md:p-8 border border-slate-200 dark:border-white/10 space-y-6 bg-white dark:bg-slate-900/90 shadow-xl">
       <div class="text-center pb-4 border-b border-slate-200 dark:border-white/10">
         <span class="text-xs font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-widest">How to Earn</span>
-        <h2 class="text-2xl font-black text-slate-900 dark:text-white mt-1">💰 PhotoEarn BD থেকে ইনকামের নিয়ম</h2>
+        <h2 class="text-2xl font-black text-slate-900 dark:text-white mt-1">💰 Photo Earn থেকে ইনকামের নিয়ম</h2>
         <p class="text-xs text-slate-600 dark:text-gray-400 mt-1 font-medium">সহজ ৩টি উপায়ে প্রতিদিন নিশ্চিত টাকা আয় করার নিয়মাবলী</p>
       </div>
 
@@ -2372,7 +2377,7 @@ window.addEventListener("appinstalled", () => {
 
 /**
  * ========================================================
- * 🚀 PicPrize BD - Core Application Engine (app.js)
+ * 🚀 Photo Earn - Core Application Engine (app.js)
  * সম্পূর্ণ ইউজার ইন্টারফেস, কনটেস্ট টাইমার, আর্নিং ও মডাল লজিক
  * ========================================================
  */
@@ -4176,10 +4181,10 @@ class PicPrizeApp {
     }
   }
 
-  // সোশ্যাল মিডিয়া ভাইরাল শেয়ার হ্যান্ডলার
+  // সোশ্যাল মিডিয়া ভাইরাল শেয়ার হ্যান্ডলার (ডাইনামিক OG প্রিভিউ সহ)
   shareToWhatsApp(photoId, photoTitle) {
-    const siteUrl = this.cfg.siteUrl || window.location.origin;
-    const shareUrl = `${siteUrl}/?p=${photoId}`;
+    const siteUrl = (this.cfg.siteUrl || window.location.origin).replace(/\/$/, "");
+    const shareUrl = `${siteUrl}/share.php?p=${photoId}`;
     const text = `🔥 "${photoTitle || 'আমার তোলা চমৎকার ছবি'}"-এ ভোট দিন এবং প্রতিদিন জিতে নিন নগদ বিকাশ পুরস্কার!\n\n👉 ভোট দিতে এখানে ক্লিক করুন: ${shareUrl}`;
     const waUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`;
     window.open(waUrl, "_blank");
@@ -4187,16 +4192,16 @@ class PicPrizeApp {
   }
 
   shareToFacebook(photoId) {
-    const siteUrl = this.cfg.siteUrl || window.location.origin;
-    const shareUrl = `${siteUrl}/?p=${photoId}`;
+    const siteUrl = (this.cfg.siteUrl || window.location.origin).replace(/\/$/, "");
+    const shareUrl = `${siteUrl}/share.php?p=${photoId}`;
     const fbUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`;
     window.open(fbUrl, "_blank");
     this.showToast("Facebook শেয়ার উইন্ডো ওপেন হয়েছে!", "success");
   }
 
   copyShareLink(photoId) {
-    const siteUrl = this.cfg.siteUrl || window.location.origin;
-    const shareUrl = `${siteUrl}/?p=${photoId}`;
+    const siteUrl = (this.cfg.siteUrl || window.location.origin).replace(/\/$/, "");
+    const shareUrl = `${siteUrl}/share.php?p=${photoId}`;
     if (navigator.clipboard && navigator.clipboard.writeText) {
       navigator.clipboard.writeText(shareUrl).then(() => {
         this.showToast("🔗 ছবির ভোট দেওয়ার লিঙ্ক কপি হয়েছে!", "success");

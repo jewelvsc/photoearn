@@ -3,7 +3,7 @@
  * High-Speed Caching & Offline PWA Acceleration
  */
 
-const CACHE_NAME = "photoearn-cache-v5";
+const CACHE_NAME = "photoearn-cache-v6";
 const ASSETS_TO_CACHE = [
   "./manifest.json",
   "./favicon.ico",
@@ -11,7 +11,7 @@ const ASSETS_TO_CACHE = [
   "./css/style.css?v=3",
   "./images/logo-icon.png?v=6",
   "./images/favicon.png?v=2",
-  "./images/og-preview.png"
+  "./images/og-preview.png?v=2"
 ];
 
 // Install: Cache core static assets

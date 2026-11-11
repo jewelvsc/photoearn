@@ -24,7 +24,7 @@ window.addEventListener("appinstalled", () => {
 
 /**
  * ========================================================
- * 🚀 PicPrize BD - Core Application Engine (app.js)
+ * 🚀 Photo Earn - Core Application Engine (app.js)
  * সম্পূর্ণ ইউজার ইন্টারফেস, কনটেস্ট টাইমার, আর্নিং ও মডাল লজিক
  * ========================================================
  */
@@ -1828,10 +1828,10 @@ class PicPrizeApp {
     }
   }
 
-  // সোশ্যাল মিডিয়া ভাইরাল শেয়ার হ্যান্ডলার
+  // সোশ্যাল মিডিয়া ভাইরাল শেয়ার হ্যান্ডলার (ডাইনামিক OG প্রিভিউ সহ)
   shareToWhatsApp(photoId, photoTitle) {
-    const siteUrl = this.cfg.siteUrl || window.location.origin;
-    const shareUrl = `${siteUrl}/?p=${photoId}`;
+    const siteUrl = (this.cfg.siteUrl || window.location.origin).replace(/\/$/, "");
+    const shareUrl = `${siteUrl}/share.php?p=${photoId}`;
     const text = `🔥 "${photoTitle || 'আমার তোলা চমৎকার ছবি'}"-এ ভোট দিন এবং প্রতিদিন জিতে নিন নগদ বিকাশ পুরস্কার!\n\n👉 ভোট দিতে এখানে ক্লিক করুন: ${shareUrl}`;
     const waUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`;
     window.open(waUrl, "_blank");
@@ -1839,16 +1839,16 @@ class PicPrizeApp {
   }
 
   shareToFacebook(photoId) {
-    const siteUrl = this.cfg.siteUrl || window.location.origin;
-    const shareUrl = `${siteUrl}/?p=${photoId}`;
+    const siteUrl = (this.cfg.siteUrl || window.location.origin).replace(/\/$/, "");
+    const shareUrl = `${siteUrl}/share.php?p=${photoId}`;
     const fbUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`;
     window.open(fbUrl, "_blank");
     this.showToast("Facebook শেয়ার উইন্ডো ওপেন হয়েছে!", "success");
   }
 
   copyShareLink(photoId) {
-    const siteUrl = this.cfg.siteUrl || window.location.origin;
-    const shareUrl = `${siteUrl}/?p=${photoId}`;
+    const siteUrl = (this.cfg.siteUrl || window.location.origin).replace(/\/$/, "");
+    const shareUrl = `${siteUrl}/share.php?p=${photoId}`;
     if (navigator.clipboard && navigator.clipboard.writeText) {
       navigator.clipboard.writeText(shareUrl).then(() => {
         this.showToast("🔗 ছবির ভোট দেওয়ার লিঙ্ক কপি হয়েছে!", "success");
