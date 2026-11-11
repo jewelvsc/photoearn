@@ -97,6 +97,31 @@ function writeJson($file, $data) {
     file_put_contents($file, json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE), LOCK_EX);
 }
 
+function readPhotosSafe($photosFile) {
+    $photos = readJson($photosFile, []);
+    if (!is_array($photos)) return [];
+    $changed = false;
+    foreach ($photos as &$p) {
+        $id = $p['id'] ?? '';
+        $pin = trim((string)($p['authorPin'] ?? ''));
+        $author = trim((string)($p['authorName'] ?? ''));
+        if ($id === 'photo_1' && ($pin === '1234' || $author === 'তানভীর হাসান') && $pin !== 'demo_tanvir') {
+            $p['authorPin'] = 'demo_tanvir';
+            $p['authorId']  = makeCreatorId('demo_tanvir');
+            $changed = true;
+        } elseif ($id === 'photo_2' && ($pin === '2345' || $author === 'রাকিবুল ইসলাম') && $pin !== 'demo_rakib') {
+            $p['authorPin'] = 'demo_rakib';
+            $p['authorId']  = makeCreatorId('demo_rakib');
+            $changed = true;
+        }
+    }
+    unset($p);
+    if ($changed) {
+        writeJson($photosFile, $photos);
+    }
+    return $photos;
+}
+
 function cleanText($str, $maxLen = 200) {
     $s = trim(strip_tags((string)$str));
     if (function_exists('mb_substr')) {
@@ -169,7 +194,7 @@ function addNotification(&$notifs, $pin, $title, $message, $type = 'info') {
 }
 
 function creditUserInMap(&$users, $pin, $addPoints, $isReferral = false) {
-    if (!$pin || !isset($users[$pin])) return null;
+    if (!$pin || strpos(strtolower($pin), 'demo_') === 0 || !isset($users[$pin])) return null;
     $u = &$users[$pin];
     $basePts = isset($u['points']) ? intval($u['points']) : intval(round(floatval($u['taka'] ?? 0) / PEG_TAKA_PER_POINT));
     $u['points'] = max(0, $basePts + intval($addPoints));
@@ -324,8 +349,8 @@ if (!file_exists($photosFile)) {
             "title" => "গ্রামের শান্ত বিকেল ও সূর্যাস্ত",
             "category" => "গ্রামের দৃশ্য",
             "authorName" => "তানভীর হাসান",
-            "authorPin" => "1234",
-            "authorId" => makeCreatorId("1234"),
+            "authorPin" => "demo_tanvir",
+            "authorId" => makeCreatorId("demo_tanvir"),
             "photoType" => "FREE",
             "price" => 0,
             "views" => 342,
@@ -342,8 +367,8 @@ if (!file_exists($photosFile)) {
             "title" => "নদীর বুকে পালতোলা নৌকা",
             "category" => "নদী ও নৌকা",
             "authorName" => "রাকিবুল ইসলাম",
-            "authorPin" => "2345",
-            "authorId" => makeCreatorId("2345"),
+            "authorPin" => "demo_rakib",
+            "authorId" => makeCreatorId("demo_rakib"),
             "photoType" => "FREE",
             "price" => 0,
             "views" => 654,
@@ -486,7 +511,7 @@ switch ($action) {
 
     // ===== ৩. ছবি গ্যালারি ও আপলোড =====
     case 'get_photos':
-        $photos = readJson($photosFile, []);
+        $photos = readPhotosSafe($photosFile);
         $isAdmin = isAdminLoggedIn() && (!empty($_GET['all']) || !empty($input['all']));
         $out = [];
         foreach ($photos as $p) {
@@ -516,7 +541,7 @@ switch ($action) {
         // সার্ভার থেকেই settings ও সর্বোচ্চ ছবির লিমিট যাচাই (অতিরিক্ত ফাইল সেভ হওয়া রোধ)
         $settings   = readJson($settingsFile, ["auto_approve" => false]);
         $maxPhotos  = max(0, intval($settings['max_photos_per_user'] ?? 0));
-        $photos     = readJson($photosFile, []);
+        $photos     = readPhotosSafe($photosFile);
         if ($maxPhotos > 0 && $authorPin !== '') {
             $userCurrentCount = 0;
             foreach ($photos as $p) {
@@ -597,7 +622,7 @@ switch ($action) {
             exit;
         }
 
-        $photos   = readJson($photosFile, []);
+        $photos   = readPhotosSafe($photosFile);
         $found    = false;
         $newVotes = 0;
 
@@ -707,7 +732,7 @@ switch ($action) {
         if ($pin !== '' && isset($users[$pin])) {
             unset($attempts[$ipHash]);
             writeJson($loginAttemptsFile, $attempts);
-            $photos    = readJson($photosFile, []);
+            $photos    = readPhotosSafe($photosFile);
             $followers = readJson($followersFile, []);
             $statsMap  = buildUserStatsMap($photos, $followers);
             $u         = attachUserAggregatedStats($users[$pin], $pin, $statsMap, true);
@@ -737,7 +762,7 @@ switch ($action) {
         $pin   = cleanText($input['pin'] ?? '', 20);
         $users = readJson($usersFile, []);
         if ($pin !== '' && isset($users[$pin])) {
-            $photos    = readJson($photosFile, []);
+            $photos    = readPhotosSafe($photosFile);
             $followers = readJson($followersFile, []);
             $settings  = readJson($settingsFile, []);
             $statsMap  = buildUserStatsMap($photos, $followers);
@@ -756,7 +781,7 @@ switch ($action) {
         $phone = cleanText($input['phone'] ?? '', 20);
         $ref   = strtoupper(cleanText($input['ref'] ?? '', 30));
 
-        if (strlen($pin) < 4 || $name === '' || $phone === '') {
+        if (strlen($pin) < 4 || strpos(strtolower($pin), 'demo_') === 0 || $name === '' || $phone === '') {
             echo json_encode(["success" => false, "message" => "সঠিক তথ্য দিন! পিন কমপক্ষে ৪ সংখ্যার হতে হবে।"]);
             exit;
         }
@@ -843,12 +868,12 @@ switch ($action) {
             exit;
         }
 
-        $photos = readJson($photosFile, []);
+        $photos = readPhotosSafe($photosFile);
         $actualPhotos = 0;
         foreach ($photos as $p) {
             if (($p['authorPin'] ?? '') === $pin) $actualPhotos++;
         }
-        $photoCount = max(intval($user['photosCount'] ?? 0), $actualPhotos);
+        $photoCount = $actualPhotos;
         if ($photoCount < PEG_MIN_PHOTOS_WD) {
             echo json_encode(["success" => false, "message" => "টাকা তুলতে আপনার কমপক্ষে " . PEG_MIN_PHOTOS_WD . "টি ছবি আপলোড থাকতে হবে! বর্তমানে আছে {$photoCount}টি।"]);
             exit;
@@ -972,7 +997,7 @@ switch ($action) {
     case 'approve_photo':
         requireAdmin();
         $photoId = cleanText($input['id'] ?? '', 64);
-        $photos  = readJson($photosFile, []);
+        $photos  = readPhotosSafe($photosFile);
         $found   = null;
         foreach ($photos as &$p) {
             if (($p['id'] ?? '') === $photoId) {
@@ -1000,7 +1025,7 @@ switch ($action) {
         requireAdmin();
         $photoId = cleanText($input['id'] ?? '', 64);
         $reason  = cleanText($input['reason'] ?? 'নীতিমালা পরিপন্থী বা অস্পষ্ট ছবি', 200);
-        $photos  = readJson($photosFile, []);
+        $photos  = readPhotosSafe($photosFile);
         $updated = [];
         $target  = null;
         foreach ($photos as $p) {
@@ -1025,7 +1050,7 @@ switch ($action) {
     case 'delete_photo':
         requireAdmin();
         $id      = cleanText($input['id'] ?? '', 64);
-        $photos  = readJson($photosFile, []);
+        $photos  = readPhotosSafe($photosFile);
         $updated = [];
         foreach ($photos as $p) {
             if (($p['id'] ?? '') === $id) {
@@ -1043,7 +1068,7 @@ switch ($action) {
     case 'get_all_users':
         requireAdmin();
         $users     = readJson($usersFile, []);
-        $photos    = readJson($photosFile, []);
+        $photos    = readPhotosSafe($photosFile);
         $followers = readJson($followersFile, []);
         $statsMap  = buildUserStatsMap($photos, $followers);
         $list      = [];

@@ -1,9 +1,25 @@
 window.__deferredPrompt = null;
+window.__isPwaStandalone = () =>
+  window.matchMedia("(display-mode: standalone)").matches ||
+  window.matchMedia("(display-mode: minimal-ui)").matches ||
+  window.navigator.standalone === true;
+
 window.addEventListener("beforeinstallprompt", (e) => {
   e.preventDefault();
+  if (window.__isPwaStandalone()) return;
+  localStorage.removeItem("pwa_installed");
   window.__deferredPrompt = e;
   const topPwaBtn = document.getElementById("pwa-top-btn");
   if (topPwaBtn) topPwaBtn.classList.remove("hidden");
+});
+
+window.addEventListener("appinstalled", () => {
+  localStorage.setItem("pwa_installed", "true");
+  window.__deferredPrompt = null;
+  const banner = document.getElementById("pwa-install-banner");
+  if (banner) banner.classList.add("hidden");
+  const topPwaBtn = document.getElementById("pwa-top-btn");
+  if (topPwaBtn) topPwaBtn.classList.add("hidden");
 });
 
 /**
@@ -1271,7 +1287,7 @@ class PicPrizeApp {
         </div>
       </div>
 
-      <!-- টেলিগ্রাম বোনাস কার্ড -->
+      <!-- টেলিগ্রাম সাবস্ক্রিপশন ও বোনাস কার্ড -->
       ${!u.telegramBonus ? `
         <div class="p-3 bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-200 dark:border-indigo-500/30 rounded-xl mb-3 flex items-center justify-between gap-2">
           <div>
@@ -1282,7 +1298,17 @@ class PicPrizeApp {
             ক্লেইম করুন
           </button>
         </div>
-      ` : ''}
+      ` : `
+        <div class="px-3 py-2 bg-slate-100 dark:bg-slate-800/70 border border-slate-200 dark:border-white/10 rounded-xl mb-3 flex items-center justify-between gap-2 text-[11px]">
+          <span class="font-semibold ${localStorage.getItem('peg_tg_unsubscribed') === 'true' ? 'text-amber-600 dark:text-amber-300' : 'text-emerald-600 dark:text-emerald-400'}">
+            ${localStorage.getItem('peg_tg_unsubscribed') === 'true' ? '✈️ টেলিগ্রাম রিমাইন্ডার চালু আছে' : '✈️ টেলিগ্রাম চ্যানেলে যুক্ত আছেন ✓'}
+          </span>
+          ${localStorage.getItem('peg_tg_unsubscribed') === 'true'
+            ? `<a href="${this.cfg.supportTelegram || 'https://t.me/photoearnOfficial'}" target="_blank" rel="noopener" onclick="window.APP.markTelegramSubscribed(true)" class="px-2.5 py-1 bg-sky-600 hover:bg-sky-500 text-white rounded-lg text-[10px] font-bold whitespace-nowrap">যুক্ত হোন</a>`
+            : `<button onclick="window.APP.resetTelegramSubscription()" class="text-[10px] text-slate-500 hover:text-rose-500 underline whitespace-nowrap">আনসাবস্ক্রাইব করেছেন?</button>`
+          }
+        </div>
+      `}
 
       <!-- রেফারেল লিংক -->
       <div class="p-3 bg-slate-900 rounded-xl border border-slate-800 mb-3">
@@ -1347,6 +1373,8 @@ class PicPrizeApp {
     }
     const res = await this.db.claimTelegramBonus(this.activeUser.pin);
     if (res.success) {
+      localStorage.setItem("peg_tg_subscribed", "true");
+      localStorage.removeItem("peg_tg_unsubscribed");
       this.activeUser = res.user;
       this.updateUserNavButton();
       this.openProfileModal();
@@ -1486,23 +1514,91 @@ class PicPrizeApp {
     update();
   }
 
+  isPwaInstalled() {
+    if (window.__isPwaStandalone && window.__isPwaStandalone()) {
+      localStorage.setItem("pwa_installed", "true");
+      return true;
+    }
+    return localStorage.getItem("pwa_installed") === "true";
+  }
+
+  isTelegramSubscribed() {
+    if (localStorage.getItem("peg_tg_unsubscribed") === "true") return false;
+    if (localStorage.getItem("peg_tg_subscribed") === "true") return true;
+    return !!(this.activeUser && this.activeUser.telegramBonus);
+  }
+
+  markTelegramSubscribed(reopenProfile = false) {
+    localStorage.setItem("peg_tg_subscribed", "true");
+    localStorage.removeItem("peg_tg_unsubscribed");
+    localStorage.removeItem("peg_tg_snooze_until");
+    sessionStorage.setItem("tg_popup_shown", "true");
+    this.closeModals();
+    this.showToast("✈️ টেলিগ্রামে যুক্ত হওয়ার জন্য ধন্যবাদ! আর এই পপআপ দেখাবে না।", "success");
+    if (reopenProfile && this.activeUser) {
+      this.openProfileModal();
+    }
+  }
+
+  snoozeTelegramPopup() {
+    const dayLater = Date.now() + 24 * 3600 * 1000;
+    localStorage.setItem("peg_tg_snooze_until", String(dayLater));
+    sessionStorage.setItem("tg_popup_shown", "true");
+    this.closeModals();
+  }
+
+  resetTelegramSubscription() {
+    localStorage.removeItem("peg_tg_subscribed");
+    localStorage.removeItem("peg_tg_snooze_until");
+    localStorage.setItem("peg_tg_unsubscribed", "true");
+    sessionStorage.removeItem("tg_popup_shown");
+    this.showToast("🔔 টেলিগ্রাম রিমাইন্ডার পুনরায় চালু হয়েছে। এখন থেকে চ্যানেল নোটিফিকেশন দেখাবে।", "info");
+    if (this.activeUser) this.openProfileModal();
+  }
+
   // ১৫. পপআপ (টেলিগ্রাম চ্যানেল ও PWA নোটিস - ইউটিউব বন্ধ)
   setupPopups() {
-    // টেলিগ্রাম চ্যানেল পপআপ
-    if (this.cfg.telegramPopupEnabled && !sessionStorage.getItem("tg_popup_shown")) {
+    // টেলিগ্রাম চ্যানেল পপআপ (সাবস্ক্রাইব করলে আর দেখাবে না; আনসাবস্ক্রাইব টগল করলে আবার দেখাবে)
+    const tgSnoozedUntil = parseInt(localStorage.getItem("peg_tg_snooze_until") || "0", 10);
+    if (
+      this.cfg.telegramPopupEnabled &&
+      !this.isTelegramSubscribed() &&
+      Date.now() > tgSnoozedUntil &&
+      !sessionStorage.getItem("tg_popup_shown")
+    ) {
       const delay = (this.cfg.telegramPopupDelaySeconds || 20) * 1000;
       setTimeout(() => {
+        if (this.isTelegramSubscribed()) return;
         sessionStorage.setItem("tg_popup_shown", "true");
         const modal = document.getElementById("telegram-join-modal");
         if (modal) modal.classList.remove("hidden");
       }, delay);
     }
 
-    // PWA অ্যাপ ইনস্টল ব্যানার প্রম্পট
+    // PWA অ্যাপ ইনস্টল ব্যানার প্রম্পট (ইনস্টল বা স্ট্যান্ডঅ্যালোন অ্যাপ হলে আর দেখাবে না)
+    const banner = document.getElementById("pwa-install-banner");
+    const topPwaBtn = document.getElementById("pwa-top-btn");
+    if (this.isPwaInstalled()) {
+      if (banner) banner.classList.add("hidden");
+      if (topPwaBtn) topPwaBtn.classList.add("hidden");
+      return;
+    }
+
     if (this.cfg.pwa && this.cfg.pwa.enabled && !localStorage.getItem("pwa_dismissed")) {
       const pwaDelay = (this.cfg.pwa.promptDelaySeconds || 35) * 1000;
-      setTimeout(() => {
-        const banner = document.getElementById("pwa-install-banner");
+      setTimeout(async () => {
+        if (this.isPwaInstalled() || localStorage.getItem("pwa_dismissed")) return;
+        if (navigator.getInstalledRelatedApps) {
+          try {
+            const apps = await navigator.getInstalledRelatedApps();
+            if (Array.isArray(apps) && apps.length > 0) {
+              localStorage.setItem("pwa_installed", "true");
+              if (banner) banner.classList.add("hidden");
+              if (topPwaBtn) topPwaBtn.classList.add("hidden");
+              return;
+            }
+          } catch (e) {}
+        }
         if (banner) banner.classList.remove("hidden");
       }, pwaDelay);
     }
@@ -1510,11 +1606,20 @@ class PicPrizeApp {
 
   // PWA অ্যাপ ইনস্টল ট্রিগার
   async triggerPwaInstall() {
+    if (this.isPwaInstalled()) {
+      const banner = document.getElementById("pwa-install-banner");
+      if (banner) banner.classList.add("hidden");
+      const topPwaBtn = document.getElementById("pwa-top-btn");
+      if (topPwaBtn) topPwaBtn.classList.add("hidden");
+      return;
+    }
     if (window.__deferredPrompt) {
       window.__deferredPrompt.prompt();
       const { outcome } = await window.__deferredPrompt.userChoice;
       if (outcome === "accepted") {
         localStorage.setItem("pwa_installed", "true");
+        const topPwaBtn = document.getElementById("pwa-top-btn");
+        if (topPwaBtn) topPwaBtn.classList.add("hidden");
         this.showToast("অ্যাপ সফলভাবে ইনস্টল হচ্ছে! হোম স্ক্রিনে চেক করুন। 🎉", "success");
       }
       window.__deferredPrompt = null;

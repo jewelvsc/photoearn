@@ -1621,6 +1621,11 @@ window.DB = new AppDB();
         const refCount = parseInt(u.referralsCount || 0, 10);
         const minWd = cfg.minWithdrawTaka || 50;
         const canWd = takaNum >= minWd;
+        const voteEarnedPts = totalVotes * 2;
+        const otherPts = Math.max(0, ptsNum - voteEarnedPts);
+        const ptsBreakdown = voteEarnedPts <= ptsNum
+          ? `ভোট: ${voteEarnedPts} + বোনাস/অন্যান্য: ${otherPts}`
+          : `ভোট: ${voteEarnedPts} (সমন্বয়সহ)`;
         const safeName = escHtml(u.name || "অজানা ইউজার");
         const safePin = escHtml(u.pin || "N/A");
         const safePhone = escHtml(u.phone || "নেই");
@@ -1651,7 +1656,10 @@ window.DB = new AppDB();
                 <span class="inline-flex items-center gap-1 bg-indigo-500/15 text-indigo-300 px-2 py-0.5 rounded text-[10px] font-bold whitespace-nowrap">🎁 ${refCount} রেফার</span>
               </div>
             </td>
-            <td class="py-3 px-3 font-semibold text-gray-200 whitespace-nowrap">${ptsNum} pts</td>
+            <td class="py-3 px-3 font-semibold text-gray-200 whitespace-nowrap">
+              <div>${ptsNum} pts</div>
+              <span class="block text-[9px] text-gray-400 font-normal mt-0.5">${ptsBreakdown}</span>
+            </td>
             <td class="py-3 px-3 whitespace-nowrap">
               <span class="px-2.5 py-1 rounded-lg font-black text-xs whitespace-nowrap ${canWd ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' : 'bg-slate-800 text-amber-300 border border-white/10'}">৳${takaNum.toFixed(2)}</span>
             </td>
