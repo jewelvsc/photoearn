@@ -41,7 +41,9 @@ class PicPrizeApp {
     await this.renderGallery();
     this.checkUrlParams();
     this.updateInboxBadge();
-    setInterval(() => this.updateInboxBadge(), 30000);
+    setInterval(() => {
+      if (!document.hidden) this.updateInboxBadge();
+    }, 120000);
   }
 
   // মোবাইল সার্চ ড্রপডাউন টগল

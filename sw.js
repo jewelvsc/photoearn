@@ -3,17 +3,11 @@
  * High-Speed Caching & Offline PWA Acceleration
  */
 
-const CACHE_NAME = "photoearn-cache-v1";
+const CACHE_NAME = "photoearn-cache-v2";
 const ASSETS_TO_CACHE = [
-  "./",
-  "./index.html",
-  "./admin.html",
   "./manifest.json",
   "./favicon.ico",
   "./css/style.css",
-  "./js/config.js",
-  "./js/db.js",
-  "./js/app.js",
   "./images/logo-icon.png",
   "./images/favicon.png",
   "./images/og-preview.png"
@@ -45,18 +39,21 @@ self.addEventListener("activate", (event) => {
   self.clients.claim();
 });
 
-// Fetch: Stale-While-Revalidate Strategy for fastest load speed
+// Fetch: Bypass dynamic API & HTML so live server updates immediately; cache static assets
 self.addEventListener("fetch", (event) => {
   const req = event.request;
   const url = new URL(req.url);
 
-  // Skip caching for external ad networks and Firebase API calls
+  // Skip caching for API calls, HTML pages, ads, and non-GET requests
   if (
+    req.method !== "GET" ||
+    url.pathname.includes("api.php") ||
+    url.pathname.endsWith(".html") ||
+    url.pathname === "/" ||
     url.hostname.includes("firebaseio.com") ||
     url.hostname.includes("bauval.org") ||
     url.hostname.includes("abscloud.org") ||
-    url.hostname.includes("araplhn.org") ||
-    req.method !== "GET"
+    url.hostname.includes("araplhn.org")
   ) {
     return;
   }
