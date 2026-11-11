@@ -17,7 +17,10 @@ session_set_cookie_params([
     'httponly' => true,
     'samesite' => 'Lax'
 ]);
-session_start();
+// নন-ব্লকিং রিড-অনলি সেশন: কেবল সেশন কুকি থাকলে পড়েই সাথে সাথে লক মুক্ত করবে (প্যারালাল রিকোয়েস্ট ফাস্ট করতে)
+if (!empty($_COOKIE[session_name()])) {
+    session_start(['read_and_close' => true]);
+}
 
 header('Content-Type: application/json; charset=utf-8');
 header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
@@ -177,6 +180,101 @@ function creditUserInMap(&$users, $pin, $addPoints, $isReferral = false) {
     return $u;
 }
 
+function buildUserStatsMap($photos, $followers) {
+    $byPin = [];
+    $byCreator = [];
+
+    $initBucket = function($creatorId = '') {
+        return [
+            "photosCount"    => 0,
+            "approvedCount"  => 0,
+            "pendingCount"   => 0,
+            "totalVotes"     => 0,
+            "totalViews"     => 0,
+            "totalLikes"     => 0,
+            "followersCount" => 0,
+            "myPhotos"       => [],
+            "_creatorId"     => $creatorId
+        ];
+    };
+
+    if (is_array($photos)) {
+        foreach ($photos as $p) {
+            $pin = trim((string)($p['authorPin'] ?? ''));
+            $cid = !empty($p['authorId']) ? trim((string)$p['authorId']) : ($pin !== '' ? makeCreatorId($pin) : '');
+            $votes = intval($p['votes'] ?? 0);
+            $views = intval($p['views'] ?? 0);
+            $likes = intval($p['likes'] ?? 0);
+            $isApproved = !empty($p['approved']) || (($p['status'] ?? '') === 'approved');
+            $compactPhoto = [
+                "id"          => $p['id'] ?? '',
+                "title"       => $p['title'] ?? 'শিরোনামহীন ছবি',
+                "category"    => $p['category'] ?? '',
+                "contestType" => $p['contestType'] ?? 'c24',
+                "url"         => $p['url'] ?? '',
+                "votes"       => $votes,
+                "views"       => $views,
+                "likes"       => $likes,
+                "approved"    => $isApproved,
+                "status"      => $isApproved ? 'approved' : 'pending',
+                "date"        => $p['date'] ?? ''
+            ];
+
+            if ($pin !== '') {
+                if (!isset($byPin[$pin])) $byPin[$pin] = $initBucket($cid);
+                $byPin[$pin]['photosCount'] += 1;
+                if ($isApproved) $byPin[$pin]['approvedCount'] += 1;
+                else $byPin[$pin]['pendingCount'] += 1;
+                $byPin[$pin]['totalVotes'] += $votes;
+                $byPin[$pin]['totalViews'] += $views;
+                $byPin[$pin]['totalLikes'] += $likes;
+                if (count($byPin[$pin]['myPhotos']) < 50) {
+                    $byPin[$pin]['myPhotos'][] = $compactPhoto;
+                }
+            }
+
+            if ($cid !== '') {
+                if (!isset($byCreator[$cid])) $byCreator[$cid] = $initBucket($cid);
+                $byCreator[$cid]['photosCount'] += 1;
+                if ($isApproved) $byCreator[$cid]['approvedCount'] += 1;
+                else $byCreator[$cid]['pendingCount'] += 1;
+                $byCreator[$cid]['totalVotes'] += $votes;
+                $byCreator[$cid]['totalViews'] += $views;
+                $byCreator[$cid]['totalLikes'] += $likes;
+            }
+        }
+    }
+
+    if (is_array($followers)) {
+        foreach ($followers as $cid => $cnt) {
+            $c = max(0, intval($cnt));
+            if (!isset($byCreator[$cid])) $byCreator[$cid] = $initBucket($cid);
+            $byCreator[$cid]['followersCount'] = $c;
+        }
+    }
+
+    return ["byPin" => $byPin, "byCreator" => $byCreator];
+}
+
+function attachUserAggregatedStats($user, $pin, $statsMap, $includePhotos = false) {
+    $cid = !empty($user['creatorId']) ? $user['creatorId'] : makeCreatorId($pin);
+    $user['creatorId'] = $cid;
+    $pStat = $statsMap['byPin'][$pin] ?? null;
+    $cStat = $statsMap['byCreator'][$cid] ?? null;
+
+    $user['photosCount']    = intval($pStat['photosCount'] ?? 0);
+    $user['approvedCount']  = intval($pStat['approvedCount'] ?? 0);
+    $user['pendingCount']   = intval($pStat['pendingCount'] ?? 0);
+    $user['totalVotes']     = intval($pStat['totalVotes'] ?? ($cStat['totalVotes'] ?? 0));
+    $user['totalViews']     = intval($pStat['totalViews'] ?? ($cStat['totalViews'] ?? 0));
+    $user['totalLikes']     = intval($pStat['totalLikes'] ?? ($cStat['totalLikes'] ?? 0));
+    $user['followersCount'] = intval($cStat['followersCount'] ?? 0);
+    if ($includePhotos) {
+        $user['myPhotos'] = $pStat['myPhotos'] ?? [];
+    }
+    return $user;
+}
+
 function fetchJsonUrl($url) {
     if (function_exists('curl_init')) {
         $ch = curl_init($url);
@@ -293,8 +391,10 @@ switch ($action) {
         if (verifyAdminPin($pin)) {
             unset($attempts[$ipHash]);
             writeJson($adminAttemptsFile, $attempts);
+            if (session_status() !== PHP_SESSION_ACTIVE) session_start();
             if (function_exists('session_regenerate_id')) @session_regenerate_id(true);
             $_SESSION['peg_admin_auth'] = true;
+            session_write_close();
             echo json_encode([
                 "success" => true,
                 "isDefaultPin" => !file_exists($adminAuthFile)
@@ -313,6 +413,7 @@ switch ($action) {
         break;
 
     case 'admin_logout':
+        if (session_status() !== PHP_SESSION_ACTIVE) session_start();
         $_SESSION['peg_admin_auth'] = false;
         session_destroy();
         echo json_encode(["success" => true]);
@@ -358,7 +459,8 @@ switch ($action) {
             "auto_approve" => !empty($settings['auto_approve']),
             "upload_quota_enabled" => !empty($settings['upload_quota_enabled']),
             "upload_need_likes" => isset($settings['upload_need_likes']) ? intval($settings['upload_need_likes']) : 5,
-            "upload_need_follows" => isset($settings['upload_need_follows']) ? intval($settings['upload_need_follows']) : 3
+            "upload_need_follows" => isset($settings['upload_need_follows']) ? intval($settings['upload_need_follows']) : 3,
+            "max_photos_per_user" => isset($settings['max_photos_per_user']) ? max(0, intval($settings['max_photos_per_user'])) : 0
         ]);
         break;
 
@@ -377,6 +479,7 @@ switch ($action) {
         $settings['upload_quota_enabled'] = !empty($input['enabled']);
         $settings['upload_need_likes'] = max(0, min(100, intval($input['needLikes'] ?? 5)));
         $settings['upload_need_follows'] = max(0, min(100, intval($input['needFollows'] ?? 3)));
+        $settings['max_photos_per_user'] = max(0, min(1000, intval($input['maxPhotosPerUser'] ?? 0)));
         writeJson($settingsFile, $settings);
         echo json_encode(["success" => true, "settings" => $settings]);
         break;
@@ -410,6 +513,27 @@ switch ($action) {
             exit;
         }
 
+        // সার্ভার থেকেই settings ও সর্বোচ্চ ছবির লিমিট যাচাই (অতিরিক্ত ফাইল সেভ হওয়া রোধ)
+        $settings   = readJson($settingsFile, ["auto_approve" => false]);
+        $maxPhotos  = max(0, intval($settings['max_photos_per_user'] ?? 0));
+        $photos     = readJson($photosFile, []);
+        if ($maxPhotos > 0 && $authorPin !== '') {
+            $userCurrentCount = 0;
+            foreach ($photos as $p) {
+                if (trim((string)($p['authorPin'] ?? '')) === $authorPin) {
+                    $userCurrentCount++;
+                }
+            }
+            if ($userCurrentCount >= $maxPhotos) {
+                echo json_encode([
+                    "success" => false,
+                    "limitReached" => true,
+                    "message" => "দুঃখিত! একজন ইউজার সর্বোচ্চ {$maxPhotos}টি ছবি আপলোড করতে পারবেন। আপনি ইতিমধ্যে {$userCurrentCount}টি ছবি আপলোড করেছেন।"
+                ]);
+                exit;
+            }
+        }
+
         $photoId = "photo_" . round(microtime(true) * 1000) . "_" . rand(10, 99);
         $fileUrl = saveBase64Image($imgData, $photoId, $uploadDir);
         if ($fileUrl === null) {
@@ -418,7 +542,6 @@ switch ($action) {
         }
 
         // সার্ভার থেকেই auto_approve যাচাই (ক্লায়েন্ট approved পাঠিয়ে বাইপাস করতে পারবে না)
-        $settings   = readJson($settingsFile, ["auto_approve" => false]);
         $isApproved = !empty($settings['auto_approve']);
 
         $newPhoto = [
@@ -440,14 +563,17 @@ switch ($action) {
             "date"        => date('c')
         ];
 
-        $photos = readJson($photosFile, []);
         array_unshift($photos, $newPhoto);
         writeJson($photosFile, $photos);
 
         if ($authorPin !== '') {
             $users = readJson($usersFile, []);
             if (isset($users[$authorPin])) {
-                $users[$authorPin]['photosCount'] = intval($users[$authorPin]['photosCount'] ?? 0) + 1;
+                $cnt = 0;
+                foreach ($photos as $p) {
+                    if (trim((string)($p['authorPin'] ?? '')) === $authorPin) $cnt++;
+                }
+                $users[$authorPin]['photosCount'] = $cnt;
                 writeJson($usersFile, $users);
             }
         }
@@ -581,8 +707,12 @@ switch ($action) {
         if ($pin !== '' && isset($users[$pin])) {
             unset($attempts[$ipHash]);
             writeJson($loginAttemptsFile, $attempts);
-            $u = $users[$pin];
-            $u['creatorId'] = makeCreatorId($pin);
+            $photos    = readJson($photosFile, []);
+            $followers = readJson($followersFile, []);
+            $statsMap  = buildUserStatsMap($photos, $followers);
+            $u         = attachUserAggregatedStats($users[$pin], $pin, $statsMap, true);
+            $settings  = readJson($settingsFile, []);
+            $u['max_photos_per_user'] = max(0, intval($settings['max_photos_per_user'] ?? 0));
             echo json_encode(["success" => true, "user" => $u]);
         } else {
             $rec['count'] = ($rec['count'] ?? 0) + 1;
@@ -593,6 +723,30 @@ switch ($action) {
             $attempts[$ipHash] = $rec;
             writeJson($loginAttemptsFile, $attempts);
             echo json_encode(["success" => false, "message" => "ভুল পিন! একাউন্ট না থাকলে রেজিস্ট্রেশন করুন।"]);
+        }
+        break;
+
+    case 'get_user_stats':
+        $attempts = readJson($loginAttemptsFile, []);
+        $now = time();
+        $rec = $attempts[$ipHash] ?? ["count" => 0, "lockedUntil" => 0];
+        if (($rec['lockedUntil'] ?? 0) > $now) {
+            echo json_encode(["success" => false, "message" => "অনেকবার ভুল চেষ্টা হয়েছে! কিছুক্ষণ পর চেষ্টা করুন।"]);
+            exit;
+        }
+        $pin   = cleanText($input['pin'] ?? '', 20);
+        $users = readJson($usersFile, []);
+        if ($pin !== '' && isset($users[$pin])) {
+            $photos    = readJson($photosFile, []);
+            $followers = readJson($followersFile, []);
+            $settings  = readJson($settingsFile, []);
+            $statsMap  = buildUserStatsMap($photos, $followers);
+            $u         = attachUserAggregatedStats($users[$pin], $pin, $statsMap, true);
+            $maxP      = max(0, intval($settings['max_photos_per_user'] ?? 0));
+            $u['max_photos_per_user'] = $maxP;
+            echo json_encode(["success" => true, "user" => $u, "max_photos_per_user" => $maxP]);
+        } else {
+            echo json_encode(["success" => false, "message" => "ইউজার পাওয়া যায়নি"]);
         }
         break;
 
@@ -888,8 +1042,15 @@ switch ($action) {
 
     case 'get_all_users':
         requireAdmin();
-        $users = readJson($usersFile, []);
-        $list  = array_values($users);
+        $users     = readJson($usersFile, []);
+        $photos    = readJson($photosFile, []);
+        $followers = readJson($followersFile, []);
+        $statsMap  = buildUserStatsMap($photos, $followers);
+        $list      = [];
+        foreach ($users as $uPin => $uData) {
+            $pinKey = (string)($uData['pin'] ?? $uPin);
+            $list[] = attachUserAggregatedStats($uData, $pinKey, $statsMap, false);
+        }
         usort($list, function($a, $b) {
             return floatval($b['taka'] ?? 0) <=> floatval($a['taka'] ?? 0);
         });

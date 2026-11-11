@@ -322,6 +322,10 @@ body {
             <span class="text-gray-400">ফলো:</span>
             <input type="number" id="quota-follows-input" min="0" max="100" value="3" class="w-14 bg-slate-900 border border-slate-700 rounded-lg px-2 py-1 text-xs text-white text-center outline-none">
           </div>
+          <div class="flex items-center gap-1 text-xs" title="প্রতি ইউজার সর্বোচ্চ কয়টি ছবি আপলোড করতে পারবে (০ = আনলিমিটেড)">
+            <span class="text-gray-400">সর্বোচ্চ ছবি (০=আনলিমিটেড):</span>
+            <input type="number" id="quota-max-photos-input" min="0" max="1000" value="0" class="w-16 bg-slate-900 border border-slate-700 rounded-lg px-2 py-1 text-xs text-white text-center outline-none">
+          </div>
           <button onclick="saveQuotaSettings()" class="px-3 py-1.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs rounded-xl transition-all active:scale-95">সেভ</button>
         </div>
       </div>
@@ -425,7 +429,7 @@ body {
                 <th class="py-3 px-3">#</th>
                 <th class="py-3 px-3">ইউজার ও পিন</th>
                 <th class="py-3 px-3">মোবাইল নম্বর</th>
-                <th class="py-3 px-3">ছবি ও রেফার</th>
+                <th class="py-3 px-3">ছবি, লাইক ও ফলোয়ার</th>
                 <th class="py-3 px-3">মোট পয়েন্ট</th>
                 <th class="py-3 px-3">আয়কৃত ব্যালেন্স</th>
                 <th class="py-3 px-3 text-right">অ্যাকশন</th>
@@ -824,7 +828,20 @@ class AppDB {
     }
 
     // অফলাইন লোকাল ফলব্যাক
-    const isAuto = await this.isAutoApproveEnabled();
+    const settings = await this.getSettings();
+    const maxPhotos = Math.max(0, parseInt(settings.max_photos_per_user || "0", 10));
+    const photos = await this.getPhotos();
+    if (maxPhotos > 0 && photoData.authorPin) {
+      const existingCount = photos.filter(p => String(p.authorPin || "") === String(photoData.authorPin)).length;
+      if (existingCount >= maxPhotos) {
+        return {
+          error: true,
+          limitReached: true,
+          message: `দুঃখিত! একজন ইউজার সর্বোচ্চ ${maxPhotos}টি ছবি আপলোড করতে পারবেন। আপনি ইতিমধ্যে ${existingCount}টি ছবি আপলোড করেছেন।`
+        };
+      }
+    }
+    const isAuto = !!settings.auto_approve;
     photoData.id = "photo_" + Date.now();
     photoData.views = 0;
     photoData.votes = 0;
@@ -833,9 +850,16 @@ class AppDB {
     photoData.status = isAuto ? "approved" : "pending";
     photoData.date = new Date().toISOString();
     photoData.authorId = photoData.authorPin ? `u_${photoData.authorPin}` : "guest";
-    const photos = await this.getPhotos();
     photos.unshift(photoData);
     localStorage.setItem("peg_photos", JSON.stringify(photos));
+    this.lastPhotosList = photos;
+    if (photoData.authorPin) {
+      const u = this.getUser(photoData.authorPin);
+      if (u) {
+        u.photosCount = photos.filter(p => String(p.authorPin || "") === String(photoData.authorPin)).length;
+        this.saveUser(u);
+      }
+    }
     return photoData;
   }
 
@@ -1214,11 +1238,24 @@ class AppDB {
     const globalLikes = parseInt(localStorage.getItem("peg_user_likes") || "0", 10);
     const currentLikes = Math.max(pinLikes, globalLikes, (user && user.likesGiven) || 0);
     const follows = JSON.parse(localStorage.getItem("peg_follows") || "[]");
+    const maxPhotos = Math.max(0, parseInt(settings.max_photos_per_user ?? 0, 10));
 
-    // কোটা বন্ধ থাকলে সবাই সরাসরি ছবি জমা দিতে পারবে
+    let userPhotosCount = (user && parseInt(user.photosCount || 0, 10)) || 0;
+    if (maxPhotos > 0 && pin) {
+      const fresh = await this.fetchUserStats(pin);
+      if (fresh && fresh.photosCount !== undefined) {
+        userPhotosCount = parseInt(fresh.photosCount || 0, 10);
+      }
+    }
+    const limitReached = maxPhotos > 0 && userPhotosCount >= maxPhotos;
+
+    // কোটা বন্ধ থাকলে সবাই সরাসরি ছবি জমা দিতে পারবে (যদি না সর্বোচ্চ ছবির লিমিট পূর্ণ থাকে)
     if (!settings.upload_quota_enabled) {
       return {
-        ok: true,
+        ok: !limitReached,
+        limitReached,
+        maxPhotos,
+        userPhotosCount,
         quotaEnabled: false,
         likes: currentLikes,
         needLikes: 0,
@@ -1238,13 +1275,57 @@ class AppDB {
     const needF = Math.min(Math.max(0, rawNeedF), availCreators);
 
     return {
-      ok: currentLikes >= needL && follows.length >= needF,
+      ok: !limitReached && currentLikes >= needL && follows.length >= needF,
+      limitReached,
+      maxPhotos,
+      userPhotosCount,
       quotaEnabled: true,
       likes: currentLikes,
       needLikes: needL,
       follows: follows.length,
       needFollows: needF
     };
+  }
+
+  async fetchUserStats(pin) {
+    if (!pin) return null;
+    const res = await this.apiCall("get_user_stats", { pin });
+    if (res && res.data && res.data.success && res.data.user) {
+      const merged = { ...res.data.user, max_photos_per_user: res.data.max_photos_per_user ?? 0 };
+      this.saveUser(merged);
+      return merged;
+    }
+
+    // অফলাইন / লোকাল ফলব্যাক
+    const user = this.getUser(pin);
+    if (!user) return null;
+    const photos = await this.getPhotos();
+    const myPhotos = photos.filter(p => String(p.authorPin || "") === String(pin));
+    const settings = await this.getSettings();
+    const agg = myPhotos.reduce((acc, p) => {
+      const approved = !!p.approved || p.status === "approved";
+      if (approved) acc.approvedCount += 1;
+      else acc.pendingCount += 1;
+      acc.totalVotes += parseInt(p.votes || 0, 10);
+      acc.totalViews += parseInt(p.views || 0, 10);
+      acc.totalLikes += parseInt(p.likes || 0, 10);
+      return acc;
+    }, { approvedCount: 0, pendingCount: 0, totalVotes: 0, totalViews: 0, totalLikes: 0 });
+
+    const out = {
+      ...user,
+      photosCount: myPhotos.length,
+      approvedCount: agg.approvedCount,
+      pendingCount: agg.pendingCount,
+      totalVotes: agg.totalVotes,
+      totalViews: agg.totalViews,
+      totalLikes: agg.totalLikes,
+      followersCount: parseInt(user.followersCount || 0, 10),
+      myPhotos: myPhotos.slice(0, 50),
+      max_photos_per_user: Math.max(0, parseInt(settings.max_photos_per_user ?? 0, 10))
+    };
+    this.saveUser(out);
+    return out;
   }
 
   getWithdrawBan() {
@@ -1266,7 +1347,8 @@ class AppDB {
       auto_approve: localStorage.getItem("peg_auto_approve") === "true",
       upload_quota_enabled: localStorage.getItem("peg_quota_enabled") === "true" || !!this.cfg.uploadQuotaEnabled,
       upload_need_likes: parseInt(localStorage.getItem("peg_quota_likes") || this.cfg.uploadNeedLikes || "5", 10),
-      upload_need_follows: parseInt(localStorage.getItem("peg_quota_follows") || this.cfg.uploadNeedFollows || "3", 10)
+      upload_need_follows: parseInt(localStorage.getItem("peg_quota_follows") || this.cfg.uploadNeedFollows || "3", 10),
+      max_photos_per_user: parseInt(localStorage.getItem("peg_max_photos_per_user") || this.cfg.maxPhotosPerUser || "0", 10)
     };
     const res = await this.apiCall("get_settings");
     if (res && res.data && res.data.success) {
@@ -1274,16 +1356,18 @@ class AppDB {
       localStorage.setItem("peg_quota_enabled", res.data.upload_quota_enabled ? "true" : "false");
       localStorage.setItem("peg_quota_likes", String(res.data.upload_need_likes ?? 5));
       localStorage.setItem("peg_quota_follows", String(res.data.upload_need_follows ?? 3));
+      localStorage.setItem("peg_max_photos_per_user", String(res.data.max_photos_per_user ?? 0));
       return res.data;
     }
     return fallback;
   }
 
-  async setQuotaSettings({ enabled, needLikes, needFollows }) {
+  async setQuotaSettings({ enabled, needLikes, needFollows, maxPhotosPerUser = 0 }) {
     localStorage.setItem("peg_quota_enabled", enabled ? "true" : "false");
     localStorage.setItem("peg_quota_likes", String(needLikes));
     localStorage.setItem("peg_quota_follows", String(needFollows));
-    const res = await this.apiCall("set_quota_settings", { enabled: !!enabled, needLikes, needFollows });
+    localStorage.setItem("peg_max_photos_per_user", String(maxPhotosPerUser || 0));
+    const res = await this.apiCall("set_quota_settings", { enabled: !!enabled, needLikes, needFollows, maxPhotosPerUser: maxPhotosPerUser || 0 });
     return res && res.data ? res.data : { success: true };
   }
 
@@ -1443,21 +1527,25 @@ window.DB = new AppDB();
       const qToggle = document.getElementById("upload-quota-toggle");
       const qLikes = document.getElementById("quota-likes-input");
       const qFollows = document.getElementById("quota-follows-input");
+      const qMax = document.getElementById("quota-max-photos-input");
       if (qToggle) qToggle.checked = !!settings.upload_quota_enabled;
       if (qLikes) qLikes.value = settings.upload_need_likes ?? 5;
       if (qFollows) qFollows.value = settings.upload_need_follows ?? 3;
-      updateQuotaBadge(!!settings.upload_quota_enabled, qLikes ? qLikes.value : 5, qFollows ? qFollows.value : 3);
+      if (qMax) qMax.value = settings.max_photos_per_user ?? 0;
+      updateQuotaBadge(!!settings.upload_quota_enabled, qLikes ? qLikes.value : 5, qFollows ? qFollows.value : 3, qMax ? qMax.value : 0);
     }
 
-    function updateQuotaBadge(enabled, likes, follows) {
+    function updateQuotaBadge(enabled, likes, follows, maxPhotos = 0) {
       const b = document.getElementById("quota-status-badge");
       if (!b) return;
+      const m = Math.max(0, parseInt(maxPhotos || "0", 10));
+      const limitLabel = m > 0 ? `সর্বোচ্চ ${m} ছবি` : "আনলিমিটেড ছবি";
       if (enabled) {
         b.className = "text-[10px] font-black px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30";
-        b.innerText = `চালু (${likes} ভোট / ${follows} ফলো)`;
+        b.innerText = `চালু (${likes} ভোট / ${follows} ফলো · ${limitLabel})`;
       } else {
         b.className = "text-[10px] font-black px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30";
-        b.innerText = "বন্ধ (সরাসরি ফ্রি আপলোড চালু)";
+        b.innerText = `ফ্রি আপলোড চালু · ${limitLabel}`;
       }
     }
 
@@ -1465,11 +1553,13 @@ window.DB = new AppDB();
       const enabled = !!document.getElementById("upload-quota-toggle")?.checked;
       const needLikes = parseInt(document.getElementById("quota-likes-input")?.value || "5", 10);
       const needFollows = parseInt(document.getElementById("quota-follows-input")?.value || "3", 10);
-      await db.setQuotaSettings({ enabled, needLikes, needFollows });
-      updateQuotaBadge(enabled, needLikes, needFollows);
+      const maxPhotosPerUser = Math.max(0, parseInt(document.getElementById("quota-max-photos-input")?.value || "0", 10));
+      await db.setQuotaSettings({ enabled, needLikes, needFollows, maxPhotosPerUser });
+      updateQuotaBadge(enabled, needLikes, needFollows, maxPhotosPerUser);
+      const limitMsg = maxPhotosPerUser > 0 ? `প্রতি ইউজার সর্বোচ্চ ${maxPhotosPerUser}টি ছবি দিতে পারবে।` : "ছবি আপলোড সীমা আনলিমিটেড।";
       alert(enabled
-        ? `🔒 আপলোড শর্ত চালু হয়েছে: ${needLikes} ভোট ও ${needFollows} ফলো (সাইটে পর্যাপ্ত ছবি না থাকলে স্বয়ংক্রিয়ভাবে কমবে)।`
-        : "✅ আপলোড শর্ত বন্ধ করা হয়েছে! এখন সব ভিজিটর সরাসরি ছবি জমা দিতে পারবে।"
+        ? `🔒 আপলোড শর্ত চালু হয়েছে: ${needLikes} ভোট ও ${needFollows} ফলো।\n${limitMsg}`
+        : `✅ ফ্রি আপলোড চালু আছে!\n${limitMsg}`
       );
     }
 
@@ -1519,10 +1609,15 @@ window.DB = new AppDB();
       tbody.innerHTML = users.map((u, i) => {
         const takaNum = parseFloat(u.taka || 0);
         const ptsNum = parseInt(u.points || Math.round(takaNum / (cfg.takaPerPoint || 0.1)), 10);
-        const photoCount = Math.max(
-          parseInt(u.photosCount || 0, 10),
-          allAdminPhotos.filter(p => String(p.authorPin || "") === String(u.pin || "")).length
-        );
+        const userPhotos = allAdminPhotos.filter(p => String(p.authorPin || "") === String(u.pin || ""));
+        const photoCount = Math.max(parseInt(u.photosCount ?? 0, 10), userPhotos.length);
+        const totalVotes = u.totalVotes !== undefined
+          ? parseInt(u.totalVotes || 0, 10)
+          : userPhotos.reduce((sum, p) => sum + parseInt(p.votes || 0, 10), 0);
+        const totalViews = u.totalViews !== undefined
+          ? parseInt(u.totalViews || 0, 10)
+          : userPhotos.reduce((sum, p) => sum + parseInt(p.views || 0, 10), 0);
+        const followersCount = parseInt(u.followersCount || 0, 10);
         const refCount = parseInt(u.referralsCount || 0, 10);
         const minWd = cfg.minWithdrawTaka || 50;
         const canWd = takaNum >= minWd;
@@ -1547,9 +1642,14 @@ window.DB = new AppDB();
                 ${u.phone ? `<button onclick="navigator.clipboard.writeText('${safePhone}'); alert('নম্বর কপি হয়েছে: ${safePhone}')" class="text-[10px] bg-slate-800 text-gray-400 hover:text-white px-1.5 py-0.5 rounded border border-white/5">কপি</button>` : ""}
               </div>
             </td>
-            <td class="py-3 px-3 whitespace-nowrap">
-              <span class="inline-flex items-center gap-1 bg-purple-500/15 text-purple-300 px-2 py-0.5 rounded text-[10px] font-bold whitespace-nowrap">📸 ${photoCount}টি</span>
-              <span class="inline-flex items-center gap-1 bg-indigo-500/15 text-indigo-300 px-2 py-0.5 rounded text-[10px] font-bold ml-1 whitespace-nowrap">🎁 ${refCount} রেফার</span>
+            <td class="py-3 px-3">
+              <div class="flex flex-wrap items-center gap-1 min-w-[180px]">
+                <span class="inline-flex items-center gap-1 bg-purple-500/15 text-purple-300 px-2 py-0.5 rounded text-[10px] font-bold whitespace-nowrap">📸 ${photoCount}টি</span>
+                <span class="inline-flex items-center gap-1 bg-rose-500/15 text-rose-300 px-2 py-0.5 rounded text-[10px] font-bold whitespace-nowrap">❤️ ${totalVotes} ভোট</span>
+                <span class="inline-flex items-center gap-1 bg-sky-500/15 text-sky-300 px-2 py-0.5 rounded text-[10px] font-bold whitespace-nowrap">👥 ${followersCount} ফলোয়ার</span>
+                <span class="inline-flex items-center gap-1 bg-amber-500/15 text-amber-300 px-2 py-0.5 rounded text-[10px] font-bold whitespace-nowrap">👁️ ${totalViews} ভিউ</span>
+                <span class="inline-flex items-center gap-1 bg-indigo-500/15 text-indigo-300 px-2 py-0.5 rounded text-[10px] font-bold whitespace-nowrap">🎁 ${refCount} রেফার</span>
+              </div>
             </td>
             <td class="py-3 px-3 font-semibold text-gray-200 whitespace-nowrap">${ptsNum} pts</td>
             <td class="py-3 px-3 whitespace-nowrap">

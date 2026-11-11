@@ -38,12 +38,13 @@ window.APP_CONFIG = {
   uploadQuotaEnabled: false,    // শুরুতে ফ্রি আপলোড চালু (সব নতুন ভিজিটর সরাসরি ছবি দিতে পারবে)
   uploadNeedLikes: 5,           // কোটা চালু করলে প্রয়োজনীয় ভোট/লাইক
   uploadNeedFollows: 3,         // কোটা চালু করলে প্রয়োজনীয় ফলো
+  maxPhotosPerUser: 0,          // প্রতি ইউজার সর্বোচ্চ কতটি ছবি আপলোড করতে পারবে (০ = আনলিমিটেড)
   likeVerifyEvery: 5,           // প্রতি ৫টি লাইকে Adsterra স্পনসর ভেরিফিকেশন (ইনকাম বাড়াতে)
   likeWaitSeconds: 5,           // লাইক ভেরিফাই অপেক্ষা ৫ সেকেন্ড
 
   // ৫. ভোট দেওয়ার শর্ত ও ২-ধাপের Adsterra গেট (ডাবল ইনকাম)
   voteWaitSeconds: 5,
-  voteCoolDownSeconds: 5,
+  voteCoolDownSeconds: 2,
   verifyAd1: "https://araplhn.org/4/7decde193b07302555c7d1b18a2dfcbe",
   verifyAd2: "https://araplhn.org/4/7decde193b07302555c7d1b18a2dfcbe",
 

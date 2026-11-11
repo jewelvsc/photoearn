@@ -140,7 +140,20 @@ class AppDB {
     }
 
     // অফলাইন লোকাল ফলব্যাক
-    const isAuto = await this.isAutoApproveEnabled();
+    const settings = await this.getSettings();
+    const maxPhotos = Math.max(0, parseInt(settings.max_photos_per_user || "0", 10));
+    const photos = await this.getPhotos();
+    if (maxPhotos > 0 && photoData.authorPin) {
+      const existingCount = photos.filter(p => String(p.authorPin || "") === String(photoData.authorPin)).length;
+      if (existingCount >= maxPhotos) {
+        return {
+          error: true,
+          limitReached: true,
+          message: `দুঃখিত! একজন ইউজার সর্বোচ্চ ${maxPhotos}টি ছবি আপলোড করতে পারবেন। আপনি ইতিমধ্যে ${existingCount}টি ছবি আপলোড করেছেন।`
+        };
+      }
+    }
+    const isAuto = !!settings.auto_approve;
     photoData.id = "photo_" + Date.now();
     photoData.views = 0;
     photoData.votes = 0;
@@ -149,9 +162,16 @@ class AppDB {
     photoData.status = isAuto ? "approved" : "pending";
     photoData.date = new Date().toISOString();
     photoData.authorId = photoData.authorPin ? `u_${photoData.authorPin}` : "guest";
-    const photos = await this.getPhotos();
     photos.unshift(photoData);
     localStorage.setItem("peg_photos", JSON.stringify(photos));
+    this.lastPhotosList = photos;
+    if (photoData.authorPin) {
+      const u = this.getUser(photoData.authorPin);
+      if (u) {
+        u.photosCount = photos.filter(p => String(p.authorPin || "") === String(photoData.authorPin)).length;
+        this.saveUser(u);
+      }
+    }
     return photoData;
   }
 
@@ -530,11 +550,24 @@ class AppDB {
     const globalLikes = parseInt(localStorage.getItem("peg_user_likes") || "0", 10);
     const currentLikes = Math.max(pinLikes, globalLikes, (user && user.likesGiven) || 0);
     const follows = JSON.parse(localStorage.getItem("peg_follows") || "[]");
+    const maxPhotos = Math.max(0, parseInt(settings.max_photos_per_user ?? 0, 10));
 
-    // কোটা বন্ধ থাকলে সবাই সরাসরি ছবি জমা দিতে পারবে
+    let userPhotosCount = (user && parseInt(user.photosCount || 0, 10)) || 0;
+    if (maxPhotos > 0 && pin) {
+      const fresh = await this.fetchUserStats(pin);
+      if (fresh && fresh.photosCount !== undefined) {
+        userPhotosCount = parseInt(fresh.photosCount || 0, 10);
+      }
+    }
+    const limitReached = maxPhotos > 0 && userPhotosCount >= maxPhotos;
+
+    // কোটা বন্ধ থাকলে সবাই সরাসরি ছবি জমা দিতে পারবে (যদি না সর্বোচ্চ ছবির লিমিট পূর্ণ থাকে)
     if (!settings.upload_quota_enabled) {
       return {
-        ok: true,
+        ok: !limitReached,
+        limitReached,
+        maxPhotos,
+        userPhotosCount,
         quotaEnabled: false,
         likes: currentLikes,
         needLikes: 0,
@@ -554,13 +587,57 @@ class AppDB {
     const needF = Math.min(Math.max(0, rawNeedF), availCreators);
 
     return {
-      ok: currentLikes >= needL && follows.length >= needF,
+      ok: !limitReached && currentLikes >= needL && follows.length >= needF,
+      limitReached,
+      maxPhotos,
+      userPhotosCount,
       quotaEnabled: true,
       likes: currentLikes,
       needLikes: needL,
       follows: follows.length,
       needFollows: needF
     };
+  }
+
+  async fetchUserStats(pin) {
+    if (!pin) return null;
+    const res = await this.apiCall("get_user_stats", { pin });
+    if (res && res.data && res.data.success && res.data.user) {
+      const merged = { ...res.data.user, max_photos_per_user: res.data.max_photos_per_user ?? 0 };
+      this.saveUser(merged);
+      return merged;
+    }
+
+    // অফলাইন / লোকাল ফলব্যাক
+    const user = this.getUser(pin);
+    if (!user) return null;
+    const photos = await this.getPhotos();
+    const myPhotos = photos.filter(p => String(p.authorPin || "") === String(pin));
+    const settings = await this.getSettings();
+    const agg = myPhotos.reduce((acc, p) => {
+      const approved = !!p.approved || p.status === "approved";
+      if (approved) acc.approvedCount += 1;
+      else acc.pendingCount += 1;
+      acc.totalVotes += parseInt(p.votes || 0, 10);
+      acc.totalViews += parseInt(p.views || 0, 10);
+      acc.totalLikes += parseInt(p.likes || 0, 10);
+      return acc;
+    }, { approvedCount: 0, pendingCount: 0, totalVotes: 0, totalViews: 0, totalLikes: 0 });
+
+    const out = {
+      ...user,
+      photosCount: myPhotos.length,
+      approvedCount: agg.approvedCount,
+      pendingCount: agg.pendingCount,
+      totalVotes: agg.totalVotes,
+      totalViews: agg.totalViews,
+      totalLikes: agg.totalLikes,
+      followersCount: parseInt(user.followersCount || 0, 10),
+      myPhotos: myPhotos.slice(0, 50),
+      max_photos_per_user: Math.max(0, parseInt(settings.max_photos_per_user ?? 0, 10))
+    };
+    this.saveUser(out);
+    return out;
   }
 
   getWithdrawBan() {
@@ -582,7 +659,8 @@ class AppDB {
       auto_approve: localStorage.getItem("peg_auto_approve") === "true",
       upload_quota_enabled: localStorage.getItem("peg_quota_enabled") === "true" || !!this.cfg.uploadQuotaEnabled,
       upload_need_likes: parseInt(localStorage.getItem("peg_quota_likes") || this.cfg.uploadNeedLikes || "5", 10),
-      upload_need_follows: parseInt(localStorage.getItem("peg_quota_follows") || this.cfg.uploadNeedFollows || "3", 10)
+      upload_need_follows: parseInt(localStorage.getItem("peg_quota_follows") || this.cfg.uploadNeedFollows || "3", 10),
+      max_photos_per_user: parseInt(localStorage.getItem("peg_max_photos_per_user") || this.cfg.maxPhotosPerUser || "0", 10)
     };
     const res = await this.apiCall("get_settings");
     if (res && res.data && res.data.success) {
@@ -590,16 +668,18 @@ class AppDB {
       localStorage.setItem("peg_quota_enabled", res.data.upload_quota_enabled ? "true" : "false");
       localStorage.setItem("peg_quota_likes", String(res.data.upload_need_likes ?? 5));
       localStorage.setItem("peg_quota_follows", String(res.data.upload_need_follows ?? 3));
+      localStorage.setItem("peg_max_photos_per_user", String(res.data.max_photos_per_user ?? 0));
       return res.data;
     }
     return fallback;
   }
 
-  async setQuotaSettings({ enabled, needLikes, needFollows }) {
+  async setQuotaSettings({ enabled, needLikes, needFollows, maxPhotosPerUser = 0 }) {
     localStorage.setItem("peg_quota_enabled", enabled ? "true" : "false");
     localStorage.setItem("peg_quota_likes", String(needLikes));
     localStorage.setItem("peg_quota_follows", String(needFollows));
-    const res = await this.apiCall("set_quota_settings", { enabled: !!enabled, needLikes, needFollows });
+    localStorage.setItem("peg_max_photos_per_user", String(maxPhotosPerUser || 0));
+    const res = await this.apiCall("set_quota_settings", { enabled: !!enabled, needLikes, needFollows, maxPhotosPerUser: maxPhotosPerUser || 0 });
     return res && res.data ? res.data : { success: true };
   }
 

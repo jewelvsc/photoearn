@@ -33,14 +33,17 @@ class PicPrizeApp {
     this.initTheme();
     this.initNotifications();
     this.checkAuth();
-    this.renderHeader();
     this.setupEventListeners();
     this.startContestTimers();
     this.setupPopups();
     this.initLiveChat();
-    await this.renderGallery();
     this.checkUrlParams();
-    this.updateInboxBadge();
+    // সব ডাটা প্যারালালি ফেচ করে তাৎক্ষণিক লোড নিশ্চিত করা
+    await Promise.all([
+      this.renderHeader(),
+      this.renderGallery(),
+      this.updateInboxBadge()
+    ]);
     setInterval(() => {
       if (!document.hidden) this.updateInboxBadge();
     }, 120000);
@@ -340,20 +343,45 @@ class PicPrizeApp {
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
-  // ৫. গ্যালারি রেন্ডারিং
+  // ৫. গ্যালারি রেন্ডারিং (০ms ক্যাশড ফার্স্ট পেইন্ট + ব্যাকগ্রাউন্ড লাইভ আপডেট)
   async renderGallery() {
     const container = document.getElementById("photo-grid");
     if (!container) return;
 
-    container.innerHTML = `
-      <div class="col-span-full py-16 text-center text-gray-400">
-        <svg class="animate-spin h-8 w-8 mx-auto mb-3 text-indigo-500" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path></svg>
-        <span>ছবি লোড হচ্ছে…</span>
-      </div>
-    `;
+    let cachedSig = "";
+    try {
+      const cachedRaw = localStorage.getItem("peg_photos");
+      const cached = cachedRaw ? JSON.parse(cachedRaw) : [];
+      if (Array.isArray(cached) && cached.length > 0) {
+        this.db.lastPhotosList = cached;
+        cachedSig = this._gallerySig(cached);
+        this._paintGallery(container, cached);
+      }
+    } catch (e) {}
+
+    if (!cachedSig) {
+      container.innerHTML = `
+        <div class="col-span-full py-16 text-center text-gray-400">
+          <svg class="animate-spin h-8 w-8 mx-auto mb-3 text-indigo-500" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path></svg>
+          <span>ছবি লোড হচ্ছে…</span>
+        </div>
+      `;
+    }
 
     const allPhotos = await this.db.getPhotos();
     this.db.lastPhotosList = allPhotos;
+    const liveSig = this._gallerySig(allPhotos);
+    if (!cachedSig || liveSig !== cachedSig || container.children.length === 0) {
+      this._paintGallery(container, allPhotos);
+    }
+  }
+
+  _gallerySig(photos) {
+    return `${this.currentTab}|${this.currentSub || 'all'}|${this.currentTheme || ''}|${this.currentSort || 'newest'}|${this.searchQuery || ''}|` +
+      (photos || []).map(p => `${p.id}:${p.votes || 0}:${p.views || 0}:${p.approved}`).join(",");
+  }
+
+  _paintGallery(container, allPhotos) {
     // কেবল অনুমোদিত ছবিগুলো সাধারণ গ্যালারিতে দেখাবে (পেন্ডিং ছবি অ্যাডমিন অনুমোদনের অপেক্ষায় থাকবে)
     let filtered = allPhotos.filter(p => p.approved !== false);
 
@@ -459,7 +487,7 @@ class PicPrizeApp {
         <div class="photo-card glass-panel rounded-2xl overflow-hidden flex flex-col justify-between group">
           <!-- ছবি অংশ (৯:১৬ পোর্ট্রেট রেশিও) -->
           <div class="photo-img-wrap aspect-9-16 relative overflow-hidden cursor-pointer bg-slate-900" style="aspect-ratio: 9/16 !important; width: 100% !important;" onclick="window.APP.openPhotoModal('${photo.id}')">
-            <img src="${photo.url}" alt="${photo.title}" loading="lazy" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" style="aspect-ratio: 9/16 !important; object-fit: cover !important; width: 100% !important; height: 100% !important;">
+            <img src="${photo.url}" alt="${photo.title}" ${index < 4 ? (index < 2 ? 'fetchpriority="high"' : '') : 'loading="lazy"'} decoding="async" width="270" height="480" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" style="aspect-ratio: 9/16 !important; object-fit: cover !important; width: 100% !important; height: 100% !important;">
             <div class="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-black/20"></div>
             
             <!-- টপ ব্যাজ -->
@@ -515,7 +543,7 @@ class PicPrizeApp {
     if (event) event.stopPropagation();
 
     if (this.isVoteCooldown) {
-      this.showToast(`দয়া করে ${this.cfg.voteCoolDownSeconds || 5} সেকেন্ড অপেক্ষা করুন!`, "warning");
+      this.showToast(`দয়া করে ${this.cfg.voteCoolDownSeconds || 2} সেকেন্ড অপেক্ষা করুন!`, "warning");
       return;
     }
 
@@ -545,29 +573,48 @@ class PicPrizeApp {
     this.commitVote(photoId, btn);
   }
 
-  // ভোট কমিট ও রিয়েল-টাইম কাউন্টার আপডেট
+  // ভোট কমিট ও ০ms তাৎক্ষণিক অপটিমিস্টিক UI আপডেট
   async commitVote(photoId, btn) {
+    const countEl = document.getElementById(`vote-count-${photoId}`);
+    const modalCountEl = document.getElementById(`modal-vote-count-${photoId}`);
+    const prevVotes = parseInt((countEl ? countEl.innerText : (modalCountEl ? modalCountEl.innerText : "0")).replace(/[^\d]/g, ""), 10) || 0;
+    const optimisticVotes = prevVotes + 1;
+
+    // ০ সেকেন্ডেই স্ক্রিনে ভোট বৃদ্ধি ও অ্যানিমেশন (অপেক্ষা ছাড়াই)
+    this.isVoteCooldown = true;
+    if (btn) btn.classList.add("heart-active");
+    if (countEl) countEl.innerText = `${optimisticVotes} ভোট`;
+    if (modalCountEl) modalCountEl.innerText = `❤️ ${optimisticVotes} ভোট`;
+    this.showToast("আপনার ভোট সফলভাবে যোগ হয়েছে! ❤️", "success");
+
+    const cdMs = (this.cfg.voteCoolDownSeconds || 2) * 1000;
+    setTimeout(() => {
+      this.isVoteCooldown = false;
+      if (btn) btn.classList.remove("heart-active");
+    }, cdMs);
+
+    // ব্যাকগ্রাউন্ডে সার্ভার সিঙ্ক
     const voterPin = this.activeUser ? this.activeUser.pin : null;
     const res = await this.db.votePhoto(photoId, voterPin);
 
     if (res.success) {
-      this.isVoteCooldown = true;
-      if (btn) btn.classList.add("heart-active");
-      const countEl = document.getElementById(`vote-count-${photoId}`);
-      if (countEl) countEl.innerText = `${res.votes} ভোট`;
-
-      const modalCountEl = document.getElementById(`modal-vote-count-${photoId}`);
-      if (modalCountEl) modalCountEl.innerText = `❤️ ${res.votes} ভোট`;
-
-      this.showToast("আপনার ভোট সফলভাবে যোগ হয়েছে! ❤️", "success");
-
-      // ৫ সেকেন্ডের কুলডাউন
-      setTimeout(() => {
-        this.isVoteCooldown = false;
-        if (btn) btn.classList.remove("heart-active");
-      }, (this.cfg.voteCoolDownSeconds || 5) * 1000);
+      if (res.votes !== undefined) {
+        if (countEl) countEl.innerText = `${res.votes} ভোট`;
+        if (modalCountEl) modalCountEl.innerText = `❤️ ${res.votes} ভোট`;
+      }
+      if (Array.isArray(this.db.lastPhotosList)) {
+        const target = this.db.lastPhotosList.find(p => p.id === photoId);
+        if (target) {
+          target.votes = res.votes !== undefined ? res.votes : optimisticVotes;
+          localStorage.setItem("peg_photos", JSON.stringify(this.db.lastPhotosList));
+        }
+      }
     } else {
-      this.showToast(res.message, "info");
+      // সার্ভার বাতিল করলে সংখ্যা আগের অবস্থায় ফেরানো
+      if (countEl) countEl.innerText = `${prevVotes} ভোট`;
+      if (modalCountEl) modalCountEl.innerText = `❤️ ${prevVotes} ভোট`;
+      if (btn) btn.classList.remove("heart-active");
+      this.showToast(res.message || "ভোট দেওয়া যায়নি!", "info");
     }
   }
 
@@ -849,8 +896,12 @@ class PicPrizeApp {
       return;
     }
 
-    // ১. ডাইনামিক আপলোড কোটা চেক (অ্যাডমিন সেটিংস ও ডেডলক গার্ড সহ)
+    // ১. ডাইনামিক আপলোড কোটা ও সর্বোচ্চ ছবির লিমিট চেক (অ্যাডমিন সেটিংস ও ডেডলক গার্ড সহ)
     const quota = await this.db.getUploadQuota(this.activeUser.pin);
+    if (quota.limitReached) {
+      this.showToast(`🚫 ছবি আপলোডের সীমা পূর্ণ হয়েছে! একজন ইউজার সর্বোচ্চ ${quota.maxPhotos}টি ছবি দিতে পারবেন (আপনার ছবি: ${quota.userPhotosCount}টি)।`, "warning");
+      return;
+    }
     if (!quota.ok) {
       this.showUploadQuotaModal(quota);
       return;
@@ -993,9 +1044,12 @@ class PicPrizeApp {
 
         const savedPhoto = await this.db.addPhoto(newPhoto);
         if (savedPhoto && savedPhoto.error) {
+          submitBtn.disabled = false;
+          submitBtn.innerHTML = "<span>📤 ছবিসহ সরাসরি পাঠান</span>";
           this.showToast(savedPhoto.message || "ছবি আপলোড করা যায়নি!", "error");
           return;
         }
+        this.activeUser = this.db.getUser(this.activeUser.pin) || this.activeUser;
         const liveApproved = savedPhoto && typeof savedPhoto.approved === "boolean" ? savedPhoto.approved : isApproved;
 
         // ইউজারের ইনবক্সে তাৎক্ষণিক নোটিফিকেশন দেওয়া
@@ -1086,47 +1140,143 @@ class PicPrizeApp {
     }
   }
 
-  // ১১. প্রোফাইল ও উইথড্র মডাল
-  openProfileModal() {
+  // ১১. প্রোফাইল ও উইথড্র মডাল (লাইভ ভোট, ভিউ, ফলোয়ার ও ছবি লিমিট স্ট্যাটাস সহ)
+  async openProfileModal() {
     if (!this.activeUser) return;
     const modal = document.getElementById("profile-modal");
     const content = document.getElementById("profile-modal-content");
     if (!modal || !content) return;
 
-    // রিফ্রেশ ইউজার ডাটা
-    this.activeUser = this.db.getUser(this.activeUser.pin);
+    // তাৎক্ষণিক ক্যাশড প্রিভিউ রেন্ডার + ব্যাকগ্রাউন্ডে সার্ভার থেকে লাইভ ভোট/ফলোয়ার/ছবি ডাটা আনা
+    this.activeUser = this.db.getUser(this.activeUser.pin) || this.activeUser;
+    this._renderProfileContent(content, this.activeUser, true);
+    modal.classList.remove("hidden");
+
+    const fresh = await this.db.fetchUserStats(this.activeUser.pin);
+    if (fresh && !modal.classList.contains("hidden")) {
+      this.activeUser = fresh;
+      this._renderProfileContent(content, fresh, false);
+    }
+  }
+
+  _renderProfileContent(content, u, isLoading = false) {
+    const pinStr = String(u.pin || "");
+    const fallbackPhotos = (this.photos || []).filter(p => String(p.authorPin || "") === pinStr);
+    const myPhotos = Array.isArray(u.myPhotos) ? u.myPhotos : fallbackPhotos;
+    const photosCount = Math.max(parseInt(u.photosCount ?? 0, 10), myPhotos.length);
+    const approvedCount = u.approvedCount !== undefined
+      ? parseInt(u.approvedCount, 10)
+      : myPhotos.filter(p => !!p.approved || p.status === "approved").length;
+    const pendingCount = u.pendingCount !== undefined
+      ? parseInt(u.pendingCount, 10)
+      : Math.max(0, photosCount - approvedCount);
+    const totalVotes = u.totalVotes !== undefined
+      ? parseInt(u.totalVotes, 10)
+      : myPhotos.reduce((s, p) => s + parseInt(p.votes || 0, 10), 0);
+    const totalViews = u.totalViews !== undefined
+      ? parseInt(u.totalViews, 10)
+      : myPhotos.reduce((s, p) => s + parseInt(p.views || 0, 10), 0);
+    const followersCount = parseInt(u.followersCount || 0, 10);
+    const referralsCount = parseInt(u.referralsCount || 0, 10);
+    const cachedMax = parseInt(localStorage.getItem("peg_max_photos_per_user") || this.cfg.maxPhotosPerUser || "0", 10);
+    const maxPhotos = u.max_photos_per_user !== undefined ? Math.max(0, parseInt(u.max_photos_per_user, 10)) : Math.max(0, cachedMax);
+    const minWdPhotos = this.cfg.minPhotosForWithdraw || 3;
+    const safeName = this.escapeHtml(u.name || "শিল্পী");
+    const safePhone = this.escapeHtml(u.phone || "");
+    const safeRef = this.escapeHtml(u.refCode || ("REF" + pinStr));
+
+    let limitBanner = "";
+    if (maxPhotos > 0) {
+      const remaining = Math.max(0, maxPhotos - photosCount);
+      limitBanner = remaining === 0
+        ? `<div class="mt-3 px-3 py-2 rounded-xl bg-rose-500/15 border border-rose-500/30 text-[11px] font-bold text-rose-600 dark:text-rose-300 text-center">🚫 আপলোড লিমিট পূর্ণ হয়েছে (${photosCount}/${maxPhotos}টি)</div>`
+        : `<div class="mt-3 px-3 py-2 rounded-xl bg-sky-500/15 border border-sky-500/30 text-[11px] font-bold text-sky-700 dark:text-sky-300 text-center">📸 আপলোড সীমা: ${photosCount}/${maxPhotos}টি (আরও ${remaining}টি ছবি দিতে পারবেন)</div>`;
+    } else {
+      limitBanner = `<div class="mt-3 px-3 py-2 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-[11px] font-bold text-emerald-700 dark:text-emerald-300 text-center">♾️ আপলোড সীমা: আনলিমিটেড (আপনি যত খুশি ছবি দিতে পারবেন)</div>`;
+    }
+
+    const myPhotosHtml = myPhotos.length > 0
+      ? myPhotos.slice(0, 20).map(p => {
+          const isApp = !!p.approved || p.status === "approved";
+          const pVotes = parseInt(p.votes || 0, 10);
+          const pViews = parseInt(p.views || 0, 10);
+          const pTitle = this.escapeHtml(p.title || "শিরোনামহীন ছবি");
+          return `
+            <div class="flex items-center justify-between gap-2 p-2 rounded-xl bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-white/5 text-xs">
+              <div class="flex items-center gap-2 min-w-0">
+                ${p.url ? `<img src="${this.escapeHtml(p.url)}" alt="${pTitle}" class="w-9 h-9 rounded-lg object-cover shrink-0 bg-slate-700">` : `<div class="w-9 h-9 rounded-lg bg-slate-700 flex items-center justify-center shrink-0">🖼️</div>`}
+                <div class="min-w-0">
+                  <div class="font-bold text-slate-900 dark:text-white truncate text-[11px]">${pTitle}</div>
+                  <div class="text-[10px] ${isApp ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-600 dark:text-amber-300'} font-semibold">
+                    ${isApp ? '✅ লাইভ' : '⏳ পেন্ডিং'}
+                  </div>
+                </div>
+              </div>
+              <div class="flex items-center gap-2 shrink-0 text-[11px] font-bold">
+                <span class="text-rose-600 dark:text-rose-400">❤️ ${pVotes}</span>
+                <span class="text-sky-600 dark:text-sky-400">👁️ ${pViews}</span>
+              </div>
+            </div>`;
+        }).join("")
+      : `<div class="text-center py-3 text-[11px] text-gray-500">আপনি এখনো কোনো ছবি আপলোড করেননি।</div>`;
 
     content.innerHTML = `
-      <div class="flex items-center gap-3 pb-4 border-b border-white/10">
-        <div class="w-12 h-12 rounded-full bg-gradient-to-tr from-indigo-500 to-pink-500 flex items-center justify-center text-white text-lg font-bold shadow-md">
-          ${this.activeUser.name.charAt(0)}
+      <div class="flex items-center gap-3 pb-3 border-b border-slate-200 dark:border-white/10 pr-8">
+        <div class="w-12 h-12 rounded-full bg-gradient-to-tr from-indigo-500 to-pink-500 flex items-center justify-center text-white text-lg font-bold shadow-md shrink-0">
+          ${safeName.charAt(0)}
         </div>
-        <div>
-          <h3 class="font-bold text-white text-base">${this.activeUser.name}</h3>
-          <p class="text-xs text-gray-400">পিন: ****${this.activeUser.pin.slice(-2)} · ফোন: ${this.activeUser.phone}</p>
+        <div class="min-w-0">
+          <div class="flex items-center gap-2">
+            <h3 class="font-bold text-white text-base truncate">${safeName}</h3>
+            ${isLoading ? `<span class="text-[10px] text-amber-500 font-semibold animate-pulse">আপডেট হচ্ছে…</span>` : ""}
+          </div>
+          <p class="text-xs text-gray-400">পিন: ****${pinStr.slice(-2)} · ফোন: ${safePhone}</p>
         </div>
       </div>
 
-      <!-- ব্যালেন্স ও স্ট্যাটাস কার্ড -->
-      <div class="grid grid-cols-2 gap-3 my-4">
+      ${limitBanner}
+
+      <!-- ব্যালেন্স ও ৪-কার্ড পারফরম্যান্স স্ট্যাটাস -->
+      <div class="grid grid-cols-2 gap-2.5 my-3">
         <div class="p-3 bg-slate-900 rounded-xl border border-indigo-500/20 text-center">
-          <span class="text-xs text-gray-400">মোট ব্যালেন্স</span>
-          <p class="text-xl font-bold text-emerald-400 mt-0.5">৳${parseFloat(this.activeUser.taka || 0).toFixed(2)}</p>
-          <span class="text-[10px] text-gray-500">${this.activeUser.points || 0} পয়েন্ট</span>
+          <span class="text-[11px] text-gray-400">💰 মোট ব্যালেন্স</span>
+          <div class="text-lg font-extrabold text-emerald-600 dark:text-emerald-400 mt-0.5">৳${parseFloat(u.taka || 0).toFixed(2)}</div>
+          <span class="text-[10px] text-gray-500">${u.points || 0} পয়েন্ট</span>
         </div>
         <div class="p-3 bg-slate-900 rounded-xl border border-purple-500/20 text-center">
-          <span class="text-xs text-gray-400">আপলোড করা ছবি</span>
-          <p class="text-xl font-bold text-purple-400 mt-0.5">${this.activeUser.photosCount || 0} টি</p>
-          <span class="text-[10px] text-gray-500">উইথড্র রিকোয়ারমেন্ট: ৩টি</span>
+          <span class="text-[11px] text-gray-400">📸 আপলোডকৃত ছবি</span>
+          <div class="text-lg font-extrabold text-purple-600 dark:text-purple-400 mt-0.5">${maxPhotos > 0 ? `${photosCount} / ${maxPhotos}` : `${photosCount} টি`}</div>
+          <span class="text-[10px] text-gray-500">${approvedCount} লাইভ · ${pendingCount} পেন্ডিং</span>
+        </div>
+        <div class="p-3 bg-slate-900 rounded-xl border border-rose-500/20 text-center">
+          <span class="text-[11px] text-gray-400">❤️ মোট ভোট / লাইক</span>
+          <div class="text-lg font-extrabold text-rose-600 dark:text-rose-400 mt-0.5">${totalVotes} টি</div>
+          <span class="text-[10px] text-gray-500">👁️ ${totalViews} বার ভিউ</span>
+        </div>
+        <div class="p-3 bg-slate-900 rounded-xl border border-sky-500/20 text-center">
+          <span class="text-[11px] text-gray-400">👥 মোট ফলোয়ার</span>
+          <div class="text-lg font-extrabold text-sky-600 dark:text-sky-400 mt-0.5">${followersCount} জন</div>
+          <span class="text-[10px] text-gray-500">🎁 রেফার: ${referralsCount} জন</span>
+        </div>
+      </div>
+
+      <!-- আমার আপলোড করা ছবির পারফরম্যান্স -->
+      <div class="p-3 bg-slate-900 rounded-xl border border-slate-800 mb-3">
+        <div class="flex items-center justify-between mb-2">
+          <span class="text-xs font-bold text-slate-700 dark:text-gray-200">🖼️ আমার ছবি ও ভোট রিপোর্ট</span>
+          <span class="text-[10px] text-gray-500">উইথড্র শর্ত: ${minWdPhotos}টি ছবি</span>
+        </div>
+        <div class="max-h-36 overflow-y-auto space-y-1.5 pr-1">
+          ${myPhotosHtml}
         </div>
       </div>
 
       <!-- টেলিগ্রাম বোনাস কার্ড -->
-      ${!this.activeUser.telegramBonus ? `
-        <div class="p-3 bg-indigo-950/60 border border-indigo-500/30 rounded-xl mb-4 flex items-center justify-between gap-2">
+      ${!u.telegramBonus ? `
+        <div class="p-3 bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-200 dark:border-indigo-500/30 rounded-xl mb-3 flex items-center justify-between gap-2">
           <div>
-            <b class="text-indigo-300 text-xs block">🎁 টেলিগ্রাম বোনাস ৳১০</b>
-            <span class="text-[11px] text-gray-400">চ্যানেলে জয়েন করে ইনস্ট্যান্ট বোনাস নিন</span>
+            <b class="text-indigo-700 dark:text-indigo-300 text-xs block">🎁 টেলিগ্রাম বোনাস ৳১০</b>
+            <span class="text-[11px] text-slate-600 dark:text-gray-400">চ্যানেলে জয়েন করে ইনস্ট্যান্ট বোনাস নিন</span>
           </div>
           <button onclick="window.APP.claimTelegramBonus()" class="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-semibold whitespace-nowrap">
             ক্লেইম করুন
@@ -1135,11 +1285,11 @@ class PicPrizeApp {
       ` : ''}
 
       <!-- রেফারেল লিংক -->
-      <div class="p-3 bg-slate-900 rounded-xl border border-slate-800 mb-4">
+      <div class="p-3 bg-slate-900 rounded-xl border border-slate-800 mb-3">
         <label class="text-xs text-gray-400 block mb-1">আপনার রেফারেল কোড:</label>
         <div class="flex items-center gap-2">
-          <input type="text" readonly value="${this.activeUser.refCode || 'REF' + this.activeUser.pin}" class="w-full bg-slate-800 text-xs text-amber-300 px-3 py-2 rounded-lg border border-slate-700 outline-none">
-          <button onclick="navigator.clipboard.writeText('${window.location.origin}/?ref=${this.activeUser.refCode}'); window.APP.showToast('রেফারেল লিংক কপি হয়েছে!', 'success')" class="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-lg text-xs font-semibold whitespace-nowrap">
+          <input type="text" readonly value="${safeRef}" class="w-full bg-slate-800 text-xs text-amber-300 px-3 py-2 rounded-lg border border-slate-700 outline-none">
+          <button onclick="navigator.clipboard.writeText('${window.location.origin}/?ref=${safeRef}'); window.APP.showToast('রেফারেল লিংক কপি হয়েছে!', 'success')" class="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-lg text-xs font-semibold whitespace-nowrap">
             কপি
           </button>
         </div>
@@ -1166,7 +1316,7 @@ class PicPrizeApp {
 
         <div>
           <label class="text-[11px] text-gray-400">বিকাশ/নগদ নম্বর</label>
-          <input type="text" id="wd-phone" value="${this.activeUser.phone || ''}" required placeholder="01XXXXXXXXX" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white outline-none">
+          <input type="text" id="wd-phone" value="${safePhone}" required placeholder="01XXXXXXXXX" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white outline-none">
         </div>
 
         <button type="submit" class="w-full py-2 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white rounded-xl text-xs font-bold shadow-lg transition-transform active:scale-95">
@@ -1186,8 +1336,6 @@ class PicPrizeApp {
         লগআউট করুন
       </button>
     `;
-
-    modal.classList.remove("hidden");
   }
 
   // টেলিগ্রাম বোনাস ক্লেইম

@@ -3,13 +3,14 @@
  * High-Speed Caching & Offline PWA Acceleration
  */
 
-const CACHE_NAME = "photoearn-cache-v2";
+const CACHE_NAME = "photoearn-cache-v4";
 const ASSETS_TO_CACHE = [
   "./manifest.json",
   "./favicon.ico",
-  "./css/style.css",
-  "./images/logo-icon.png",
-  "./images/favicon.png",
+  "./css/tailwind.min.css?v=2",
+  "./css/style.css?v=3",
+  "./images/logo-icon.png?v=6",
+  "./images/favicon.png?v=2",
   "./images/og-preview.png"
 ];
 
