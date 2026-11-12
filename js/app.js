@@ -1187,12 +1187,14 @@ class PicPrizeApp {
     // তাৎক্ষণিক ক্যাশড প্রিভিউ রেন্ডার + ব্যাকগ্রাউন্ডে সার্ভার থেকে লাইভ ভোট/ফলোয়ার/ছবি ডাটা আনা
     this.activeUser = this.db.getUser(this.activeUser.pin) || this.activeUser;
     this._renderProfileContent(content, this.activeUser, true);
+    this.loadUserWithdrawHistory(this.activeUser.pin);
     modal.classList.remove("hidden");
 
     const fresh = await this.db.fetchUserStats(this.activeUser.pin);
     if (fresh && !modal.classList.contains("hidden")) {
       this.activeUser = fresh;
       this._renderProfileContent(content, fresh, false);
+      this.loadUserWithdrawHistory(this.activeUser.pin);
       this.updateUserNavButton();
     }
   }
@@ -1372,6 +1374,21 @@ class PicPrizeApp {
         </button>
       </form>
 
+      <!-- আমার উইথড্র হিস্ট্রি সেকশন -->
+      <div class="mt-4 pt-3 border-t border-white/10 text-left">
+        <div class="flex items-center justify-between mb-2">
+          <h4 class="text-xs font-bold text-gray-300 uppercase tracking-wider flex items-center gap-1.5">
+            <span>💳 আমার উইথড্র হিস্ট্রি</span>
+          </h4>
+          <button onclick="window.APP.openPublicProofsModal()" class="text-[10px] text-emerald-400 hover:underline font-bold">
+            লাইভ প্রুফ দেখুন ➔
+          </button>
+        </div>
+        <div id="user-withdraw-history-container" class="space-y-2 max-h-52 overflow-y-auto pr-1">
+          <div class="text-center py-2 text-[11px] text-gray-500">উইথড্র হিস্ট্রি লোড হচ্ছে…</div>
+        </div>
+      </div>
+
       
         <!-- সরাসরি অ্যাডমিন প্যানেল লিংক -->
         <div class="pt-3 border-t border-white/10">
@@ -1430,6 +1447,266 @@ class PicPrizeApp {
     this.updateUserNavButton();
     this.closeModals();
     this.showToast("সফলভাবে লগআউট হয়েছে!", "info");
+  }
+
+  // ================= 💳 উইথড্র হিস্ট্রি, পেমেন্ট ভাউচার ও শেয়ার =================
+  async loadUserWithdrawHistory(pin) {
+    const listEl = document.getElementById("user-withdraw-history-container");
+    if (!listEl) return;
+    const phone = (this.activeUser && this.activeUser.phone) || "";
+    let list = await this.db.getUserWithdraws(pin, phone);
+
+    if (!list || list.length === 0) {
+      listEl.innerHTML = `
+        <div class="p-3 bg-slate-950/60 rounded-2xl border border-white/5 text-center space-y-2">
+          <div class="text-[11px] text-gray-400">আপনার এখনো কোনো উইথড্র পরিশোধিত হয়নি।</div>
+          <button onclick="window.APP.openPaymentVoucher('demo')" class="px-3.5 py-1.5 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white text-xs font-bold rounded-xl shadow-md inline-flex items-center gap-1.5 transition-transform active:scale-95">
+            <span>🧾 ডেমো পেমেন্ট রসিদ ও ভাউচার দেখুন</span>
+          </button>
+        </div>
+      `;
+      return;
+    }
+
+    listEl.innerHTML = list.map(w => {
+      const dateStr = new Date(w.date).toLocaleDateString('bn-BD', { month: 'short', day: 'numeric' });
+      const method = (w.method || 'bkash').toUpperCase();
+      let statusBadge = '';
+
+      if (w.status === 'pending') {
+        statusBadge = `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">⏳ পেন্ডিং</span>`;
+      } else if (w.status === 'rejected') {
+        statusBadge = `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-500/20 text-rose-300 border border-rose-500/30">❌ বাতিল</span>`;
+      } else {
+        statusBadge = `
+          <div class="flex items-center gap-1.5">
+            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">✅ পেইড</span>
+            <button onclick="window.APP.openPaymentVoucher('${w.id}')" class="px-2 py-0.5 rounded-lg text-[10px] font-black bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white shadow transition-transform active:scale-95 flex items-center gap-1">
+              🧾 রসিদ ও শেয়ার
+            </button>
+          </div>
+        `;
+      }
+
+      return `
+        <div class="p-2.5 bg-slate-800/80 rounded-xl border border-white/5 flex items-center justify-between gap-2">
+          <div>
+            <div class="text-xs font-bold text-white flex items-center gap-1.5">
+              <span>৳${parseFloat(w.amount || 0).toFixed(0)}</span>
+              <span class="text-[9px] uppercase px-1.5 py-0.2 rounded font-black ${w.method === 'bkash' ? 'bg-pink-500/20 text-pink-300' : 'bg-orange-500/20 text-orange-300'}">${method}</span>
+            </div>
+            <div class="text-[10px] text-gray-400 font-mono mt-0.5">
+              <span>${w.phone}</span> · <span>${dateStr}</span>
+              ${w.trxId ? `<span class="text-sky-400 block text-[9px]">Trx: ${w.trxId}</span>` : ''}
+            </div>
+          </div>
+          <div>
+            ${statusBadge}
+          </div>
+        </div>
+      `;
+    }).join("");
+  }
+
+  async openPaymentVoucher(withdrawId) {
+    let list = [];
+    if (this.activeUser && this.activeUser.pin) {
+      const phone = this.activeUser.phone || "";
+      list = await this.db.getUserWithdraws(this.activeUser.pin, phone);
+    }
+    let w = (list || []).find(item => item.id === withdrawId);
+    if (!w) {
+      const all = await this.db.getWithdraws();
+      w = (all || []).find(item => item.id === withdrawId);
+    }
+    if (!w || withdrawId === 'demo') {
+      const u = this.activeUser || {};
+      w = {
+        id: "demo_wd_1",
+        name: u.name || "তানভীর হাসান",
+        phone: u.phone || "01771136809",
+        pin: u.pin || "180202",
+        amount: 100,
+        method: "bkash",
+        status: "paid",
+        trxId: "TRXTFRTXLVB",
+        paidAt: new Date().toISOString()
+      };
+    }
+
+    this.currentVoucher = w;
+    document.getElementById("profile-modal")?.classList.add("hidden");
+    const modal = document.getElementById("payment-voucher-modal");
+    const container = document.getElementById("user-receipt-preview-container");
+    if (!modal) return;
+
+    modal.classList.remove("hidden");
+
+    if (container) {
+      container.innerHTML = `<div class="text-xs text-emerald-400 py-10 animate-pulse font-bold">🧾 রসিদ তৈরি হচ্ছে, অপেক্ষা করুন…</div>`;
+      try {
+        if (window.PaymentReceipt) {
+          const refCode = (this.activeUser && (this.activeUser.refCode || this.activeUser.pin)) || "180202";
+          const canvas = await window.PaymentReceipt.createReceiptCanvas({
+            name: w.name || (this.activeUser ? this.activeUser.name : "শিল্পী"),
+            phone: w.phone || (this.activeUser ? this.activeUser.phone : "01771136809"),
+            amount: w.amount || 100,
+            method: w.method || "bkash",
+            trxId: w.trxId || "TRXTFRTXLVB",
+            date: w.date,
+            paidAt: w.paidAt,
+            refCode: refCode,
+            siteUrl: window.location.origin
+          });
+          const img = new Image();
+          img.src = canvas.toDataURL("image/png");
+          img.className = "w-full h-auto rounded-xl shadow-lg cursor-pointer transition-transform hover:scale-[1.01]";
+          img.title = "ক্লিক করে রসিদ ডাউনলোড করুন";
+          img.onclick = () => this.downloadReceiptImage();
+          container.innerHTML = "";
+          container.appendChild(img);
+        }
+      } catch (err) {
+        console.error("Receipt generation error:", err);
+        container.innerHTML = `<div class="text-xs text-rose-400 py-6">রসিদ ইমেজ তৈরিতে সমস্যা হয়েছে।</div>`;
+      }
+    }
+  }
+
+  async copyReceiptImage() {
+    if (!this.currentVoucher || !window.PaymentReceipt) return;
+    try {
+      const refCode = (this.activeUser && (this.activeUser.refCode || this.activeUser.pin)) || "180202";
+      const res = await window.PaymentReceipt.copyReceiptImage({
+        ...this.currentVoucher,
+        refCode: refCode,
+        siteUrl: window.location.origin
+      });
+      if (res === "copied") {
+        this.showToast("🎉 রসিদের ছবি সফলভাবে কপি হয়েছে! চ্যাটে বা ফেসবুকে সরাসরি Ctrl+V দিয়ে পেস্ট করুন।", "success");
+      } else {
+        this.showToast("📥 রসিদের ছবি ডাউনলোড করা হয়েছে!", "success");
+      }
+    } catch (err) {
+      console.error(err);
+      this.downloadReceiptImage();
+    }
+  }
+
+  async downloadReceiptImage() {
+    if (!this.currentVoucher || !window.PaymentReceipt) return;
+    const refCode = (this.activeUser && (this.activeUser.refCode || this.activeUser.pin)) || "180202";
+    await window.PaymentReceipt.downloadReceipt({
+      ...this.currentVoucher,
+      refCode: refCode,
+      siteUrl: window.location.origin
+    });
+    this.showToast("📥 অফিসিয়াল রসিদ ছবি ডাউনলোড সম্পন্ন হয়েছে!", "success");
+  }
+
+  shareVoucherWhatsApp() {
+    if (!this.currentVoucher) return;
+    const v = this.currentVoucher;
+    const refCode = (this.activeUser && (this.activeUser.refCode || this.activeUser.pin)) || "";
+    const siteUrl = window.location.origin;
+    const refUrl = refCode ? `${siteUrl}/?ref=${refCode}` : siteUrl;
+    const phoneStr = String(v.phone || "");
+    const phoneMasked = phoneStr.length >= 8 ? (phoneStr.slice(0, 3) + '****' + phoneStr.slice(-4)) : "01X****XXXX";
+    const trx = v.trxId || "VERIFIED";
+
+    const text = `🎉 আলহামদুলিল্লাহ! Photo Earn Gallery থেকে আমি সফলভাবে ৳${v.amount} ${String(v.method || 'bkash').toUpperCase()} পেমেন্ট পেয়েছি!\n\n` +
+      `👤 প্রাপক: ${v.name || 'শিল্পী'}\n` +
+      `💰 টাকার পরিমাণ: ৳${v.amount}\n` +
+      `📱 মেথড: ${String(v.method || 'bkash').toUpperCase()} (${phoneMasked})\n` +
+      `🔢 Transaction ID (TrxID): ${trx}\n` +
+      `✅ স্ট্যাটাস: 100% Genuine Verified Payment\n\n` +
+      `📸 আপনারাও নিজের তোলা সুন্দর ছবি আপলোড করে ও বন্ধুদের ভোটে জিতে নিন প্রতিদিন নগদ টাকা!\n` +
+      `👉 এখনই ফ্রি জয়েন করে ৳১০ বোনাস নিন: ${refUrl}`;
+
+    window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, "_blank");
+  }
+
+  shareVoucherFacebook() {
+    const siteUrl = window.location.origin;
+    const refCode = (this.activeUser && (this.activeUser.refCode || this.activeUser.pin)) || "";
+    const shareUrl = refCode ? `${siteUrl}/share.php?ref=${refCode}` : `${siteUrl}/share.php`;
+    window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`, "_blank");
+  }
+
+  copyVoucherText() {
+    if (!this.currentVoucher) return;
+    const v = this.currentVoucher;
+    const refCode = (this.activeUser && (this.activeUser.refCode || this.activeUser.pin)) || "";
+    const siteUrl = window.location.origin;
+    const refUrl = refCode ? `${siteUrl}/?ref=${refCode}` : siteUrl;
+    const phoneStr = String(v.phone || "");
+    const phoneMasked = phoneStr.length >= 8 ? (phoneStr.slice(0, 3) + '****' + phoneStr.slice(-4)) : "01X****XXXX";
+    const trx = v.trxId || "VERIFIED";
+
+    const text = `🎉 Photo Earn Gallery পেমেন্ট প্রুফ!\n` +
+      `👤 প্রাপক: ${v.name || 'শিল্পী'}\n` +
+      `💰 প্রাপ্ত অর্থ: ৳${v.amount} (${String(v.method || 'bkash').toUpperCase()})\n` +
+      `📱 নম্বর: ${phoneMasked}\n` +
+      `🔢 TrxID: ${trx}\n` +
+      `✅ ভেরিফাইড পেমেন্ট সম্পন্ন!\n\n` +
+      `👉 ছবি দিয়ে টাকা আয় করতে যুক্ত হোন: ${refUrl}`;
+
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(text).then(() => {
+        this.showToast("পেমেন্ট প্রমাণ টেক্সট ও লিংক কপি হয়েছে! বন্ধুদের ইনবক্স বা গ্রুপে শেয়ার করুন।", "success");
+      });
+    } else {
+      prompt("পেমেন্ট প্রমাণ কপি করুন:", text);
+    }
+  }
+
+  copyTrxId() {
+    if (!this.currentVoucher || !this.currentVoucher.trxId) return;
+    navigator.clipboard.writeText(this.currentVoucher.trxId).then(() => {
+      this.showToast("TrxID কপি হয়েছে!", "success");
+    });
+  }
+
+  async openPublicProofsModal() {
+    const modal = document.getElementById("payment-proofs-modal");
+    const listEl = document.getElementById("public-proofs-list");
+    if (!modal || !listEl) return;
+
+    modal.classList.remove("hidden");
+    listEl.innerHTML = `<div class="text-center py-6 text-xs text-gray-400">লাইভ পেমেন্ট প্রুফ ডাটা লোড হচ্ছে…</div>`;
+
+    const proofs = await this.db.getPublicProofs();
+    if (!proofs || proofs.length === 0) {
+      listEl.innerHTML = `<div class="text-center py-6 text-xs text-gray-500">এখনো কোনো পাবলিক পেমেন্ট সম্পন্ন হয়নি।</div>`;
+      return;
+    }
+
+    listEl.innerHTML = proofs.map(p => `
+      <div class="p-3 bg-slate-900/90 rounded-2xl border border-white/5 flex items-center justify-between gap-2 hover:border-emerald-500/30 transition-all">
+        <div class="flex items-center gap-2.5">
+          <div class="w-9 h-9 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-base shrink-0">
+            💸
+          </div>
+          <div>
+            <div class="text-xs font-bold text-white flex items-center gap-1.5">
+              <span>${this.escapeHtml(p.name)}</span>
+              <span class="text-[10px] font-mono text-gray-400">(${p.phoneMasked})</span>
+            </div>
+            <div class="text-[10px] text-emerald-400 font-mono mt-0.5 flex items-center gap-1">
+              <span>Trx: ${this.escapeHtml(p.trxId)}</span>
+              <span class="text-gray-500">·</span>
+              <span class="text-gray-400">${new Date(p.date).toLocaleDateString('bn-BD')}</span>
+            </div>
+          </div>
+        </div>
+        <div class="text-right shrink-0">
+          <div class="text-sm font-black text-emerald-400">৳${parseFloat(p.amount).toFixed(0)}</div>
+          <span class="px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider ${p.method === 'bkash' ? 'bg-pink-500/20 text-pink-300' : 'bg-orange-500/20 text-orange-300'}">
+            ${this.escapeHtml(p.method)}
+          </span>
+        </div>
+      </div>
+    `).join("");
   }
 
   // ১২. লিডারবোর্ড রেন্ডারিং

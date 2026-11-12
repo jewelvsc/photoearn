@@ -1162,6 +1162,61 @@ switch ($action) {
         echo json_encode(["success" => true, "message" => "উইথড্র আবেদন সফল হয়েছে! অ্যাডমিন যাচাই করে বিকাশ/নগদে টাকা পাঠাবে।"]);
         break;
 
+    case 'get_user_withdraws':
+        $pin   = cleanText($input['pin'] ?? '', 20);
+        $phone = cleanText($input['phone'] ?? '', 20);
+        if ($pin === '' && $phone === '') {
+            echo json_encode(["success" => false, "message" => "পিন বা নম্বর প্রয়োজন"]);
+            exit;
+        }
+        $withdraws = readJson($withdrawsFile, []);
+        $cleanPhone = $phone !== '' ? preg_replace('/[^0-9]/', '', $phone) : '';
+        $userWd = [];
+        foreach ($withdraws as $w) {
+            $wPin = trim((string)($w['pin'] ?? ''));
+            $wPhone = preg_replace('/[^0-9]/', '', (string)($w['phone'] ?? ''));
+            $matchPin = ($pin !== '' && $wPin === $pin);
+            $matchPhone = ($cleanPhone !== '' && $wPhone !== '' && (strpos($wPhone, $cleanPhone) !== false || strpos($cleanPhone, $wPhone) !== false));
+            if ($matchPin || $matchPhone) {
+                $userWd[] = [
+                    "id"     => $w['id'] ?? '',
+                    "pin"    => $w['pin'] ?? '',
+                    "name"   => $w['name'] ?? '',
+                    "phone"  => $w['phone'] ?? '',
+                    "amount" => floatval($w['amount'] ?? 0),
+                    "method" => $w['method'] ?? 'bkash',
+                    "status" => $w['status'] ?? 'pending',
+                    "trxId"  => $w['trxId'] ?? '',
+                    "note"   => $w['note'] ?? '',
+                    "paidAt" => $w['paidAt'] ?? '',
+                    "date"   => $w['date'] ?? ''
+                ];
+            }
+        }
+        echo json_encode(["success" => true, "withdraws" => $userWd]);
+        break;
+
+    case 'get_public_proofs':
+        $withdraws = readJson($withdrawsFile, []);
+        $proofs = [];
+        foreach ($withdraws as $w) {
+            if (($w['status'] ?? '') === 'paid') {
+                $phone = (string)($w['phone'] ?? '');
+                $masked = strlen($phone) >= 8 ? substr($phone, 0, 3) . '****' . substr($phone, -4) : '01X****XXXX';
+                $proofs[] = [
+                    "id"          => $w['id'] ?? '',
+                    "name"        => $w['name'] ?? 'শিল্পী',
+                    "phoneMasked" => $masked,
+                    "amount"      => floatval($w['amount'] ?? 0),
+                    "method"      => $w['method'] ?? 'bkash',
+                    "trxId"       => $w['trxId'] ?? 'VERIFIED',
+                    "date"        => $w['paidAt'] ?? ($w['date'] ?? '')
+                ];
+            }
+        }
+        echo json_encode(["success" => true, "proofs" => array_slice($proofs, 0, 40)]);
+        break;
+
     // ===== ৫. পাবলিক লাইভ চ্যাট ও নোটিফিকেশন =====
     case 'get_chat':
         $chat = readJson($chatFile, []);
@@ -1236,11 +1291,20 @@ switch ($action) {
         requireAdmin();
         $id        = cleanText($input['id'] ?? '', 64);
         $newStatus = ($input['status'] ?? '') === 'rejected' ? 'rejected' : 'paid';
+        $trxId     = cleanText($input['trxId'] ?? '', 100);
+        $note      = cleanText($input['note'] ?? '', 255);
         $withdraws = readJson($withdrawsFile, []);
         $target    = null;
         foreach ($withdraws as &$w) {
             if (($w['id'] ?? '') === $id) {
                 $w['status'] = $newStatus;
+                if ($newStatus === 'paid') {
+                    $w['trxId']  = $trxId !== '' ? $trxId : ($w['trxId'] ?? ('TRX' . strtoupper(substr(md5(uniqid()), 0, 10))));
+                    $w['paidAt'] = date('c');
+                }
+                if ($note !== '') {
+                    $w['note'] = $note;
+                }
                 $target = $w;
                 break;
             }
@@ -1248,19 +1312,35 @@ switch ($action) {
         unset($w);
         writeJson($withdrawsFile, $withdraws);
         if ($target && !empty($target['pin'])) {
+            if ($newStatus === 'rejected') {
+                $refundPts = intval(round(floatval($target['amount'] ?? 0) / PEG_TAKA_PER_POINT));
+                if ($refundPts > 0) {
+                    $users = readUsersSafe($usersFile);
+                    creditUserInMap($users, $target['pin'], $refundPts);
+                    writeJson($usersFile, $users);
+                }
+            }
+
             $notifs = readJson($notifsFile, ["personal" => [], "broadcast" => []]);
+            $msg = $newStatus === 'paid'
+                ? "আপনার ৳{$target['amount']} উইথড্র আবেদন ({$target['method']}) সফলভাবে পরিশোধ করা হয়েছে। TrxID: " . ($target['trxId'] ?? 'VERIFIED') . "। ভাউচার দেখুন ও শেয়ার করুন।"
+                : "দুঃখিত, আপনার ৳{$target['amount']} উইথড্র আবেদনটি অ্যাডমিন বাতিল করেছেন এবং পয়েন্ট ফেরত দেওয়া হয়েছে।";
+
             addNotification(
                 $notifs,
                 $target['pin'],
                 $newStatus === 'paid' ? "💸 পেমেন্ট সম্পন্ন হয়েছে!" : "⚠️ উইথড্র আবেদন বাতিল হয়েছে",
-                $newStatus === 'paid'
-                    ? "আপনার ৳{$target['amount']} উইথড্র আবেদন ({$target['method']}) সফলভাবে পরিশোধ করা হয়েছে।"
-                    : "দুঃখিত, আপনার ৳{$target['amount']} উইথড্র আবেদনটি অ্যাডমিন বাতিল করেছেন।",
+                $msg,
                 $newStatus === 'paid' ? 'ok' : 'bad'
             );
             writeJson($notifsFile, $notifs);
+
+            if ($newStatus === 'paid') {
+                $tTrx = $target['trxId'] ?? 'VERIFIED';
+                sendTelegramNotification("💸 <b>পেমেন্ট সফলভাবে পরিশোধিত!</b>\nপ্রাপক: {$target['name']}\nপরিমাণ: <b>৳{$target['amount']}</b> (" . strtoupper($target['method']) . ")\nমোবাইল: {$target['phone']}\nTrxID: <code>{$tTrx}</code>\n✅ পেমেন্ট প্রুফ ভেরিফাইড!");
+            }
         }
-        echo json_encode(["success" => true]);
+        echo json_encode(["success" => true, "withdraw" => $target]);
         break;
 
     case 'approve_photo':
