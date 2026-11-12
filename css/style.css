@@ -41,8 +41,6 @@ body {
 /* Glassmorphism Classes */
 .glass-panel {
   background: var(--glass-bg);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
   border: 1px solid var(--border-color);
   box-shadow: var(--card-shadow);
 }
@@ -249,11 +247,31 @@ body {
   box-shadow: 0 2px 8px rgba(99, 102, 241, 0.35) !important;
 }
 
-/* Modals */
+/* Modals & Popups Zero-Blur */
 .modal-overlay {
-  background: rgba(10, 15, 29, 0.65);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+  background: rgba(2, 6, 23, 0.75) !important;
+  backdrop-filter: blur(4px) !important;
+  -webkit-backdrop-filter: blur(4px) !important;
+}
+
+.app-modal .glass-panel,
+.modal-overlay .glass-panel {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+html.dark .app-modal .glass-panel,
+html.dark .modal-overlay .glass-panel {
+  background: #0f172a !important;
+  border-color: #334155 !important;
+  color: #f8fafc !important;
+}
+
+html:not(.dark) .app-modal .glass-panel,
+html:not(.dark) .modal-overlay .glass-panel {
+  background: #ffffff !important;
+  border-color: #cbd5e1 !important;
+  color: #0f172a !important;
 }
 
 /* Animations */

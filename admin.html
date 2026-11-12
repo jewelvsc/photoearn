@@ -18,6 +18,20 @@
   </script>
   
   <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            primary: '#6366f1',
+            secondary: '#ec4899',
+            accent: '#f59e0b'
+          }
+        }
+      }
+    };
+  </script>
   <style>
 @import url('https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap');
 
@@ -26,9 +40,23 @@
   --primary-hover: #4f46e5;
   --secondary: #ec4899;
   --accent: #f59e0b;
-  --dark-bg: #0b0f19;
-  --card-bg: rgba(17, 24, 39, 0.75);
+  --bg: #f1f5f9;
+  --card-bg: #ffffff;
+  --border-color: #e2e8f0;
+  --nav-bg: rgba(255, 255, 255, 0.95);
+  --text-main: #0f172a;
+  --text-sub: #475569;
+  --card-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+}
+
+html.dark, html[data-t="dark"] {
+  --bg: #0b0f19;
+  --card-bg: #111827;
   --border-color: rgba(255, 255, 255, 0.08);
+  --nav-bg: rgba(11, 15, 25, 0.95);
+  --text-main: #f8fafc;
+  --text-sub: #94a3b8;
+  --card-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
 }
 
 * {
@@ -40,29 +68,140 @@
 
 body {
   font-family: 'Hind Siliguri', 'Outfit', sans-serif;
-  background-color: var(--dark-bg);
-  color: #f3f4f6;
+  background-color: var(--bg) !important;
+  color: var(--text-main) !important;
   min-height: 100vh;
   overflow-x: hidden;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+html.dark body {
+  background-color: var(--bg) !important;
+  color: var(--text-main) !important;
   background-image: 
     radial-gradient(at 10% 20%, rgba(99, 102, 241, 0.12) 0px, transparent 50%),
     radial-gradient(at 90% 80%, rgba(236, 72, 153, 0.1) 0px, transparent 50%);
   background-attachment: fixed;
 }
 
+html:not(.dark) body {
+  background-color: var(--bg) !important;
+  color: var(--text-main) !important;
+  background-image: none !important;
+}
+
 /* Glassmorphism Classes */
 .glass-panel {
-  background: var(--card-bg);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid var(--border-color);
+  background: var(--card-bg) !important;
+  border: 1px solid var(--border-color) !important;
+  box-shadow: var(--card-shadow) !important;
 }
 
 .glass-nav {
-  background: rgba(11, 15, 25, 0.85);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border-bottom: 1px solid var(--border-color);
+  background: var(--nav-bg) !important;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-bottom: 1px solid var(--border-color) !important;
+}
+
+/* Typography & Headings High Contrast */
+html:not(.dark) h1,
+html:not(.dark) h2,
+html:not(.dark) h3,
+html:not(.dark) h4,
+html:not(.dark) .glass-panel h2,
+html:not(.dark) .glass-panel h3,
+html:not(.dark) .glass-panel h4 {
+  color: #0f172a !important;
+}
+
+html.dark h1,
+html.dark h2,
+html.dark h3,
+html.dark h4,
+html.dark .glass-panel h2,
+html.dark .glass-panel h3,
+html.dark .glass-panel h4 {
+  color: #f8fafc !important;
+}
+
+html:not(.dark) p,
+html:not(.dark) .glass-panel p,
+html:not(.dark) .glass-panel .text-gray-400 {
+  color: #475569 !important;
+}
+
+html.dark .glass-panel .text-gray-400 {
+  color: #94a3b8 !important;
+}
+
+/* Inputs, Selects & Search in Light Mode */
+html:not(.dark) input:not([type="checkbox"]),
+html:not(.dark) select,
+html:not(.dark) textarea {
+  background-color: #ffffff !important;
+  color: #0f172a !important;
+  border: 1px solid #cbd5e1 !important;
+}
+
+html:not(.dark) input::placeholder {
+  color: #94a3b8 !important;
+}
+
+html.dark input:not([type="checkbox"]),
+html.dark select,
+html.dark textarea {
+  background-color: #0f172a !important;
+  color: #f8fafc !important;
+  border: 1px solid #334155 !important;
+}
+
+/* Tables High Contrast */
+html:not(.dark) table thead tr {
+  background-color: #f8fafc !important;
+  color: #475569 !important;
+  border-color: #e2e8f0 !important;
+}
+
+html:not(.dark) table tbody tr {
+  border-color: #f1f5f9 !important;
+}
+
+html:not(.dark) table tbody tr:hover {
+  background-color: #f8fafc !important;
+}
+
+html:not(.dark) .bg-slate-900:not([type="checkbox"]),
+html:not(.dark) .bg-slate-800 {
+  background-color: #f1f5f9 !important;
+  color: #1e293b !important;
+  border-color: #cbd5e1 !important;
+}
+
+/* Light mode overrides for gradient cards */
+html:not(.dark) .bg-gradient-to-r.from-indigo-500\/15.via-purple-500\/10.to-slate-900 {
+  background: linear-gradient(135deg, #eef2ff 0%, #fdf4ff 100%) !important;
+  border-color: #c7d2fe !important;
+}
+
+html:not(.dark) .glass-panel.bg-amber-500\/5 {
+  background: #fffbeb !important;
+  border-color: #fde68a !important;
+}
+
+html:not(.dark) .glass-panel.bg-sky-500\/5 {
+  background: #f0f9ff !important;
+  border-color: #bae6fd !important;
+}
+
+html:not(.dark) .glass-panel.bg-emerald-500\/5 {
+  background: #ecfdf5 !important;
+  border-color: #a7f3d0 !important;
+}
+
+#admin-header-title,
+#admin-header-title span {
+  color: var(--text-main) !important;
 }
 
 /* Custom Scrollbar */
@@ -232,7 +371,7 @@ body {
 </style>
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect fill='%236366f1' width='64' height='64' rx='16'/><text y='42' x='18' fill='%23fff' font-size='32'>⚙️</text></svg>">
 </head>
-<body class="bg-gray-100 dark:bg-slate-950 text-gray-900 dark:text-gray-100 min-h-screen transition-colors">
+<body class="min-h-screen transition-colors">
 
   <!-- ================= ADMIN PIN LOGIN OVERLAY ================= -->
   <div id="admin-auth-overlay" class="fixed inset-0 z-50 bg-slate-950/95 backdrop-blur-xl flex items-center justify-center p-4">
@@ -265,7 +404,7 @@ body {
             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
             <span>মূল সাইটে যান</span>
           </a>
-          <h1 class="text-base font-bold text-gray-900 dark:text-white flex items-center gap-1.5">
+          <h1 id="admin-header-title" class="text-base font-bold flex items-center gap-1.5">
             <span>⚙️ Photo Earn অ্যাডমিন প্যানেল</span>
           </h1>
         </div>

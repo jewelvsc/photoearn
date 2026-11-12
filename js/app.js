@@ -803,7 +803,7 @@ class PicPrizeApp {
         <div class="flex items-start justify-between gap-3">
           <div>
             <span class="text-xs text-indigo-400 font-semibold px-2 py-0.5 rounded-full bg-indigo-500/10 border border-indigo-500/20">${photo.category}</span>
-            <h2 class="text-lg font-bold text-white mt-1">${photo.title}</h2>
+            <h2 class="text-lg font-bold text-gray-900 dark:text-white mt-1">${photo.title}</h2>
             <p class="text-xs text-gray-400 mt-0.5">আপলোড তারিখ: ${new Date(photo.date).toLocaleDateString('bn-BD')}</p>
           </div>
           <div class="text-right flex flex-col items-end">
@@ -1265,7 +1265,7 @@ class PicPrizeApp {
         </div>
         <div class="min-w-0">
           <div class="flex items-center gap-2">
-            <h3 class="font-bold text-white text-base truncate">${safeName}</h3>
+            <h3 class="font-bold text-gray-900 dark:text-white text-base truncate">${safeName}</h3>
             ${isLoading ? `<span class="text-[10px] text-amber-500 font-semibold animate-pulse">আপডেট হচ্ছে…</span>` : ""}
           </div>
           <p class="text-xs text-gray-400">পিন: ****${pinStr.slice(-2)} · ফোন: ${safePhone}</p>
