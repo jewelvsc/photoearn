@@ -647,13 +647,9 @@
               <span id="users-badge-count"
                 class="bg-sky-500 text-slate-950 font-black text-[11px] px-2 py-0.5 rounded-full">০</span>
             </h2>
-            <p class="text-xs text-gray-400 mt-0.5">কে কত টাকা আয় করেছে, কয়টি ছবি দিয়েছে এবং কার ব্যালেন্স কত তা সরাসরি
-              দেখুন</p>
+            <p class="text-xs text-gray-400 mt-0.5">কে কত টাকা আয় করেছে, কয়টি ছবি দিয়েছে এবং কার ব্যালেন্স কত তা সরাসরি দেখুন</p>
           </div>
           <div class="flex items-center gap-2 flex-wrap">
-            <input type="search" id="admin-user-search" oninput="filterAdminUsers()"
-              placeholder="নাম, ফোন বা পিন খুঁজুন…"
-              class="bg-white dark:bg-slate-900 border border-gray-300 dark:border-slate-700 rounded-xl px-3 py-1.5 text-xs text-gray-900 dark:text-white placeholder-gray-500 outline-none focus:border-sky-500 w-44 sm:w-56">
             <button onclick="syncMissedReferralsAdmin()"
               class="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold flex items-center gap-1 shadow transition-all shrink-0">
               <span>🎁 রেফারেল রিকভারি</span>
@@ -665,17 +661,33 @@
           </div>
         </div>
 
-        <div class="overflow-x-auto">
+        <!-- উন্নত সার্চবার ও লাইভ ফিল্টার -->
+        <div class="mb-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2 bg-slate-900/60 p-2.5 rounded-2xl border border-white/5">
+          <div class="relative flex-1">
+            <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400 text-xs">🔍</span>
+            <input type="search" id="admin-user-search" oninput="filterAdminUsers()"
+              placeholder="মোবাইল নম্বর, নাম বা পিন দিয়ে খুঁজুন (যেমন: 017..., তানভীর, 1234)…"
+              class="w-full pl-8 pr-8 py-2 bg-slate-900 border border-slate-700 rounded-xl text-xs text-white placeholder-gray-500 outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500 transition-all">
+            <button type="button" onclick="clearUserSearch()" id="admin-user-search-clear"
+              class="hidden absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-white text-xs">&times;</button>
+          </div>
+          <div class="text-[11px] text-gray-400 px-2 shrink-0 flex items-center gap-2">
+            <span id="users-search-status">মোট ইউজার: <b>০</b> জন</span>
+          </div>
+        </div>
+
+        <!-- স্ক্রোলেবল টেবিল কন্টেইনার (উইন্ডো সাইজ ফিক্সড যাতে পাতা লম্বা হয়ে নিচে নামতে কষ্ট না হয়) -->
+        <div class="overflow-x-auto overflow-y-auto max-h-[500px] rounded-2xl border border-white/10 shadow-inner">
           <table class="w-full text-left text-xs text-gray-300 border-collapse">
-            <thead>
-              <tr class="border-b border-white/10 text-gray-400 uppercase text-[10px] tracking-wider">
-                <th class="py-3 px-3">#</th>
-                <th class="py-3 px-3">ইউজার ও পিন</th>
-                <th class="py-3 px-3">মোবাইল নম্বর</th>
-                <th class="py-3 px-3">ছবি, লাইক ও ফলোয়ার</th>
-                <th class="py-3 px-3">মোট পয়েন্ট</th>
-                <th class="py-3 px-3">আয়কৃত ব্যালেন্স</th>
-                <th class="py-3 px-3 text-right">অ্যাকশন</th>
+            <thead class="sticky top-0 bg-slate-900/95 dark:bg-slate-900/95 backdrop-blur z-10 border-b border-white/10 shadow-sm">
+              <tr class="text-gray-400 uppercase text-[10px] tracking-wider">
+                <th class="py-3 px-3 bg-slate-900/95">#</th>
+                <th class="py-3 px-3 bg-slate-900/95">ইউজার ও পিন</th>
+                <th class="py-3 px-3 bg-slate-900/95">মোবাইল নম্বর</th>
+                <th class="py-3 px-3 bg-slate-900/95">ছবি, লাইক ও ফলোয়ার</th>
+                <th class="py-3 px-3 bg-slate-900/95">মোট পয়েন্ট</th>
+                <th class="py-3 px-3 bg-slate-900/95">আয়কৃত ব্যালেন্স</th>
+                <th class="py-3 px-3 text-right bg-slate-900/95">অ্যাকশন</th>
               </tr>
             </thead>
             <tbody id="users-table-body" class="divide-y divide-white/5">
@@ -2192,17 +2204,48 @@
       }
     }
 
+    function clearUserSearch() {
+      const input = document.getElementById("admin-user-search");
+      if (input) {
+        input.value = "";
+        filterAdminUsers();
+      }
+    }
+
     function filterAdminUsers() {
-      const q = (document.getElementById("admin-user-search")?.value || "").toLowerCase().trim();
+      const input = document.getElementById("admin-user-search");
+      const clearBtn = document.getElementById("admin-user-search-clear");
+      const statusEl = document.getElementById("users-search-status");
+      const q = (input?.value || "").toLowerCase().trim();
+      const qDigits = q.replace(/[^0-9]/g, "");
+
+      if (clearBtn) {
+        if (q) clearBtn.classList.remove("hidden");
+        else clearBtn.classList.add("hidden");
+      }
+
       if (!q) {
+        if (statusEl) statusEl.innerHTML = `মোট ইউজার: <b>${allAdminUsers.length}</b> জন`;
         renderAdminUsersTable(allAdminUsers);
         return;
       }
-      const filtered = allAdminUsers.filter(u =>
-        String(u.name || "").toLowerCase().includes(q) ||
-        String(u.phone || "").toLowerCase().includes(q) ||
-        String(u.pin || "").toLowerCase().includes(q)
-      );
+
+      const filtered = allAdminUsers.filter(u => {
+        const nameMatch = String(u.name || "").toLowerCase().includes(q);
+        const pinMatch = String(u.pin || "").toLowerCase().includes(q);
+        const idMatch = String(u.userId || u.id || "").toLowerCase().includes(q);
+        const refMatch = String(u.refCode || u.referredBy || "").toLowerCase().includes(q);
+
+        const userPhone = String(u.phone || "");
+        const userPhoneDigits = userPhone.replace(/[^0-9]/g, "");
+        const phoneMatch = userPhone.toLowerCase().includes(q) || (qDigits.length >= 3 && userPhoneDigits.includes(qDigits));
+
+        return nameMatch || pinMatch || idMatch || refMatch || phoneMatch;
+      });
+
+      if (statusEl) {
+        statusEl.innerHTML = `ফিল্টার ফলাফল: <b>${filtered.length}</b> / ${allAdminUsers.length} জন`;
+      }
       renderAdminUsersTable(filtered);
     }
 
