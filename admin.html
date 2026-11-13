@@ -5,6 +5,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Admin Dashboard - Photo Earn</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap">
   <script>
     (function () {
       var t = localStorage.getItem('peg_theme_mode') || 'light';
@@ -35,8 +38,6 @@
     };
   </script>
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap');
-
     :root {
       --primary: #6366f1;
       --primary-hover: #4f46e5;
@@ -70,7 +71,7 @@
     }
 
     body {
-      font-family: 'Hind Siliguri', 'Outfit', sans-serif;
+      font-family: 'Hind Siliguri', 'Noto Sans Bengali', 'Nirmala UI', 'Vrinda', 'Outfit', sans-serif;
       background-color: var(--bg) !important;
       color: var(--text-main) !important;
       min-height: 100vh;
@@ -134,6 +135,12 @@
       color: #475569 !important;
     }
 
+    html:not(.dark) .glass-panel p.text-xs {
+      color: #334155 !important;
+      font-size: 14px !important;
+      line-height: 1.55 !important;
+    }
+
     html.dark .glass-panel .text-gray-400 {
       color: #94a3b8 !important;
     }
@@ -148,7 +155,7 @@
     }
 
     html:not(.dark) input::placeholder {
-      color: #94a3b8 !important;
+      color: #64748b !important;
     }
 
     html.dark input:not([type="checkbox"]),
@@ -200,6 +207,86 @@
     html:not(.dark) .glass-panel.bg-emerald-500\/5 {
       background: #ecfdf5 !important;
       border-color: #a7f3d0 !important;
+    }
+
+    /* Keep light-mode admin tables readable even where their markup uses dark-theme utilities. */
+    html:not(.dark) .glass-panel .bg-slate-900\/60 {
+      background-color: #f1f5f9 !important;
+      color: #1e293b !important;
+      border-color: #cbd5e1 !important;
+    }
+
+    html:not(.dark) .glass-panel thead .bg-slate-900\/95 {
+      background-color: #e2e8f0 !important;
+      color: #1e293b !important;
+      border-color: #cbd5e1 !important;
+    }
+
+    html:not(.dark) #users-table-body {
+      color: #1e293b !important;
+    }
+
+    html:not(.dark) #users-table-body .text-gray-400,
+    html:not(.dark) #users-table-body .text-gray-500 {
+      color: #475569 !important;
+    }
+
+    html:not(.dark) #admin-pending-grid .admin-empty-state {
+      color: #7c2d12 !important;
+      background-color: #fff7ed !important;
+      border-color: #fed7aa !important;
+    }
+
+    html:not(.dark) #withdraw-table-body .text-gray-400,
+    html:not(.dark) #withdraw-table-body .text-gray-500 {
+      color: #475569 !important;
+    }
+
+    html:not(.dark) #withdraw-table-body .text-pink-300 { color: #9d174d !important; }
+    html:not(.dark) #withdraw-table-body .text-orange-300 { color: #9a3412 !important; }
+    html:not(.dark) #withdraw-table-body .text-emerald-300 { color: #047857 !important; }
+    html:not(.dark) #withdraw-table-body .text-amber-300 { color: #92400e !important; }
+    html:not(.dark) #withdraw-table-body .text-sky-400 { color: #0369a1 !important; }
+
+    /* The live chat intentionally has a dark surface in both themes. */
+    #admin-chat-messages .text-gray-500,
+    #admin-chat-messages .text-gray-400 {
+      color: #cbd5e1 !important;
+    }
+
+    html:not(.dark) #admin-chat-messages .text-gray-500,
+    html:not(.dark) #admin-chat-messages .text-gray-400,
+    html:not(.dark) #admin-chat-messages p {
+      color: #e2e8f0 !important;
+      font-size: 14px !important;
+      line-height: 1.55 !important;
+    }
+
+    html:not(.dark) #admin-chat-messages .text-gray-500 {
+      color: #cbd5e1 !important;
+    }
+
+    html:not(.dark) #admin-chat-messages .text-indigo-400 { color: #a5b4fc !important; }
+    html:not(.dark) #admin-chat-messages .text-amber-400 { color: #fcd34d !important; }
+
+    html:not(.dark) #auto-approve-badge.text-rose-300 {
+      color: #9f1239 !important;
+      background-color: #ffe4e6 !important;
+    }
+
+    html:not(.dark) #auto-approve-badge.text-emerald-300 {
+      color: #047857 !important;
+      background-color: #d1fae5 !important;
+    }
+
+    html:not(.dark) #quota-status-badge.text-emerald-300 {
+      color: #047857 !important;
+      background-color: #d1fae5 !important;
+    }
+
+    html:not(.dark) #quota-status-badge.text-amber-300 {
+      color: #92400e !important;
+      background-color: #fef3c7 !important;
     }
 
     #admin-header-title,
@@ -535,18 +622,18 @@
             </div>
           </label>
           <div class="flex items-center gap-1 text-xs">
-            <span class="text-gray-400">ভোট:</span>
+            <span class="text-gray-700 dark:text-gray-300 text-sm font-medium">ভোট:</span>
             <input type="number" id="quota-likes-input" min="0" max="100" value="5"
               class="w-14 bg-slate-900 border border-slate-700 rounded-lg px-2 py-1 text-xs text-white text-center outline-none">
           </div>
           <div class="flex items-center gap-1 text-xs">
-            <span class="text-gray-400">ফলো:</span>
+            <span class="text-gray-700 dark:text-gray-300 text-sm font-medium">ফলো:</span>
             <input type="number" id="quota-follows-input" min="0" max="100" value="3"
               class="w-14 bg-slate-900 border border-slate-700 rounded-lg px-2 py-1 text-xs text-white text-center outline-none">
           </div>
           <div class="flex items-center gap-1 text-xs"
             title="প্রতি ইউজার সর্বোচ্চ কয়টি ছবি আপলোড করতে পারবে (০ = আনলিমিটেড)">
-            <span class="text-gray-400">সর্বোচ্চ ছবি (০=আনলিমিটেড):</span>
+            <span class="text-gray-700 dark:text-gray-300 text-sm font-medium">সর্বোচ্চ ছবি (০=আনলিমিটেড):</span>
             <input type="number" id="quota-max-photos-input" min="0" max="1000" value="0"
               class="w-16 bg-slate-900 border border-slate-700 rounded-lg px-2 py-1 text-xs text-white text-center outline-none">
           </div>
@@ -2316,7 +2403,7 @@
       const pendingGrid = document.getElementById("admin-pending-grid");
       if (pendingGrid) {
         if (pendingPhotos.length === 0) {
-          pendingGrid.innerHTML = `<div class="col-span-full py-8 text-center text-gray-400 text-xs bg-slate-900/40 rounded-2xl border border-white/5">🎉 কোনো পেন্ডিং ছবি নেই! সমস্ত ছবি অনুমোদিত ও লাইভ।</div>`;
+          pendingGrid.innerHTML = `<div class="admin-empty-state col-span-full py-8 text-center text-gray-400 text-xs bg-slate-900/40 rounded-2xl border border-white/5">🎉 কোনো পেন্ডিং ছবি নেই! সমস্ত ছবি অনুমোদিত ও লাইভ।</div>`;
         } else {
           pendingGrid.innerHTML = pendingPhotos.map(p => `
             <div class="glass-panel rounded-2xl overflow-hidden border border-amber-500/30 bg-slate-900/60 p-3 space-y-2.5">
@@ -2881,7 +2968,7 @@
 
       const messages = await db.getChatMessages();
       if (!messages || messages.length === 0) {
-        container.innerHTML = `<div class="text-center py-12 text-gray-500 text-xs">এখনও কোনো চ্যাট বার্তা নেই। নিচের ফর্ম থেকে অ্যাডমিন হিসেবে প্রথম মেসেজ পাঠাতে পারেন! 😊</div>`;
+        container.innerHTML = `<div class="text-center py-12 text-gray-500 text-sm leading-relaxed">এখনও কোনো চ্যাট বার্তা নেই। নিচের ফর্ম থেকে অ্যাডমিন হিসেবে প্রথম মেসেজ পাঠাতে পারেন! 😊</div>`;
         return;
       }
 

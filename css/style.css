@@ -30,7 +30,7 @@ html[data-t="dark"] {
 }
 
 body {
-  font-family: 'Hind Siliguri', 'Outfit', sans-serif;
+  font-family: 'Hind Siliguri', 'Noto Sans Bengali', 'Nirmala UI', 'Vrinda', 'Outfit', sans-serif;
   background-color: var(--bg);
   color: var(--text-main);
   min-height: 100vh;
