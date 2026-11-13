@@ -255,6 +255,12 @@
       border-color: #475569 !important;
     }
 
+    html:not(.dark) #admin-chat-messages .bg-slate-800 {
+      background-color: #334155 !important;
+      color: #e2e8f0 !important;
+      border-color: #475569 !important;
+    }
+
     #admin-chat-messages .text-gray-500,
     #admin-chat-messages .text-gray-400 {
       color: #cbd5e1 !important;
@@ -925,7 +931,7 @@
         <h2 class="text-base font-bold text-white mb-1">🖼️ গ্যালারির ছবিসমূহ ও মডারেশন</h2>
         <p class="text-xs text-gray-400 mb-4">আপত্তিকর বা নকল কোনো ছবি থাকলে এখান থেকে সরাসরি ডিলিট করতে পারবেন</p>
 
-        <div id="admin-photos-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
+        <div id="admin-photos-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 max-h-[65vh] overflow-y-auto overscroll-contain pr-2">
           <!-- ফটোগুলো লোড হবে -->
         </div>
       </div>
