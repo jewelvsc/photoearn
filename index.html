@@ -3920,23 +3920,35 @@ class PicPrizeApp {
 
   async completeFirebaseEmailLinkRegistration() {
     const auth = window.PEG_FIREBASE_AUTH;
-    if (!auth || !auth.isSignInWithEmailLink(window.location.href)) return;
+    if (!auth) return;
 
     let pending = null;
     try { pending = JSON.parse(localStorage.getItem("peg_pending_email_registration") || "null"); } catch (error) {}
-    const email = String(localStorage.getItem("peg_email_link_email") || "").trim().toLowerCase();
+    const email = String(localStorage.getItem("peg_email_link_email") || pending?.email || "").trim().toLowerCase();
+    const isLegacyEmailLink = auth.isSignInWithEmailLink(window.location.href);
     if (!pending || !email || String(pending.email || "").toLowerCase() !== email) {
-      this.showToast("যে browser থেকে registration করেছেন, email link সেই browser-এ খুলুন।", "warning");
+      if (isLegacyEmailLink) this.showToast("Open the verification link in the same browser where you started registration.", "warning");
       return;
     }
 
     try {
-      const credential = await auth.signInWithEmailLink(email, window.location.href);
-      const firebaseIdToken = await credential.user.getIdToken(true);
+      let user = auth.currentUser;
+      // Finish old sign-in links that were already sent before the verification-flow update.
+      if (isLegacyEmailLink) {
+        const credential = await auth.signInWithEmailLink(email, window.location.href);
+        user = credential.user;
+      }
+      if (!user || String(user.email || "").toLowerCase() !== email) return;
+      await user.reload();
+      user = auth.currentUser;
+      if (!user?.emailVerified) return;
+
+      const firebaseIdToken = await user.getIdToken(true);
       const result = await this.db.registerUser(
         pending.pin, pending.name, pending.phone, pending.ref, email, firebaseIdToken
       );
-      if (!result.success || !result.user) throw new Error(result.message || "রেজিস্ট্রেশন সম্পন্ন হয়নি।");
+      if (!result.success || !result.user) throw new Error(result.message || "Registration could not be completed.");
+      await auth.signOut();
 
       this.activeUser = result.user;
       localStorage.setItem("peg_auth_pin", pending.pin);
@@ -3947,11 +3959,11 @@ class PicPrizeApp {
       localStorage.removeItem("peg_pending_ref");
       history.replaceState(null, "", location.pathname);
       this.updateUserNavButton();
-      this.showToast(`অ্যাকাউন্ট তৈরি হয়েছে, ${result.user.name}! ২০ পয়েন্ট বোনাস যোগ হয়েছে।`, "success");
+      this.showToast(`Account created successfully, ${result.user.name}!`, "success");
     } catch (error) {
-      const message = error?.code === "auth/expired-action-code"
-        ? "Email link-এর মেয়াদ শেষ। Registration form থেকে নতুন link নিন।"
-        : (error.message || "Email verification সম্পন্ন হয়নি। আবার চেষ্টা করুন।");
+      const message = error?.code === "auth/expired-action-code" || error?.code === "auth/invalid-action-code"
+        ? "This old verification link is invalid or already used. Request a new verification email."
+        : (error.message || "Email verification could not be completed. Please try again.");
       this.showToast(message, "error");
     }
   }
@@ -3963,57 +3975,64 @@ class PicPrizeApp {
     const phone = document.getElementById("reg-phone").value.trim();
     const pin = document.getElementById("reg-pin").value.trim();
     let ref = document.getElementById("reg-ref") ? document.getElementById("reg-ref").value.trim() : "";
-    if (!ref) {
-      ref = localStorage.getItem("peg_pending_ref") || "";
-    }
+    if (!ref) ref = localStorage.getItem("peg_pending_ref") || "";
 
     if (!name || !email || !phone || !pin) {
-      this.showToast("দয়া করে নাম, মোবাইল নম্বর এবং ৪ ডিজিটের পিন দিন!", "warning");
+      this.showToast("Please enter your name, email, phone number, and PIN.", "warning");
       return;
     }
-
     if (pin.length < 4) {
-      this.showToast("পিন কমপক্ষে ৪ সংখ্যার হতে হবে!", "warning");
+      this.showToast("PIN must be at least 4 digits.", "warning");
       return;
     }
 
     const auth = window.PEG_FIREBASE_AUTH;
     if (!auth) {
-      this.showToast("Firebase Auth চালু হয়নি। পেজ refresh করে আবার চেষ্টা করুন।", "error");
+      this.showToast("Firebase Auth did not start. Refresh the page and try again.", "error");
       return;
     }
 
     const pending = { name, email, phone, pin, ref };
+    const currentUser = auth.currentUser;
+    if (currentUser && String(currentUser.email || "").toLowerCase() !== email) {
+      this.showToast("A different Firebase email is active in this browser. Sign out of that account and try again.", "error");
+      return;
+    }
+    let generatedFirebasePassword = "";
+    if (!currentUser) {
+      const randomBytes = new Uint8Array(32);
+      crypto.getRandomValues(randomBytes);
+      generatedFirebasePassword = Array.from(randomBytes, byte => byte.toString(16).padStart(2, "0")).join("");
+    }
     localStorage.setItem("peg_pending_email_registration", JSON.stringify(pending));
     localStorage.setItem("peg_email_link_email", email);
-    try {
-      await auth.sendSignInLinkToEmail(email, {
-        url: `${location.origin}${location.pathname}`,
-        handleCodeInApp: true
-      });
-      this.showToast("ইমেইলে verification link পাঠানো হয়েছে। একই browser-এ link খুলুন।", "success");
-    } catch (error) {
-      localStorage.removeItem("peg_pending_email_registration");
-      localStorage.removeItem("peg_email_link_email");
-      const message = error?.code === "auth/operation-not-allowed"
-        ? "Firebase Console-এ Email/Password এবং Email Link provider চালু করুন।"
-        : error?.code === "auth/unauthorized-continue-uri"
-          ? "Firebase Authorized domains-এ এই website domain যোগ করুন।"
-          : (error.message || "Verification email পাঠানো যায়নি। আবার চেষ্টা করুন।");
-      this.showToast(message, "error");
-    }
-    return;
 
-    const res = await this.db.registerUser(pin, name, phone, ref, email);
-    if (res.success && res.user) {
-      this.activeUser = res.user;
-      localStorage.setItem("peg_auth_pin", pin);
-      localStorage.removeItem("peg_pending_ref");
-      this.updateUserNavButton();
-      this.closeModals();
-      this.showToast(`একাউন্ট সফলভাবে তৈরি হয়েছে! বোনাস ২০ পয়েন্ট যোগ হয়েছে। 🎉`, "success");
-    } else {
-      this.showToast(res.message, "error");
+    try {
+      let user = auth.currentUser;
+      if (!user) {
+        const credential = await auth.createUserWithEmailAndPassword(email, generatedFirebasePassword);
+        user = credential.user;
+      }
+      if (user.emailVerified) {
+        await this.completeFirebaseEmailLinkRegistration();
+        return;
+      }
+      await user.sendEmailVerification({
+        url: `${location.origin}${location.pathname}`,
+        handleCodeInApp: false
+      });
+      this.showToast("Verification email sent. Verify it, then return to the browser where you started registration.", "success");
+    } catch (error) {
+      const message = error?.code === "auth/too-many-requests"
+        ? "Firebase temporarily blocked repeated requests. Wait a while and try again."
+        : error?.code === "auth/email-already-in-use"
+          ? "This email already has a Firebase account. Return to the browser where you first started registration."
+          : error?.code === "auth/operation-not-allowed"
+            ? "Enable the Email/Password provider in Firebase Console."
+            : error?.code === "auth/unauthorized-continue-uri"
+              ? "Add this website domain to Firebase Authorized domains."
+              : (error.message || "Could not send verification email. Please try again.");
+      this.showToast(message, "error");
     }
   }
 
