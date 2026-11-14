@@ -3961,8 +3961,14 @@ class PicPrizeApp {
       this.updateUserNavButton();
       this.showToast(`Account created successfully, ${result.user.name}!`, "success");
     } catch (error) {
-      const message = error?.code === "auth/expired-action-code" || error?.code === "auth/invalid-action-code"
-        ? "This old verification link is invalid or already used. Request a new verification email."
+      const invalidLink = error?.code === "auth/expired-action-code" || error?.code === "auth/invalid-action-code";
+      if (invalidLink) {
+        const cleanUrl = new URL(window.location.href);
+        ["mode", "oobCode", "apiKey", "continueUrl", "lang"].forEach(key => cleanUrl.searchParams.delete(key));
+        history.replaceState(null, "", `${cleanUrl.pathname}${cleanUrl.search}${cleanUrl.hash}`);
+      }
+      const message = invalidLink
+        ? "This old verification link is invalid or already used. Start registration again for a fresh link."
         : (error.message || "Email verification could not be completed. Please try again.");
       this.showToast(message, "error");
     }
@@ -4023,15 +4029,28 @@ class PicPrizeApp {
       });
       this.showToast("Verification email sent. Verify it, then return to the browser where you started registration.", "success");
     } catch (error) {
+      if (error?.code === "auth/email-already-in-use") {
+        try {
+          await auth.sendSignInLinkToEmail(email, {
+            url: `${location.origin}${location.pathname}`,
+            handleCodeInApp: true
+          });
+          this.showToast("A Firebase account from an earlier attempt exists. A recovery link was sent; open the newest link in this browser.", "success");
+        } catch (recoveryError) {
+          const recoveryMessage = recoveryError?.code === "auth/too-many-requests"
+            ? "Firebase temporarily limited recovery links. Check Spam and try again later."
+            : "An earlier Firebase account exists, but a recovery link could not be sent. Check Spam or try later.";
+          this.showToast(recoveryMessage, "error");
+        }
+        return;
+      }
       const message = error?.code === "auth/too-many-requests"
         ? "Firebase temporarily blocked repeated requests. Wait a while and try again."
-        : error?.code === "auth/email-already-in-use"
-          ? "This email already has a Firebase account. Return to the browser where you first started registration."
-          : error?.code === "auth/operation-not-allowed"
-            ? "Enable the Email/Password provider in Firebase Console."
-            : error?.code === "auth/unauthorized-continue-uri"
-              ? "Add this website domain to Firebase Authorized domains."
-              : (error.message || "Could not send verification email. Please try again.");
+        : error?.code === "auth/operation-not-allowed"
+          ? "Enable the Email/Password provider in Firebase Console."
+          : error?.code === "auth/unauthorized-continue-uri"
+            ? "Add this website domain to Firebase Authorized domains."
+            : (error.message || "Could not send verification email. Please try again.");
       this.showToast(message, "error");
     }
   }
