@@ -1561,25 +1561,61 @@ class PicPrizeApp {
   async handleAvatarUpload(event) {
     const file = event?.target?.files?.[0];
     if (!file || !this.activeUser) return;
-    if (!file.type.startsWith("image/")) { this.showToast("একটি ছবি নির্বাচন করুন।", "error"); return; }
+    if (!file.type.startsWith("image/")) {
+      this.showToast("Choose an image file.", "error");
+      event.target.value = "";
+      return;
+    }
+
     const image = new Image();
+    const objectUrl = URL.createObjectURL(file);
     image.onload = async () => {
-      const canvas = document.createElement("canvas");
-      const scale = Math.min(1, 512 / Math.max(image.width, image.height));
-      canvas.width = Math.max(1, Math.round(image.width * scale));
-      canvas.height = Math.max(1, Math.round(image.height * scale));
-      canvas.getContext("2d").drawImage(image, 0, 0, canvas.width, canvas.height);
-      const result = await this.db.updateAvatar(canvas.toDataURL("image/jpeg", 0.82));
-      if (result.success) {
-        this.activeUser = result.user || { ...this.activeUser, avatarUrl: result.avatarUrl };
-        this.db.saveUser(this.activeUser);
-        this._renderProfileContent(document.getElementById("profile-modal-content"), this.activeUser, false);
-        this.showToast("প্রোফাইল ছবি আপডেট হয়েছে।", "success");
-      } else this.showToast(result.message || "ছবি আপলোড করা যায়নি।", "error");
-      URL.revokeObjectURL(image.src);
+      try {
+        const canvas = document.createElement("canvas");
+        const context = canvas.getContext("2d");
+        if (!context) throw new Error("Image could not be prepared.");
+        let maxDimension = 512;
+        let quality = 0.82;
+        let imageData = "";
+        let imageBytes = Infinity;
+
+        for (let attempt = 0; attempt < 8; attempt++) {
+          const scale = Math.min(1, maxDimension / Math.max(image.width, image.height));
+          canvas.width = Math.max(1, Math.round(image.width * scale));
+          canvas.height = Math.max(1, Math.round(image.height * scale));
+          context.clearRect(0, 0, canvas.width, canvas.height);
+          context.drawImage(image, 0, 0, canvas.width, canvas.height);
+          imageData = canvas.toDataURL("image/jpeg", quality);
+          imageBytes = Math.floor((imageData.length - "data:image/jpeg;base64,".length) * 0.75);
+          if (imageBytes <= 260000) break;
+          if (quality > 0.52) quality -= 0.1;
+          else {
+            maxDimension = Math.floor(maxDimension * 0.8);
+            quality = 0.72;
+          }
+        }
+        if (imageBytes > 280000) throw new Error("Could not compress this image enough. Choose another photo.");
+
+        const result = await this.db.updateAvatar(imageData);
+        if (result.success) {
+          this.activeUser = result.user || { ...this.activeUser, avatarUrl: result.avatarUrl };
+          this.db.saveUser(this.activeUser);
+          this._renderProfileContent(document.getElementById("profile-modal-content"), this.activeUser, false);
+          this.showToast("Profile photo updated.", "success");
+        } else this.showToast(result.message || "Photo upload failed.", "error");
+      } catch (error) {
+        this.showToast(error.message || "Photo upload failed. Check your connection and try again.", "error");
+      } finally {
+        URL.revokeObjectURL(objectUrl);
+        event.target.value = "";
+      }
     };
-    image.onerror = () => this.showToast("ছবিটি পড়া যায়নি।", "error");
-    image.src = URL.createObjectURL(file);
+    image.onerror = () => {
+      URL.revokeObjectURL(objectUrl);
+      event.target.value = "";
+      this.showToast("This image could not be opened.", "error");
+    };
+    image.src = objectUrl;
   }
 
   // ================= 💳 উইথড্র হিস্ট্রি, পেমেন্ট ভাউচার ও শেয়ার =================
