@@ -747,7 +747,7 @@ html.dark .photo-img-wrap {
 }
 
 </style>
-  <link rel="stylesheet" href="css/style.css?v=3">
+  <link rel="stylesheet" href="css/style.css?v=8">
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect fill='%236366f1' width='64' height='64' rx='16'/><circle cx='32' cy='32' r='14' fill='%23ec4899'/><circle cx='32' cy='32' r='6' fill='%23ffffff'/></svg>">
 </head>
 <body class="pb-24">
@@ -823,7 +823,7 @@ html.dark .photo-img-wrap {
     </div>
   </header>
   <!-- ================= STICKY HERO CONTEST BAR (স্থির হিরো সেকশন - ডানে-বামে সুন্দর ফিট) ================= -->
-  <div class="sticky top-[58px] z-30 w-full bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-b border-gray-200 dark:border-white/10 px-3 py-2 shadow-sm" id="sticky-mobile-hero">
+  <div class="sticky top-[58px] z-30 w-full bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-b border-gray-200 dark:border-white/10 px-3 py-2 shadow-sm md:hidden" id="sticky-mobile-hero">
     <div class="flex items-center justify-between gap-2 max-w-[1750px] mx-auto">
       <div class="flex items-center gap-2 min-w-0">
         <span class="w-2.5 h-2.5 rounded-full bg-rose-500 animate-ping shrink-0"></span>
@@ -876,7 +876,7 @@ html.dark .photo-img-wrap {
 
   <!-- ================= HERO CONTEST ANNOUNCEMENT BANNER ================= -->
   <!-- ইউজারের নির্দেশনা অনুযায়ী ছবি যোগ করার রিকোয়েস্ট ব্যানারটি মেনুর নিচে নামানো হলো -->
-  <section class="hidden sm:block w-full max-w-[1750px] mx-auto px-3 sm:px-6 lg:px-8 mt-3" id="contest-hero-banner">
+  <section class="hidden md:block w-full max-w-[1750px] mx-auto px-3 sm:px-6 lg:px-8 mt-3" id="contest-hero-banner">
     <div class="glass-panel rounded-3xl p-4 sm:p-6 border border-indigo-500/20 relative overflow-hidden">
       <div class="absolute -right-10 -bottom-10 w-64 h-64 bg-pink-500/10 rounded-full blur-3xl pointer-events-none"></div>
       <div class="absolute -left-10 -top-10 w-64 h-64 bg-indigo-500/15 rounded-full blur-3xl pointer-events-none"></div>
@@ -1144,9 +1144,6 @@ html.dark .photo-img-wrap {
         <a href="https://wa.me/8801771136809" target="_blank" class="hover:text-emerald-400 transition-colors">💬 হোয়াটসঅ্যাপ সাপোর্ট</a>
         
         <!-- ⚙️ অ্যাডমিন ড্যাশবোর্ড সরাসরি লিংক -->
-        <a href="/admin.html" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-amber-300 font-bold border border-amber-400/20 shadow transition-all active:scale-95" title="অ্যাডমিন প্যানেল">
-          <span>⚙️ অ্যাডমিন প্যানেল</span>
-        </a>
       </div>
     </div>
   </footer>
@@ -1456,6 +1453,7 @@ html.dark .photo-img-wrap {
             লগইন করুন
           </button>
         </form>
+        <a href="admin.html" class="mt-3 block w-full rounded-xl border border-amber-400/30 bg-amber-500/10 px-3 py-2 text-center text-xs font-bold text-amber-600 dark:text-amber-300 hover:bg-amber-500/20">⚙️ Admin panel</a>
       </div>
 
       <!-- রেজিস্ট্রেশন ফর্ম -->
@@ -1464,6 +1462,10 @@ html.dark .photo-img-wrap {
           <div>
             <label class="text-xs font-bold text-gray-800 dark:text-gray-200 block mb-1">আপনার পূর্ণ নাম</label>
             <input type="text" id="reg-name" placeholder="যেমন: সাব্বির আহমেদ" required class="w-full bg-gray-50 dark:bg-slate-900 border border-gray-300 dark:border-slate-700 rounded-xl px-3 py-2 text-xs text-gray-900 dark:text-white placeholder-gray-500 outline-none focus:border-indigo-500 font-medium">
+          </div>
+          <div>
+            <label class="text-xs font-bold text-gray-800 dark:text-gray-200 block mb-1">ইমেইল</label>
+            <input type="email" id="reg-email" placeholder="name@example.com" autocomplete="email" required class="w-full bg-gray-50 dark:bg-slate-900 border border-gray-300 dark:border-slate-700 rounded-xl px-3 py-2 text-xs text-gray-900 dark:text-white placeholder-gray-500 outline-none focus:border-indigo-500 font-medium">
           </div>
           <div>
             <label class="text-xs font-bold text-gray-800 dark:text-gray-200 block mb-1">মোবাইল নম্বর (বিকাশ/নগদ)</label>
@@ -1486,10 +1488,13 @@ html.dark .photo-img-wrap {
   </div>
 
   <!-- ================= MODAL 4: USER PROFILE & WITHDRAW ================= -->
-  <div id="profile-modal" class="fixed inset-0 z-50 modal-overlay hidden flex items-center justify-center p-4 app-modal">
-    <div class="glass-panel rounded-3xl p-5 sm:p-6 w-full max-w-md max-h-[90vh] overflow-y-auto border border-white/15 relative">
-      <button onclick="window.APP.closeModals()" class="absolute top-4 right-4 w-8 h-8 rounded-full bg-slate-800 text-gray-400 hover:text-white flex items-center justify-center text-lg">&times;</button>
-      <div id="profile-modal-content">
+  <div id="profile-modal" class="profile-page fixed inset-0 z-[60] hidden overflow-y-auto bg-slate-50 dark:bg-slate-950 app-modal">
+    <div class="min-h-full w-full max-w-5xl mx-auto px-3 py-4 sm:px-6 sm:py-7">
+      <div class="flex items-center justify-between mb-5">
+        <button onclick="window.APP.closeModals()" class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white dark:bg-slate-900 text-slate-700 dark:text-white border border-slate-200 dark:border-white/10 shadow-sm"><span aria-hidden="true">←</span> হোমে ফিরুন</button>
+        <span class="text-sm font-bold text-indigo-600 dark:text-indigo-300">আমার প্রোফাইল</span>
+      </div>
+      <div id="profile-modal-content" class="profile-content-grid">
         <!-- প্রোফাইল ও উইথড্র ফর্ম app.js থেকে আসবে -->
       </div>
     </div>
@@ -1790,10 +1795,33 @@ window.APP_CONFIG = {
   // ১১. সিকিউরিটি: ক্লায়েন্ট-সাইড থেকে Firebase ডাইরেক্ট এক্সেস ও পিন সম্পূর্ণ বন্ধ রাখা হয়েছে
   // সমস্ত ডাটা ও অ্যাডমিন যাচাই নিরাপদ Hostinger PHP ব্যাকএন্ড (api.php) দিয়ে পরিচালিত হবে।
   firebase: {
-    databaseURL: ""
+    apiKey: "AIzaSyBs5rDPI6ICiA296EgC2kLFVjuLH_xX5To",
+    authDomain: "photo-earn-official.firebaseapp.com",
+    databaseURL: "https://photo-earn-official-default-rtdb.firebaseio.com",
+    projectId: "photo-earn-official",
+    storageBucket: "photo-earn-official.firebasestorage.app",
+    messagingSenderId: "549402956129",
+    appId: "1:549402956129:web:9a97f84dd957a7a9b8b520",
+    measurementId: "G-CX12QYHSS8"
   }
 };
 </script>
+  <script src="https://www.gstatic.com/firebasejs/13.3.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/13.3.0/firebase-auth-compat.js"></script>
+  <script>
+    window.PEG_FIREBASE_AUTH = null;
+    try {
+      if (window.firebase && window.APP_CONFIG?.firebase?.apiKey) {
+        const firebaseApp = window.firebase.apps.length
+          ? window.firebase.app()
+          : window.firebase.initializeApp(window.APP_CONFIG.firebase);
+        window.PEG_FIREBASE_AUTH = firebaseApp.auth();
+        window.PEG_FIREBASE_AUTH.languageCode = "bn";
+      }
+    } catch (firebaseInitError) {
+      console.error("Firebase Auth could not initialize", firebaseInitError);
+    }
+  </script>
   <script>
 /**
  * ========================================================
@@ -2080,8 +2108,9 @@ class AppDB {
   }
 
   // ৭. ইউজার রেজিস্ট্রেশন
-  async registerUser(pin, name, phone, refCode) {
-    const res = await this.apiCall("register", { pin, name, phone, ref: refCode || "" });
+  async registerUser(pin, name, phone, refCode, email = "", firebaseIdToken = "") {
+    if (!firebaseIdToken) return { success: false, message: "ইমেইল লিংক যাচাই করে আবার চেষ্টা করুন।" };
+    const res = await this.apiCall("register", { pin, name, phone, email, firebaseIdToken, ref: refCode || "" });
     if (res && res.data) {
       if (res.data.success && res.data.user) {
         this.saveUser(res.data.user);
@@ -2089,6 +2118,8 @@ class AppDB {
       }
       return { success: false, message: res.data.message || "রেজিস্ট্রেশন সম্পন্ন হয়নি!" };
     }
+
+    return { success: false, message: "নিরাপদ রেজিস্ট্রেশনের জন্য ওয়েবসাইটের PHP সার্ভার প্রয়োজন।" };
 
     // অফলাইন লোকাল ফলব্যাক
     const existing = this.getUser(pin);
@@ -2100,6 +2131,7 @@ class AppDB {
       creatorId: `u_${pin}`,
       name,
       phone,
+      email,
       points: 20,
       taka: "2.00",
       photosCount: 0,
@@ -2228,6 +2260,15 @@ class AppDB {
     const res = await this.apiCall("get_withdraws");
     if (res && res.data) return res.data.withdraws || [];
     return JSON.parse(localStorage.getItem("peg_withdraws") || "[]");
+  }
+
+  async updateAvatar(imageData) {
+    const res = await this.apiCall("update_avatar", { image: imageData });
+    if (res && res.data) {
+      if (res.data.success && res.data.user) this.saveUser(res.data.user);
+      return res.data;
+    }
+    return { success: false, message: "সার্ভারের সঙ্গে সংযোগ করা যায়নি।" };
   }
 
   async getUserWithdraws(pin, phone = "") {
@@ -2788,6 +2829,11 @@ class PicPrizeApp {
       this.renderGallery(),
       this.updateInboxBadge()
     ]);
+    await this.completeFirebaseEmailLinkRegistration();
+    if (location.hash === "#profile") {
+      if (this.activeUser) await this.openProfileModal();
+      else history.replaceState(null, "", location.pathname + location.search);
+    }
     setInterval(() => {
       if (!document.hidden) this.updateInboxBadge();
     }, 120000);
@@ -3872,9 +3918,48 @@ class PicPrizeApp {
     }
   }
 
+  async completeFirebaseEmailLinkRegistration() {
+    const auth = window.PEG_FIREBASE_AUTH;
+    if (!auth || !auth.isSignInWithEmailLink(window.location.href)) return;
+
+    let pending = null;
+    try { pending = JSON.parse(localStorage.getItem("peg_pending_email_registration") || "null"); } catch (error) {}
+    const email = String(localStorage.getItem("peg_email_link_email") || "").trim().toLowerCase();
+    if (!pending || !email || String(pending.email || "").toLowerCase() !== email) {
+      this.showToast("যে browser থেকে registration করেছেন, email link সেই browser-এ খুলুন।", "warning");
+      return;
+    }
+
+    try {
+      const credential = await auth.signInWithEmailLink(email, window.location.href);
+      const firebaseIdToken = await credential.user.getIdToken(true);
+      const result = await this.db.registerUser(
+        pending.pin, pending.name, pending.phone, pending.ref, email, firebaseIdToken
+      );
+      if (!result.success || !result.user) throw new Error(result.message || "রেজিস্ট্রেশন সম্পন্ন হয়নি।");
+
+      this.activeUser = result.user;
+      localStorage.setItem("peg_auth_pin", pending.pin);
+      localStorage.setItem("peg_auth_phone", pending.phone);
+      if (result.user.userId || result.user.id) localStorage.setItem("peg_auth_uid", result.user.userId || result.user.id);
+      localStorage.removeItem("peg_pending_email_registration");
+      localStorage.removeItem("peg_email_link_email");
+      localStorage.removeItem("peg_pending_ref");
+      history.replaceState(null, "", location.pathname);
+      this.updateUserNavButton();
+      this.showToast(`অ্যাকাউন্ট তৈরি হয়েছে, ${result.user.name}! ২০ পয়েন্ট বোনাস যোগ হয়েছে।`, "success");
+    } catch (error) {
+      const message = error?.code === "auth/expired-action-code"
+        ? "Email link-এর মেয়াদ শেষ। Registration form থেকে নতুন link নিন।"
+        : (error.message || "Email verification সম্পন্ন হয়নি। আবার চেষ্টা করুন।");
+      this.showToast(message, "error");
+    }
+  }
+
   async handleRegister(e) {
     e.preventDefault();
     const name = document.getElementById("reg-name").value.trim();
+    const email = document.getElementById("reg-email").value.trim().toLowerCase();
     const phone = document.getElementById("reg-phone").value.trim();
     const pin = document.getElementById("reg-pin").value.trim();
     let ref = document.getElementById("reg-ref") ? document.getElementById("reg-ref").value.trim() : "";
@@ -3882,7 +3967,7 @@ class PicPrizeApp {
       ref = localStorage.getItem("peg_pending_ref") || "";
     }
 
-    if (!name || !phone || !pin) {
+    if (!name || !email || !phone || !pin) {
       this.showToast("দয়া করে নাম, মোবাইল নম্বর এবং ৪ ডিজিটের পিন দিন!", "warning");
       return;
     }
@@ -3892,7 +3977,34 @@ class PicPrizeApp {
       return;
     }
 
-    const res = await this.db.registerUser(pin, name, phone, ref);
+    const auth = window.PEG_FIREBASE_AUTH;
+    if (!auth) {
+      this.showToast("Firebase Auth চালু হয়নি। পেজ refresh করে আবার চেষ্টা করুন।", "error");
+      return;
+    }
+
+    const pending = { name, email, phone, pin, ref };
+    localStorage.setItem("peg_pending_email_registration", JSON.stringify(pending));
+    localStorage.setItem("peg_email_link_email", email);
+    try {
+      await auth.sendSignInLinkToEmail(email, {
+        url: `${location.origin}${location.pathname}`,
+        handleCodeInApp: true
+      });
+      this.showToast("ইমেইলে verification link পাঠানো হয়েছে। একই browser-এ link খুলুন।", "success");
+    } catch (error) {
+      localStorage.removeItem("peg_pending_email_registration");
+      localStorage.removeItem("peg_email_link_email");
+      const message = error?.code === "auth/operation-not-allowed"
+        ? "Firebase Console-এ Email/Password এবং Email Link provider চালু করুন।"
+        : error?.code === "auth/unauthorized-continue-uri"
+          ? "Firebase Authorized domains-এ এই website domain যোগ করুন।"
+          : (error.message || "Verification email পাঠানো যায়নি। আবার চেষ্টা করুন।");
+      this.showToast(message, "error");
+    }
+    return;
+
+    const res = await this.db.registerUser(pin, name, phone, ref, email);
     if (res.success && res.user) {
       this.activeUser = res.user;
       localStorage.setItem("peg_auth_pin", pin);
@@ -3914,6 +4026,19 @@ class PicPrizeApp {
 
     // তাৎক্ষণিক ক্যাশড প্রিভিউ রেন্ডার + ব্যাকগ্রাউন্ডে সার্ভার থেকে লাইভ ভোট/ফলোয়ার/ছবি ডাটা আনা
     this.activeUser = this.db.getUser(this.activeUser.pin) || this.activeUser;
+    document.body.classList.add("profile-page-open");
+    if (location.hash !== "#profile") history.pushState({ profile: true }, "", "#profile");
+    if (!this._profilePopHandler) {
+      this._profilePopHandler = () => {
+        if (location.hash === "#profile") {
+          this.openProfileModal();
+        } else {
+          modal.classList.add("hidden");
+          document.body.classList.remove("profile-page-open");
+        }
+      };
+      window.addEventListener("popstate", this._profilePopHandler);
+    }
     this._renderProfileContent(content, this.activeUser, true);
     this.loadUserWithdrawHistory(this.activeUser.pin);
     modal.classList.remove("hidden");
@@ -3950,8 +4075,10 @@ class PicPrizeApp {
     const maxPhotos = u.max_photos_per_user !== undefined ? Math.max(0, parseInt(u.max_photos_per_user, 10)) : Math.max(0, cachedMax);
     const minWdPhotos = this.cfg.minPhotosForWithdraw || 3;
     const safeName = this.escapeHtml(u.name || "শিল্পী");
+    const safeEmail = this.escapeHtml(u.email || "");
     const safePhone = this.escapeHtml(u.phone || "");
     const safeRef = this.escapeHtml(u.refCode || ("REF" + pinStr));
+    const avatar = u.avatarUrl ? `<img src="${this.escapeHtml(u.avatarUrl)}" alt="${safeName}" class="w-full h-full rounded-full object-cover">` : `<span class="profile-avatar-initial">${safeName.charAt(0).toUpperCase()}</span>`;
 
     let limitBanner = "";
     if (maxPhotos > 0) {
@@ -3989,16 +4116,18 @@ class PicPrizeApp {
       : `<div class="text-center py-3 text-[11px] text-gray-500">আপনি এখনো কোনো ছবি আপলোড করেননি।</div>`;
 
     content.innerHTML = `
-      <div class="flex items-center gap-3 pb-3 border-b border-slate-200 dark:border-white/10 pr-8">
-        <div class="w-12 h-12 rounded-full bg-gradient-to-tr from-indigo-500 to-pink-500 flex items-center justify-center text-white text-lg font-bold shadow-md shrink-0">
-          ${safeName.charAt(0)}
-        </div>
+      <div class="profile-hero flex flex-col sm:flex-row sm:items-center gap-4 p-5 sm:p-7 rounded-3xl border border-indigo-200 dark:border-indigo-500/20 bg-gradient-to-br from-indigo-50 via-white to-pink-50 dark:from-indigo-950/60 dark:via-slate-900 dark:to-pink-950/30 shadow-sm">
+        <label class="profile-avatar-control w-20 h-20 rounded-full bg-gradient-to-tr from-indigo-500 to-pink-500 flex items-center justify-center text-white text-3xl font-bold shadow-lg shrink-0 overflow-hidden cursor-pointer ring-4 ring-white/70 dark:ring-slate-800" title="প্রোফাইল ছবি দিন">
+          ${avatar}<input type="file" accept="image/*" class="hidden" onchange="window.APP.handleAvatarUpload(event)">
+        </label>
         <div class="min-w-0">
           <div class="flex items-center gap-2">
             <h3 class="font-bold text-white text-base truncate">${safeName}</h3>
             ${isLoading ? `<span class="text-[10px] text-amber-500 font-semibold animate-pulse">আপডেট হচ্ছে…</span>` : ""}
           </div>
-          <p class="text-xs text-gray-400">পিন: ****${pinStr.slice(-2)} · ফোন: ${safePhone}</p>
+          <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">পিন: ****${pinStr.slice(-2)} · ফোন: ${safePhone || "যোগ করা নেই"}</p>
+          ${safeEmail ? `<p class="text-sm text-gray-500 dark:text-gray-400 mt-1 break-all">ইমেইল: ${safeEmail}</p>` : ""}
+          <label class="inline-flex mt-2 text-xs text-indigo-600 dark:text-indigo-300 font-semibold cursor-pointer">ছবি বদলান<input type="file" accept="image/*" class="hidden" onchange="window.APP.handleAvatarUpload(event)"></label>
         </div>
       </div>
 
@@ -4119,12 +4248,6 @@ class PicPrizeApp {
 
       
         <!-- সরাসরি অ্যাডমিন প্যানেল লিংক -->
-        <div class="pt-3 border-t border-white/10">
-          <a href="/admin.html" class="block w-full py-2 bg-slate-800 hover:bg-slate-700 text-amber-300 text-xs font-bold rounded-xl border border-amber-400/20 text-center transition-all">
-            ⚙️ অ্যাডমিন ড্যাশবোর্ডে যান ➔
-          </a>
-        </div>
-
       <button onclick="window.APP.handleLogout()" class="w-full mt-3 py-1.5 text-gray-500 hover:text-rose-400 text-xs font-semibold transition-colors">
         লগআউট করুন
       </button>
@@ -4167,6 +4290,30 @@ class PicPrizeApp {
     } else {
       this.showToast(res.message, "error");
     }
+  }
+
+  async handleAvatarUpload(event) {
+    const file = event?.target?.files?.[0];
+    if (!file || !this.activeUser) return;
+    if (!file.type.startsWith("image/")) { this.showToast("একটি ছবি নির্বাচন করুন।", "error"); return; }
+    const image = new Image();
+    image.onload = async () => {
+      const canvas = document.createElement("canvas");
+      const scale = Math.min(1, 512 / Math.max(image.width, image.height));
+      canvas.width = Math.max(1, Math.round(image.width * scale));
+      canvas.height = Math.max(1, Math.round(image.height * scale));
+      canvas.getContext("2d").drawImage(image, 0, 0, canvas.width, canvas.height);
+      const result = await this.db.updateAvatar(canvas.toDataURL("image/jpeg", 0.82));
+      if (result.success) {
+        this.activeUser = result.user || { ...this.activeUser, avatarUrl: result.avatarUrl };
+        this.db.saveUser(this.activeUser);
+        this._renderProfileContent(document.getElementById("profile-modal-content"), this.activeUser, false);
+        this.showToast("প্রোফাইল ছবি আপডেট হয়েছে।", "success");
+      } else this.showToast(result.message || "ছবি আপলোড করা যায়নি।", "error");
+      URL.revokeObjectURL(image.src);
+    };
+    image.onerror = () => this.showToast("ছবিটি পড়া যায়নি।", "error");
+    image.src = URL.createObjectURL(file);
   }
 
   handleLogout() {
@@ -4894,6 +5041,8 @@ class PicPrizeApp {
 
   // মডাল ক্লোজ
   closeModals() {
+    if (location.hash === "#profile") history.replaceState(null, "", location.pathname + location.search);
+    document.body.classList.remove("profile-page-open");
     document.querySelectorAll(".app-modal").forEach(m => m.classList.add("hidden"));
   }
 

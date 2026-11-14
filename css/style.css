@@ -31,6 +31,7 @@ html[data-t="dark"] {
 
 body {
   font-family: 'Hind Siliguri', 'Noto Sans Bengali', 'Nirmala UI', 'Vrinda', 'Outfit', sans-serif;
+  font-size: 16px;
   background-color: var(--bg);
   color: var(--text-main);
   min-height: 100vh;
@@ -640,4 +641,115 @@ html:not(.dark) #leaderboard-container h4 {
 
 html:not(.dark) #leaderboard-container p {
   color: #475569 !important;
+}
+
+/* Spacious full-screen profile page */
+#profile-modal.profile-page {
+  position: fixed !important;
+  inset: 0 !important;
+  width: 100vw !important;
+  min-height: 100vh;
+  min-height: 100dvh;
+  background: var(--bg) !important;
+  z-index: 60 !important;
+}
+#profile-modal .profile-content-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; width: 100%; max-width: 1000px; margin-inline: auto; }
+#profile-modal .profile-content-grid > div,
+#profile-modal .profile-content-grid > .grid.grid-cols-2,
+#profile-modal .profile-content-grid > #withdraw-form,
+#profile-modal .profile-content-grid > button { grid-column: 1 / -1; }
+#profile-modal .profile-content-grid > div:has(#user-withdraw-history-container) { grid-column: 2; grid-row: auto; align-self: stretch; margin-top: 0; padding: 1rem; border: 1px solid var(--border-color); border-radius: 1rem; background: var(--card-bg); }
+#profile-modal .profile-content-grid > #withdraw-form { grid-column: 1; padding: 1rem; border: 1px solid var(--border-color); border-radius: 1rem; background: var(--card-bg); }
+#profile-modal .profile-hero { grid-column: 1 / -1; align-items: center; min-height: 118px; }
+#profile-modal .profile-avatar-control { display: flex !important; align-items: center; justify-content: center; width: 76px !important; height: 76px !important; min-width: 76px; flex: 0 0 76px; padding: 0 !important; border-radius: 50%; font-size: 30px !important; line-height: 1 !important; }
+#profile-modal .profile-avatar-initial { display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; color: #fff; font-size: 30px; }
+#profile-modal .profile-hero h3 { font-size: 1.55rem; line-height: 1.3; }
+#profile-modal .profile-hero p { font-size: 1rem !important; line-height: 1.5; }
+#profile-modal .profile-hero label.inline-flex { font-size: .9rem !important; }
+#profile-modal-content .text-xs { font-size: 15px !important; line-height: 1.45; }
+#profile-modal-content [class~="text-[11px]"] { font-size: 14px !important; line-height: 1.4; }
+#profile-modal-content [class~="text-[10px]"] { font-size: 13px !important; line-height: 1.35; }
+#profile-modal-content h4 { font-size: 1rem !important; }
+#profile-modal .profile-content-grid > .grid.grid-cols-2 { gap: .85rem; }
+#profile-modal .profile-content-grid > div:not(.profile-hero) { border-radius: 1rem; }
+#profile-modal .profile-content-grid form,
+#profile-modal .profile-content-grid #user-withdraw-history-container { max-width: 100%; }
+#profile-modal .profile-content-grid > .grid.grid-cols-2 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+#profile-modal .profile-content-grid > .grid.grid-cols-2 > div { min-width: 0; padding: 1rem .75rem; }
+#profile-modal .profile-content-grid > .grid.grid-cols-2 > div > div { font-size: 1.55rem; }
+body.profile-page-open { overflow: hidden; }
+body.profile-page-open #sticky-mobile-hero,
+body.profile-page-open #contest-hero-banner { display: none !important; }
+
+/* Keep supporting copy readable throughout the storefront, including on phones. */
+body.pb-24 .text-xs { font-size: 14px !important; line-height: 1.45; }
+body.pb-24 [class~="text-[11px]"] { font-size: 12px !important; line-height: 1.4; }
+body.pb-24 [class~="text-[10px]"] { font-size: 11px !important; line-height: 1.35; }
+
+/* Keep the chat shortcut compact and easy to find. */
+#lc-btn { width: 3.5rem; height: 3.5rem; padding: 0; justify-content: center; border-radius: 9999px; }
+#lc-btn > span:nth-child(2) { display: none; }
+#lc-box { bottom: 6rem; }
+
+/* The compact contest strip belongs to phone layouts only. */
+#sticky-mobile-hero { display: none !important; }
+#contest-hero-banner { display: none !important; }
+@media (max-width: 767px) {
+  #sticky-mobile-hero { display: block !important; }
+  #contest-hero-banner { display: none !important; }
+}
+@media (min-width: 768px) { #sticky-mobile-hero { display: none !important; } }
+
+/* Live chat follows the active site theme instead of staying dark in light mode. */
+html:not(.dark) #lc-box {
+  color: #172033 !important;
+  background: rgba(255, 255, 255, .98) !important;
+  border-color: #dbe2ef !important;
+  box-shadow: 0 18px 50px rgba(30, 41, 59, .2) !important;
+}
+html:not(.dark) #lc-box > div:first-child {
+  background: linear-gradient(110deg, #fff7ed, #fff1f2 58%, #eef2ff) !important;
+  border-color: #e2e8f0 !important;
+}
+html:not(.dark) #lc-box > div:first-child .text-white { color: #172033 !important; }
+html:not(.dark) #lc-box > div:first-child .text-gray-400 { color: #64748b !important; }
+html:not(.dark) #lc-close {
+  background: #e2e8f0 !important;
+  color: #334155 !important;
+}
+html:not(.dark) #lc-messages { background: #f8fafc !important; }
+html:not(.dark) #lc-messages .text-gray-400,
+html:not(.dark) #lc-messages .text-gray-500 { color: #64748b !important; }
+html:not(.dark) #lc-messages .text-indigo-300 { color: #4f46e5 !important; }
+html:not(.dark) #lc-messages .text-amber-400 { color: #b45309 !important; }
+html:not(.dark) #lc-messages .bg-slate-800 {
+  background: #fff !important;
+  color: #263247 !important;
+  border-color: #dbe2ef !important;
+}
+html:not(.dark) #lc-form {
+  background: #fff !important;
+  border-color: #e2e8f0 !important;
+}
+html:not(.dark) #lc-form input {
+  background: #f8fafc !important;
+  color: #172033 !important;
+  border-color: #cbd5e1 !important;
+}
+html:not(.dark) #lc-form input::placeholder { color: #94a3b8 !important; }
+
+@media (max-width: 640px) {
+#profile-modal .min-h-full { padding-left: .75rem; padding-right: .75rem; }
+  #profile-modal .profile-content-grid { grid-template-columns: 1fr; }
+  #profile-modal .profile-content-grid > div:has(#user-withdraw-history-container),
+  #profile-modal .profile-content-grid > #withdraw-form { grid-column: 1; grid-row: auto; }
+  #profile-modal .profile-content-grid > .grid.grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  #profile-modal .profile-content-grid { gap: .75rem; }
+  #profile-modal .profile-hero { padding: 1rem; min-height: 0; }
+  #profile-modal .profile-hero h3 { font-size: 1.35rem; }
+  #profile-modal .profile-avatar-control { width: 64px !important; height: 64px !important; min-width: 64px; flex-basis: 64px; font-size: 25px !important; }
+  #profile-modal .profile-avatar-initial { font-size: 25px; }
+  #profile-modal .profile-content-grid > .grid.grid-cols-2 { gap: .55rem; }
+  #profile-modal .profile-content-grid > .grid.grid-cols-2 > div { padding: .7rem; }
+  #lc-box { width: min(340px, calc(100vw - 24px)); height: min(470px, calc(100dvh - 130px)); }
 }

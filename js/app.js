@@ -60,6 +60,11 @@ class PicPrizeApp {
       this.renderGallery(),
       this.updateInboxBadge()
     ]);
+    await this.completeFirebaseEmailLinkRegistration();
+    if (location.hash === "#profile") {
+      if (this.activeUser) await this.openProfileModal();
+      else history.replaceState(null, "", location.pathname + location.search);
+    }
     setInterval(() => {
       if (!document.hidden) this.updateInboxBadge();
     }, 120000);
@@ -160,8 +165,9 @@ class PicPrizeApp {
   // ১. ইউজার অথেনটিকেশন চেক (তাৎক্ষণিক ক্যাশ লোড + ব্যাকগ্রাউন্ডে Firebase লাইভ ব্যালেন্স সিঙ্ক)
   checkAuth() {
     const savedPin = localStorage.getItem("peg_auth_pin");
+    const savedUserId = localStorage.getItem("peg_auth_uid");
     if (savedPin) {
-      const user = this.db.getUser(savedPin);
+      const user = this.db.getUser(savedUserId) || this.db.getUser(savedPin);
       if (user) {
         this.activeUser = user;
       }
@@ -1144,9 +1150,40 @@ class PicPrizeApp {
     }
   }
 
+  async completeFirebaseEmailLinkRegistration() {
+    const auth = window.PEG_FIREBASE_AUTH;
+    if (!auth || !auth.isSignInWithEmailLink(window.location.href)) return;
+    let pending = null;
+    try { pending = JSON.parse(localStorage.getItem("peg_pending_email_registration") || "null"); } catch (error) {}
+    const email = String(localStorage.getItem("peg_email_link_email") || "").trim().toLowerCase();
+    if (!pending || !email || String(pending.email || "").toLowerCase() !== email) {
+      this.showToast("যে browser থেকে registration করেছেন, email link সেই browser-এ খুলুন।", "warning");
+      return;
+    }
+    try {
+      const credential = await auth.signInWithEmailLink(email, window.location.href);
+      const firebaseIdToken = await credential.user.getIdToken(true);
+      const result = await this.db.registerUser(pending.pin, pending.name, pending.phone, pending.ref, email, firebaseIdToken);
+      if (!result.success || !result.user) throw new Error(result.message || "রেজিস্ট্রেশন সম্পন্ন হয়নি।");
+      this.activeUser = result.user;
+      localStorage.setItem("peg_auth_pin", pending.pin);
+      localStorage.setItem("peg_auth_phone", pending.phone);
+      if (result.user.userId || result.user.id) localStorage.setItem("peg_auth_uid", result.user.userId || result.user.id);
+      localStorage.removeItem("peg_pending_email_registration");
+      localStorage.removeItem("peg_email_link_email");
+      localStorage.removeItem("peg_pending_ref");
+      history.replaceState(null, "", location.pathname);
+      this.updateUserNavButton();
+      this.showToast(`অ্যাকাউন্ট তৈরি হয়েছে, ${result.user.name}! ২০ পয়েন্ট বোনাস যোগ হয়েছে।`, "success");
+    } catch (error) {
+      this.showToast(error.message || "Email verification সম্পন্ন হয়নি। আবার চেষ্টা করুন।", "error");
+    }
+  }
+
   async handleRegister(e) {
     e.preventDefault();
     const name = document.getElementById("reg-name").value.trim();
+    const email = document.getElementById("reg-email").value.trim().toLowerCase();
     const phone = document.getElementById("reg-phone").value.trim();
     const pin = document.getElementById("reg-pin").value.trim();
     let ref = document.getElementById("reg-ref") ? document.getElementById("reg-ref").value.trim() : "";
@@ -1154,7 +1191,7 @@ class PicPrizeApp {
       ref = localStorage.getItem("peg_pending_ref") || "";
     }
 
-    if (!name || !phone || !pin) {
+    if (!name || !email || !phone || !pin) {
       this.showToast("দয়া করে নাম, মোবাইল নম্বর এবং ৪ ডিজিটের পিন দিন!", "warning");
       return;
     }
@@ -1164,10 +1201,29 @@ class PicPrizeApp {
       return;
     }
 
-    const res = await this.db.registerUser(pin, name, phone, ref);
+    const auth = window.PEG_FIREBASE_AUTH;
+    if (!auth) {
+      this.showToast("Firebase Auth চালু হয়নি। পেজ refresh করে আবার চেষ্টা করুন।", "error");
+      return;
+    }
+    localStorage.setItem("peg_pending_email_registration", JSON.stringify({ name, email, phone, pin, ref }));
+    localStorage.setItem("peg_email_link_email", email);
+    try {
+      await auth.sendSignInLinkToEmail(email, { url: `${location.origin}${location.pathname}`, handleCodeInApp: true });
+      this.showToast("ইমেইলে verification link পাঠানো হয়েছে। একই browser-এ link খুলুন।", "success");
+    } catch (error) {
+      localStorage.removeItem("peg_pending_email_registration");
+      localStorage.removeItem("peg_email_link_email");
+      this.showToast(error.message || "Verification email পাঠানো যায়নি।", "error");
+    }
+    return;
+
+    const res = await this.db.registerUser(pin, name, phone, ref, email);
     if (res.success && res.user) {
       this.activeUser = res.user;
       localStorage.setItem("peg_auth_pin", pin);
+      localStorage.setItem("peg_auth_phone", phone);
+      if (res.user.userId || res.user.id) localStorage.setItem("peg_auth_uid", res.user.userId || res.user.id);
       localStorage.removeItem("peg_pending_ref");
       this.updateUserNavButton();
       this.closeModals();
@@ -1186,6 +1242,17 @@ class PicPrizeApp {
 
     // তাৎক্ষণিক ক্যাশড প্রিভিউ রেন্ডার + ব্যাকগ্রাউন্ডে সার্ভার থেকে লাইভ ভোট/ফলোয়ার/ছবি ডাটা আনা
     this.activeUser = this.db.getUser(this.activeUser.pin) || this.activeUser;
+    document.body.classList.add("profile-page-open");
+    if (location.hash !== "#profile") history.pushState({ profile: true }, "", "#profile");
+    if (!this._profilePopHandler) {
+      this._profilePopHandler = () => {
+        if (location.hash !== "#profile") {
+          modal.classList.add("hidden");
+          document.body.classList.remove("profile-page-open");
+        }
+      };
+      window.addEventListener("popstate", this._profilePopHandler);
+    }
     this._renderProfileContent(content, this.activeUser, true);
     this.loadUserWithdrawHistory(this.activeUser.pin);
     modal.classList.remove("hidden");
@@ -1222,8 +1289,10 @@ class PicPrizeApp {
     const maxPhotos = u.max_photos_per_user !== undefined ? Math.max(0, parseInt(u.max_photos_per_user, 10)) : Math.max(0, cachedMax);
     const minWdPhotos = this.cfg.minPhotosForWithdraw || 3;
     const safeName = this.escapeHtml(u.name || "শিল্পী");
+    const safeEmail = this.escapeHtml(u.email || "");
     const safePhone = this.escapeHtml(u.phone || "");
     const safeRef = this.escapeHtml(u.refCode || ("REF" + pinStr));
+    const avatar = u.avatarUrl ? `<img src="${this.escapeHtml(u.avatarUrl)}" alt="${safeName}" class="w-full h-full rounded-full object-cover">` : `<span class="profile-avatar-initial">${safeName.charAt(0).toUpperCase()}</span>`;
 
     let limitBanner = "";
     if (maxPhotos > 0) {
@@ -1261,16 +1330,18 @@ class PicPrizeApp {
       : `<div class="text-center py-3 text-[11px] text-gray-500">আপনি এখনো কোনো ছবি আপলোড করেননি।</div>`;
 
     content.innerHTML = `
-      <div class="flex items-center gap-3 pb-3 border-b border-slate-200 dark:border-white/10 pr-8">
-        <div class="w-12 h-12 rounded-full bg-gradient-to-tr from-indigo-500 to-pink-500 flex items-center justify-center text-white text-lg font-bold shadow-md shrink-0">
-          ${safeName.charAt(0)}
-        </div>
+      <div class="profile-hero flex flex-col sm:flex-row sm:items-center gap-4 p-5 sm:p-7 rounded-3xl border border-indigo-200 dark:border-indigo-500/20 bg-gradient-to-br from-indigo-50 via-white to-pink-50 dark:from-indigo-950/60 dark:via-slate-900 dark:to-pink-950/30 shadow-sm">
+        <label class="profile-avatar-control w-20 h-20 rounded-full bg-gradient-to-tr from-indigo-500 to-pink-500 flex items-center justify-center text-white text-3xl font-bold shadow-lg shrink-0 overflow-hidden cursor-pointer ring-4 ring-white/70 dark:ring-slate-800" title="প্রোফাইল ছবি দিন">
+          ${avatar}<input type="file" accept="image/*" class="hidden" onchange="window.APP.handleAvatarUpload(event)">
+        </label>
         <div class="min-w-0">
           <div class="flex items-center gap-2">
             <h3 class="font-bold text-gray-900 dark:text-white text-base truncate">${safeName}</h3>
             ${isLoading ? `<span class="text-[10px] text-amber-500 font-semibold animate-pulse">আপডেট হচ্ছে…</span>` : ""}
           </div>
-          <p class="text-xs text-gray-400">পিন: ****${pinStr.slice(-2)} · ফোন: ${safePhone}</p>
+          <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">পিন: ****${pinStr.slice(-2)} · ফোন: ${safePhone || "যোগ করা নেই"}</p>
+          ${safeEmail ? `<p class="text-sm text-gray-500 dark:text-gray-400 mt-1 break-all">ইমেইল: ${safeEmail}</p>` : ""}
+          <label class="inline-flex mt-2 text-xs text-indigo-600 dark:text-indigo-300 font-semibold cursor-pointer">ছবি বদলান<input type="file" accept="image/*" class="hidden" onchange="window.APP.handleAvatarUpload(event)"></label>
         </div>
       </div>
 
@@ -1441,12 +1512,39 @@ class PicPrizeApp {
     }
   }
 
-  handleLogout() {
+  async handleLogout() {
+    if (this.db && this.db.userLogout) await this.db.userLogout();
     localStorage.removeItem("peg_auth_pin");
+    localStorage.removeItem("peg_auth_phone");
+    localStorage.removeItem("peg_auth_uid");
     this.activeUser = null;
     this.updateUserNavButton();
     this.closeModals();
     this.showToast("সফলভাবে লগআউট হয়েছে!", "info");
+  }
+
+  async handleAvatarUpload(event) {
+    const file = event?.target?.files?.[0];
+    if (!file || !this.activeUser) return;
+    if (!file.type.startsWith("image/")) { this.showToast("একটি ছবি নির্বাচন করুন।", "error"); return; }
+    const image = new Image();
+    image.onload = async () => {
+      const canvas = document.createElement("canvas");
+      const scale = Math.min(1, 512 / Math.max(image.width, image.height));
+      canvas.width = Math.max(1, Math.round(image.width * scale));
+      canvas.height = Math.max(1, Math.round(image.height * scale));
+      canvas.getContext("2d").drawImage(image, 0, 0, canvas.width, canvas.height);
+      const result = await this.db.updateAvatar(canvas.toDataURL("image/jpeg", 0.82));
+      if (result.success) {
+        this.activeUser = result.user || { ...this.activeUser, avatarUrl: result.avatarUrl };
+        this.db.saveUser(this.activeUser);
+        this._renderProfileContent(document.getElementById("profile-modal-content"), this.activeUser, false);
+        this.showToast("প্রোফাইল ছবি আপডেট হয়েছে।", "success");
+      } else this.showToast(result.message || "ছবি আপলোড করা যায়নি।", "error");
+      URL.revokeObjectURL(image.src);
+    };
+    image.onerror = () => this.showToast("ছবিটি পড়া যায়নি।", "error");
+    image.src = URL.createObjectURL(file);
   }
 
   // ================= 💳 উইথড্র হিস্ট্রি, পেমেন্ট ভাউচার ও শেয়ার =================
@@ -2166,6 +2264,8 @@ class PicPrizeApp {
 
   // মডাল ক্লোজ
   closeModals() {
+    if (location.hash === "#profile") history.replaceState(null, "", location.pathname + location.search);
+    document.body.classList.remove("profile-page-open");
     document.querySelectorAll(".app-modal").forEach(m => m.classList.add("hidden"));
   }
 

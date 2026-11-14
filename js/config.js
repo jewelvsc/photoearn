@@ -142,6 +142,13 @@ window.APP_CONFIG = {
   // ১১. সিকিউরিটি: ক্লায়েন্ট-সাইড থেকে Firebase ডাইরেক্ট এক্সেস ও পিন সম্পূর্ণ বন্ধ রাখা হয়েছে
   // সমস্ত ডাটা ও অ্যাডমিন যাচাই নিরাপদ Hostinger PHP ব্যাকএন্ড (api.php) দিয়ে পরিচালিত হবে।
   firebase: {
-    databaseURL: ""
+    apiKey: "AIzaSyBs5rDPI6ICiA296EgC2kLFVjuLH_xX5To",
+    authDomain: "photo-earn-official.firebaseapp.com",
+    databaseURL: "https://photo-earn-official-default-rtdb.firebaseio.com",
+    projectId: "photo-earn-official",
+    storageBucket: "photo-earn-official.firebasestorage.app",
+    messagingSenderId: "549402956129",
+    appId: "1:549402956129:web:9a97f84dd957a7a9b8b520",
+    measurementId: "G-CX12QYHSS8"
   }
 };

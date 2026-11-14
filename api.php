@@ -66,6 +66,7 @@ define('PEG_INIT_PIN_HASH', '3db9f914c5ae28fee256bd211cbd48e6824b56fc3ebed4f5221
 define('PEG_TAKA_PER_POINT', 0.10);
 define('PEG_MIN_WITHDRAW_TAKA', 50);
 define('PEG_MIN_PHOTOS_WD', 3);
+define('PEG_FIREBASE_WEB_API_KEY', 'AIzaSyBs5rDPI6ICiA296EgC2kLFVjuLH_xX5To');
 
 // ===== 🔔 টেলিগ্রাম অ্যালার্ট কনফিগ (ঐচ্ছিক) =====
 $tgBotToken = "";
@@ -96,6 +97,48 @@ function readJson($file, $default = []) {
 
 function writeJson($file, $data) {
     file_put_contents($file, json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE), LOCK_EX);
+}
+
+function verifyFirebaseEmailLinkToken($idToken, $expectedEmail) {
+    if ($idToken === '' || $expectedEmail === '' || !defined('PEG_FIREBASE_WEB_API_KEY')) return false;
+    $url = 'https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=' . rawurlencode(PEG_FIREBASE_WEB_API_KEY);
+    $payload = json_encode(['idToken' => $idToken]);
+    $response = false;
+
+    if (function_exists('curl_init')) {
+        $ch = curl_init($url);
+        if ($ch === false) return false;
+        curl_setopt_array($ch, [
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_POST => true,
+            CURLOPT_HTTPHEADER => ['Content-Type: application/json'],
+            CURLOPT_POSTFIELDS => $payload,
+            CURLOPT_CONNECTTIMEOUT => 4,
+            CURLOPT_TIMEOUT => 8,
+            CURLOPT_SSL_VERIFYPEER => true,
+            CURLOPT_SSL_VERIFYHOST => 2
+        ]);
+        $response = curl_exec($ch);
+        $status = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+        if ($response === false || $status < 200 || $status >= 300) return false;
+    } else {
+        $context = stream_context_create(['http' => [
+            'method' => 'POST',
+            'header' => "Content-Type: application/json\r\n",
+            'content' => $payload,
+            'timeout' => 8,
+            'ignore_errors' => true
+        ]]);
+        $response = @file_get_contents($url, false, $context);
+        if ($response === false || empty($http_response_header[0]) || !preg_match('/\s2\d\d\s/', $http_response_header[0])) return false;
+    }
+
+    $data = json_decode((string)$response, true);
+    $firebaseUser = $data['users'][0] ?? null;
+    if (!is_array($firebaseUser) || empty($firebaseUser['emailVerified'])) return false;
+    if (strtolower((string)($firebaseUser['email'] ?? '')) !== strtolower($expectedEmail)) return false;
+    return (string)($firebaseUser['localId'] ?? '') ?: false;
 }
 
 function readPhotosSafe($photosFile) {
@@ -318,6 +361,18 @@ function isAdminLoggedIn() {
     return !empty($_SESSION['peg_admin_auth']) && $_SESSION['peg_admin_auth'] === true;
 }
 
+function requireUserSession($requestedPin = '') {
+    $sessionPin = trim((string)($_SESSION['peg_user_pin'] ?? ''));
+    $sessionUserId = trim((string)($_SESSION['peg_user_id'] ?? ''));
+    $requestedPin = trim((string)$requestedPin);
+    if ($sessionPin === '' || $sessionUserId === '' || ($requestedPin !== '' && !hash_equals($sessionPin, $requestedPin))) {
+        http_response_code(401);
+        echo json_encode(["success" => false, "authRequired" => true, "message" => "লগইন করে আবার চেষ্টা করুন।"]);
+        exit;
+    }
+    return $sessionUserId;
+}
+
 function requireAdmin() {
     if (!isAdminLoggedIn()) {
         http_response_code(401);
@@ -442,6 +497,9 @@ function buildUserStatsMap($photos, $followers) {
                 $byCreator[$cid]['totalVotes'] += $votes;
                 $byCreator[$cid]['totalViews'] += $views;
                 $byCreator[$cid]['totalLikes'] += $likes;
+                if (count($byCreator[$cid]['myPhotos']) < 50) {
+                    $byCreator[$cid]['myPhotos'][] = $compactPhoto;
+                }
             }
         }
     }
@@ -463,15 +521,16 @@ function attachUserAggregatedStats($user, $pin, $statsMap, $includePhotos = fals
     $pStat = $statsMap['byPin'][$pin] ?? null;
     $cStat = $statsMap['byCreator'][$cid] ?? null;
 
-    $user['photosCount']    = intval($pStat['photosCount'] ?? 0);
-    $user['approvedCount']  = intval($pStat['approvedCount'] ?? 0);
-    $user['pendingCount']   = intval($pStat['pendingCount'] ?? 0);
-    $user['totalVotes']     = intval($pStat['totalVotes'] ?? ($cStat['totalVotes'] ?? 0));
-    $user['totalViews']     = intval($pStat['totalViews'] ?? ($cStat['totalViews'] ?? 0));
-    $user['totalLikes']     = intval($pStat['totalLikes'] ?? ($cStat['totalLikes'] ?? 0));
+    $stat = ($cStat && intval($cStat['photosCount'] ?? 0) > 0) ? $cStat : $pStat;
+    $user['photosCount']    = intval($stat['photosCount'] ?? 0);
+    $user['approvedCount']  = intval($stat['approvedCount'] ?? 0);
+    $user['pendingCount']   = intval($stat['pendingCount'] ?? 0);
+    $user['totalVotes']     = intval($stat['totalVotes'] ?? 0);
+    $user['totalViews']     = intval($stat['totalViews'] ?? 0);
+    $user['totalLikes']     = intval($stat['totalLikes'] ?? 0);
     $user['followersCount'] = intval($cStat['followersCount'] ?? 0);
     if ($includePhotos) {
-        $user['myPhotos'] = $pStat['myPhotos'] ?? [];
+        $user['myPhotos'] = $stat['myPhotos'] ?? [];
     }
     return $user;
 }
@@ -620,6 +679,61 @@ switch ($action) {
         echo json_encode(["success" => true]);
         break;
 
+    case 'user_logout':
+        if (session_status() !== PHP_SESSION_ACTIVE) session_start();
+        unset($_SESSION['peg_user_pin']);
+        unset($_SESSION['peg_user_id']);
+        session_write_close();
+        echo json_encode(["success" => true]);
+        break;
+
+    case 'update_avatar':
+        $sessionUserId = requireUserSession();
+        $imageData = (string)($input['image'] ?? '');
+        if (!preg_match('#^data:image/jpeg;base64,([A-Za-z0-9+/=]+)$#', $imageData, $matches)) {
+            http_response_code(400);
+            echo json_encode(["success" => false, "message" => "সঠিক JPEG ছবি দিন।"]);
+            exit;
+        }
+        $imageBytes = base64_decode($matches[1], true);
+        $imageInfo = $imageBytes !== false ? @getimagesizefromstring($imageBytes) : false;
+        if ($imageBytes === false || strlen($imageBytes) > 300000 || $imageInfo === false || ($imageInfo['mime'] ?? '') !== 'image/jpeg') {
+            http_response_code(400);
+            echo json_encode(["success" => false, "message" => "ছবিটি ৩০০ KB-এর কম হতে হবে।"]);
+            exit;
+        }
+        $safeAvatarId = preg_replace('/[^a-zA-Z0-9_-]/', '_', $sessionUserId);
+        $avatarDir = $uploadDir . '/avatars';
+        if (!is_dir($avatarDir) && !@mkdir($avatarDir, 0755, true)) {
+            http_response_code(500);
+            echo json_encode(["success" => false, "message" => "ছবি সংরক্ষণ করা যায়নি।"]);
+            exit;
+        }
+        $avatarName = $safeAvatarId . '.jpg';
+        if (@file_put_contents($avatarDir . '/' . $avatarName, $imageBytes, LOCK_EX) === false) {
+            http_response_code(500);
+            echo json_encode(["success" => false, "message" => "ছবি সংরক্ষণ করা যায়নি।"]);
+            exit;
+        }
+        $users = readUsersSafe($usersFile);
+        foreach ($users as &$avatarUser) {
+            if ((string)($avatarUser['userId'] ?? ($avatarUser['id'] ?? '')) === $sessionUserId) {
+                $avatarUser['avatarUrl'] = 'uploads/avatars/' . $avatarName;
+                $updatedUser = $avatarUser;
+                break;
+            }
+        }
+        unset($avatarUser);
+        if (empty($updatedUser)) {
+            @unlink($avatarDir . '/' . $avatarName);
+            http_response_code(404);
+            echo json_encode(["success" => false, "message" => "অ্যাকাউন্ট পাওয়া যায়নি।"]);
+            exit;
+        }
+        writeJson($usersFile, $users);
+        echo json_encode(["success" => true, "avatarUrl" => $updatedUser['avatarUrl'], "user" => $updatedUser]);
+        break;
+
     case 'change_admin_pin':
         requireAdmin();
         $currPin = trim((string)($input['currentPin'] ?? ''));
@@ -705,6 +819,7 @@ switch ($action) {
         $contestType = in_array($input['contestType'] ?? '', ['c24', 'c7', 'c30'], true) ? $input['contestType'] : 'c24';
         $authorName  = cleanText($input['authorName'] ?? 'শিল্পী', 60);
         $authorPin   = cleanText($input['authorPin'] ?? '', 20);
+        $authorId    = '';
         $photoType   = ($input['photoType'] ?? 'FREE') === 'PAID' ? 'PAID' : 'FREE';
         $price       = $photoType === 'PAID' ? max(5, min(5000, intval($input['price'] ?? 10))) : 0;
         $imgData     = (string)($input['image'] ?? '');
@@ -716,7 +831,15 @@ switch ($action) {
 
         if ($authorPin !== '') {
             $users = readUsersSafe($usersFile);
-            $author = findUserByIdentifier($users, $authorPin);
+            $authorId = requireUserSession($authorPin);
+            $author = findUserByIdentifier($users, $authorId);
+            if (!$author) {
+                http_response_code(401);
+                echo json_encode(["success" => false, "authRequired" => true]);
+                exit;
+            }
+            $authorPin = (string)($author['pin'] ?? $authorPin);
+            $authorName = cleanText($author['name'] ?? $authorName, 60);
             if ($author && !empty($author['blocked'])) {
                 echo json_encode(["success" => false, "message" => "🚫 আপনার অ্যাকাউন্টটি ব্লক করা আছে। ছবি আপলোড করা যাবে না।"]);
                 exit;
@@ -730,7 +853,7 @@ switch ($action) {
         if ($maxPhotos > 0 && $authorPin !== '') {
             $userCurrentCount = 0;
             foreach ($photos as $p) {
-                if (trim((string)($p['authorPin'] ?? '')) === $authorPin) {
+                if (($authorId !== '' && (string)($p['authorId'] ?? '') === $authorId) || ($authorId === '' && trim((string)($p['authorPin'] ?? '')) === $authorPin)) {
                     $userCurrentCount++;
                 }
             }
@@ -761,7 +884,7 @@ switch ($action) {
             "contestType" => $contestType,
             "authorName"  => $authorName,
             "authorPin"   => $authorPin,
-            "authorId"    => makeCreatorId($authorPin ?: $authorName),
+            "authorId"    => $authorId !== '' ? $authorId : makeCreatorId($authorName),
             "photoType"   => $photoType,
             "price"       => $price,
             "url"         => $fileUrl,
@@ -826,9 +949,10 @@ switch ($action) {
                 $newVotes   = $p['votes'];
                 $found      = true;
 
-                if (!empty($p['authorPin'])) {
+                $ownerId = (string)($p['authorId'] ?? ($p['authorPin'] ?? ''));
+                if ($ownerId !== '') {
                     $users = readJson($usersFile, []);
-                    if (creditUserInMap($users, $p['authorPin'], 2) !== null) {
+                    if (creditUserInMap($users, $ownerId, 2) !== null) {
                         writeJson($usersFile, $users);
                     }
                 }
@@ -934,6 +1058,11 @@ switch ($action) {
             }
             unset($attempts[$ipHash]);
             writeJson($loginAttemptsFile, $attempts);
+            if (session_status() !== PHP_SESSION_ACTIVE) session_start();
+            if (function_exists('session_regenerate_id')) @session_regenerate_id(true);
+            $_SESSION['peg_user_pin'] = (string)($matchedUser['pin'] ?? '');
+            $_SESSION['peg_user_id'] = (string)($matchedUser['userId'] ?? ($matchedUser['id'] ?? ''));
+            session_write_close();
             $photos    = readPhotosSafe($photosFile);
             $followers = readJson($followersFile, []);
             $statsMap  = buildUserStatsMap($photos, $followers);
@@ -955,6 +1084,7 @@ switch ($action) {
         break;
 
     case 'get_user_stats':
+        $sessionUserId = requireUserSession($input['pin'] ?? '');
         $attempts = readJson($loginAttemptsFile, []);
         $now = time();
         $rec = $attempts[$ipHash] ?? ["count" => 0, "lockedUntil" => 0];
@@ -962,17 +1092,8 @@ switch ($action) {
             echo json_encode(["success" => false, "message" => "অনেকবার ভুল চেষ্টা হয়েছে! কিছুক্ষণ পর চেষ্টা করুন।"]);
             exit;
         }
-        $targetId = cleanText($input['userId'] ?? ($input['pin'] ?? ($input['id'] ?? '')), 40);
-        $phone    = cleanText($input['phone'] ?? '', 20);
         $users    = readUsersSafe($usersFile);
-
-        $user = null;
-        if ($phone !== '' && !empty($input['pin'])) {
-            $user = findUserByCredentials($users, $phone, $input['pin']);
-        }
-        if ($user === null && $targetId !== '') {
-            $user = findUserByIdentifier($users, $targetId);
-        }
+        $user = findUserByIdentifier($users, $sessionUserId);
 
         if ($user !== null) {
             $photos    = readPhotosSafe($photosFile);
@@ -991,13 +1112,22 @@ switch ($action) {
 
     case 'register':
         $name   = cleanText($input['name'] ?? '', 60);
+        $email  = strtolower(cleanText($input['email'] ?? '', 254));
+        $firebaseIdToken = trim((string)($input['firebaseIdToken'] ?? ''));
         $phone  = cleanText($input['phone'] ?? '', 20);
         $pin    = cleanText($input['pin'] ?? '', 20);
         $rawRef = cleanText($input['ref'] ?? '', 40);
 
         $cleanPhone = preg_replace('/[^0-9]/', '', $phone);
-        if (strlen($pin) < 4 || strpos(strtolower($pin), 'demo_') === 0 || $name === '' || strlen($cleanPhone) < 10) {
+        if (strlen($pin) < 4 || strpos(strtolower($pin), 'demo_') === 0 || $name === '' || !filter_var($email, FILTER_VALIDATE_EMAIL) || strlen($cleanPhone) < 10) {
             echo json_encode(["success" => false, "message" => "সঠিক তথ্য দিন! মোবাইল নম্বর (কমপক্ষে ১০ সংখ্যা) এবং পিন (কমপক্ষে ৪ সংখ্যা) হতে হবে।"]);
+            exit;
+        }
+
+        $firebaseUid = verifyFirebaseEmailLinkToken($firebaseIdToken, $email);
+        if ($firebaseUid === false) {
+            http_response_code(401);
+            echo json_encode(["success" => false, "message" => "রেজিস্ট্রেশনের আগে ইমেইল লিংক যাচাই করুন, তারপর আবার চেষ্টা করুন।"]);
             exit;
         }
 
@@ -1005,6 +1135,10 @@ switch ($action) {
 
         // ১ সিমে ১ একাউন্ট চেক (Duplicate Mobile Prevention)
         foreach ($users as $id => $u) {
+            if (!empty($u['email']) && strtolower((string)$u['email']) === $email) {
+                echo json_encode(["success" => false, "message" => "This email is already registered."]);
+                exit;
+            }
             $uPhone = preg_replace('/[^0-9]/', '', (string)($u['phone'] ?? ''));
             if ($uPhone !== '' && (strlen($uPhone) >= 10 && strlen($cleanPhone) >= 10 && substr($uPhone, -10) === substr($cleanPhone, -10))) {
                 echo json_encode(["success" => false, "message" => "এই মোবাইল নম্বর দিয়ে ইতিমধ্যে একটি অ্যাকাউন্ট রয়েছে! দয়া করে লগইন করুন।"]);
@@ -1019,12 +1153,15 @@ switch ($action) {
             "creatorId"      => $userId,
             "pin"            => $pin,
             "name"           => $name,
+            "email"          => $email,
+            "firebaseUid"    => $firebaseUid,
             "phone"          => $phone,
             "points"         => 20, // ওয়েলকাম বোনাস
             "taka"           => "2.00",
             "photosCount"    => 0,
             "referralsCount" => 0,
             "verified"       => false,
+            "emailVerified"  => true,
             "telegramBonus"  => false,
             "refCode"        => "REF" . substr($cleanPhone, -4) . rand(10, 99),
             "referredBy"     => $rawRef,
@@ -1079,30 +1216,41 @@ switch ($action) {
 
         $users[$userId] = $newUser;
         writeJson($usersFile, $users);
+        if (session_status() !== PHP_SESSION_ACTIVE) session_start();
+        if (function_exists('session_regenerate_id')) @session_regenerate_id(true);
+        $_SESSION['peg_user_pin'] = $pin;
+        $_SESSION['peg_user_id'] = $userId;
+        session_write_close();
         echo json_encode(["success" => true, "user" => $newUser]);
         break;
 
     case 'claim_telegram':
         $pin   = cleanText($input['pin'] ?? '', 20);
+        $sessionUserId = requireUserSession($pin);
         $users = readJson($usersFile, []);
-        if (!isset($users[$pin])) {
+        $userKey = null;
+        foreach ($users as $key => $candidate) {
+            if (($candidate['userId'] ?? ($candidate['id'] ?? '')) === $sessionUserId || $key === $sessionUserId) { $userKey = $key; break; }
+        }
+        if ($userKey === null) {
             echo json_encode(["success" => false, "message" => "প্রথমে একাউন্টে লগইন করুন!"]);
             exit;
         }
-        if (!empty($users[$pin]['telegramBonus'])) {
+        if (!empty($users[$userKey]['telegramBonus'])) {
             echo json_encode(["success" => false, "message" => "আপনি ইতিমধ্যে বোনাস পেয়েছেন!"]);
             exit;
         }
-        $users[$pin]['telegramBonus'] = true;
-        creditUserInMap($users, $pin, 100); // +100 পয়েন্ট = +৳10.00
+        $users[$userKey]['telegramBonus'] = true;
+        creditUserInMap($users, $sessionUserId, 100); // +100 পয়েন্ট = +৳10.00
         writeJson($usersFile, $users);
-        $u = $users[$pin];
-        $u['creatorId'] = makeCreatorId($pin);
+        $u = $users[$userKey];
+        $u['creatorId'] = $sessionUserId;
         echo json_encode(["success" => true, "message" => "অভিনন্দন! ৳10 বোনাস একাউন্টে যোগ হয়েছে!", "user" => $u]);
         break;
 
     case 'withdraw':
         $pin    = cleanText($input['pin'] ?? '', 20);
+        $sessionUserId = requireUserSession($pin);
         $phone  = cleanText($input['phone'] ?? '', 20);
         $amount = floatval($input['amount'] ?? 0);
         $method = in_array(strtolower(trim((string)($input['method'] ?? ''))), ['bkash', 'nagad', 'rocket', 'upay'], true)
@@ -1110,7 +1258,12 @@ switch ($action) {
             : 'bkash';
 
         $users = readUsersSafe($usersFile);
-        $user = findUserByIdentifier($users, $pin);
+        $userKey = null;
+        foreach ($users as $key => $candidate) {
+            if (($candidate['userId'] ?? ($candidate['id'] ?? '')) === $sessionUserId || $key === $sessionUserId) { $userKey = $key; break; }
+        }
+        $user = $userKey !== null ? $users[$userKey] : null;
+        $pin = (string)($user['pin'] ?? '');
         if (!$user) {
             echo json_encode(["success" => false, "message" => "ইউজার পাওয়া যায়নি!"]);
             exit;
@@ -1130,8 +1283,16 @@ switch ($action) {
 
         $photos = readPhotosSafe($photosFile);
         $actualPhotos = 0;
+        $samePinCount = 0;
+        foreach ($users as $candidate) {
+            if ((string)($candidate['pin'] ?? '') === $pin) $samePinCount++;
+        }
         foreach ($photos as $p) {
-            if (($p['authorPin'] ?? '') === $pin) $actualPhotos++;
+            if ((string)($p['authorId'] ?? '') === $sessionUserId) {
+                $actualPhotos++;
+            } elseif ($samePinCount === 1 && ($p['authorPin'] ?? '') === $pin && in_array((string)($p['authorId'] ?? ''), ['', (string)($user['creatorId'] ?? '')], true)) {
+                $actualPhotos++;
+            }
         }
         $photoCount = $actualPhotos;
         if ($photoCount < PEG_MIN_PHOTOS_WD) {
@@ -1140,12 +1301,13 @@ switch ($action) {
         }
 
         $deductPts = intval(round($amount / PEG_TAKA_PER_POINT));
-        creditUserInMap($users, $pin, -$deductPts);
+        creditUserInMap($users, $sessionUserId, -$deductPts);
         writeJson($usersFile, $users);
 
         $withdraws = readJson($withdrawsFile, []);
         $newWd = [
             "id"     => "wd_" . round(microtime(true) * 1000) . "_" . rand(10, 99),
+            "userId" => $sessionUserId,
             "pin"    => $pin,
             "name"   => $user['name'],
             "phone"  => $phone,
@@ -1164,20 +1326,20 @@ switch ($action) {
 
     case 'get_user_withdraws':
         $pin   = cleanText($input['pin'] ?? '', 20);
-        $phone = cleanText($input['phone'] ?? '', 20);
-        if ($pin === '' && $phone === '') {
-            echo json_encode(["success" => false, "message" => "পিন বা নম্বর প্রয়োজন"]);
+        $sessionUserId = requireUserSession($pin);
+        $users = readUsersSafe($usersFile);
+        $sessionUser = findUserByIdentifier($users, $sessionUserId);
+        if (!$sessionUser) {
+            http_response_code(401);
+            echo json_encode(["success" => false, "authRequired" => true]);
             exit;
         }
+        $pin = (string)($sessionUser['pin'] ?? '');
         $withdraws = readJson($withdrawsFile, []);
-        $cleanPhone = $phone !== '' ? preg_replace('/[^0-9]/', '', $phone) : '';
         $userWd = [];
         foreach ($withdraws as $w) {
             $wPin = trim((string)($w['pin'] ?? ''));
-            $wPhone = preg_replace('/[^0-9]/', '', (string)($w['phone'] ?? ''));
-            $matchPin = ($pin !== '' && $wPin === $pin);
-            $matchPhone = ($cleanPhone !== '' && $wPhone !== '' && (strpos($wPhone, $cleanPhone) !== false || strpos($cleanPhone, $wPhone) !== false));
-            if ($matchPin || $matchPhone) {
+            if (!empty($w['userId']) ? $w['userId'] === $sessionUserId : ($wPin === $pin && count(array_filter($users, fn($u) => (string)($u['pin'] ?? '') === $pin)) === 1)) {
                 $userWd[] = [
                     "id"     => $w['id'] ?? '',
                     "pin"    => $w['pin'] ?? '',
@@ -1271,6 +1433,11 @@ switch ($action) {
 
     case 'get_notifications':
         $pin    = cleanText($input['pin'] ?? '', 20);
+        if ($pin !== '') {
+            $sessionUserId = requireUserSession($pin);
+            $sessionUser = findUserByIdentifier(readUsersSafe($usersFile), $sessionUserId);
+            $pin = (string)($sessionUser['pin'] ?? '');
+        }
         $notifs = readJson($notifsFile, ["personal" => [], "broadcast" => []]);
         $personal  = ($pin !== '' && !empty($notifs['personal'][$pin])) ? $notifs['personal'][$pin] : [];
         $broadcast = $notifs['broadcast'] ?? [];
@@ -1316,7 +1483,7 @@ switch ($action) {
                 $refundPts = intval(round(floatval($target['amount'] ?? 0) / PEG_TAKA_PER_POINT));
                 if ($refundPts > 0) {
                     $users = readUsersSafe($usersFile);
-                    creditUserInMap($users, $target['pin'], $refundPts);
+                    creditUserInMap($users, $target['userId'] ?? $target['pin'], $refundPts);
                     writeJson($usersFile, $users);
                 }
             }

@@ -283,8 +283,9 @@ class AppDB {
   }
 
   // ৭. ইউজার রেজিস্ট্রেশন
-  async registerUser(pin, name, phone, refCode) {
-    const res = await this.apiCall("register", { pin, name, phone, ref: refCode || "" });
+  async registerUser(pin, name, phone, refCode, email = "", firebaseIdToken = "") {
+    if (!firebaseIdToken) return { success: false, message: "ইমেইল লিংক যাচাই করে আবার চেষ্টা করুন।" };
+    const res = await this.apiCall("register", { pin, name, phone, email, firebaseIdToken, ref: refCode || "" });
     if (res && res.data) {
       if (res.data.success && res.data.user) {
         this.saveUser(res.data.user);
@@ -292,6 +293,8 @@ class AppDB {
       }
       return { success: false, message: res.data.message || "রেজিস্ট্রেশন সম্পন্ন হয়নি!" };
     }
+
+    return { success: false, message: "নিরাপদ রেজিস্ট্রেশনের জন্য ওয়েবসাইটের PHP সার্ভার প্রয়োজন।" };
 
     // অফলাইন লোকাল ফলব্যাক
     const existing = this.getUser(pin);
@@ -303,6 +306,7 @@ class AppDB {
       creatorId: `u_${pin}`,
       name,
       phone,
+      email,
       points: 20,
       taka: "2.00",
       photosCount: 0,
@@ -459,6 +463,19 @@ class AppDB {
     return matches;
   }
 
+  async userLogout() {
+    await this.apiCall("user_logout", {});
+  }
+
+  async updateAvatar(imageData) {
+    const res = await this.apiCall("update_avatar", { image: imageData });
+    if (res && res.data) {
+      if (res.data.success && res.data.user) this.saveUser(res.data.user);
+      return res.data;
+    }
+    return { success: false, message: "সার্ভারের সঙ্গে সংযোগ করা যায়নি।" };
+  }
+
   async getPublicProofs() {
     const res = await this.apiCall("get_public_proofs");
     if (res && res.data && res.data.success && Array.isArray(res.data.proofs)) {
@@ -561,11 +578,13 @@ class AppDB {
 
   async fetchFirebaseUser(pin) {
     if (!pin) return null;
-    const res = await this.apiCall("login", { pin });
+    const phone = localStorage.getItem("peg_auth_phone") || "";
+    const res = await this.apiCall("login", { pin, phone });
     if (res && res.data && res.data.success && res.data.user) {
       this.saveUser(res.data.user);
       return res.data.user;
     }
+    if (res && res.data) return null;
     return this.getUser(pin);
   }
 
